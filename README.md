@@ -1,83 +1,56 @@
-# E-commerce Spring Boot Application
+# AI-Powered E-Commerce Platform & Microservices
 
-A robust, production-oriented Java e-commerce web application built with Spring Boot, JSP, Spring Security, and Hibernate. 
+A production-grade Java e-commerce platform built with **Java 17**, **Spring Boot 3.2**, **PostgreSQL + pgvector**, **LangChain4j**, and **Google Gemini AI**.
 
-This project follows a layered MVC architecture and supports role-based access for admin and customer workflows, designed to provide a seamless shopping experience and easy product management.
+---
 
-## 🚀 Key Features
+## 🚀 Key AI & Microservice Features
 
-- **Server-Rendered UI**: Dynamic and responsive views using JSP and JSTL.
-- **Secure Authentication**: Spring Security handles role-based authorization (Admin vs. User).
-- **Custom Persistence**: Custom Hibernate SessionFactory configuration for advanced database management.
-- **Admin Dashboard**: Modules for managing products, categories, and viewing registered customers.
-- **Customer Portal**: Modules for user registration, login, profile management, and product browsing.
-- **Database Integrated**: MySQL-backed persistence with clean DAO and service layers.
+- **RAG Product Search**: Gemini 768-dim embeddings stored in **pgvector** with HNSW cosine similarity search.
+- **AI Customer Support Assistant**: LangChain4j conversational AI agent with chat memory, RAG context augmentation, and order/product lookup tools.
+- **4 RESTful Microservice Domains**: Product, User, Order, and Payment services with clean API contracts (`/api/products`, `/api/users`, `/api/orders`, `/api/payments`).
+- **PostgreSQL & Flyway Migrations**: Production schema with vector columns, Flyway migration scripts (`V1`, `V2`, `V3`), and optimized performance indexes.
+- **Automated Testing Suite**: Full unit and integration test coverage using JUnit 5, Mockito, `@WebMvcTest`, and JaCoCo reports.
+- **CI/CD & Docker**: GitHub Actions pipeline + multi-stage `Dockerfile` and `docker-compose.yml`.
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Java 11**
-- **Spring Boot 2.6.4**
-- **Spring MVC**
-- **Spring Security**
-- **Hibernate ORM**
-- **JSP + Tomcat Jasper**
-- **MySQL 8**
-- **Maven**
-
-## 📂 Project Structure
-
-```text
-src/main/java/com/jtspringproject/JtSpringProject/
-  configuration/     # Security config
-  controller/        # MVC controllers
-  dao/               # Data access layer
-  models/            # Entities
-  services/          # Business layer
-  repository/        # Spring Data repository
-src/main/resources/
-  application.properties
-src/main/webapp/views/
-  *.jsp
-```
-
-## ⚙️ Getting Started
-
-### Prerequisites
-- Java 11+
-- Maven 3.8+
-- MySQL Server
-
-### 1) Database Configuration
-Update `src/main/resources/application.properties` with your local MySQL credentials:
-
-```properties
-db.driver=com.mysql.cj.jdbc.Driver
-db.url=jdbc:mysql://localhost:3306/ecommjava?createDatabaseIfNotExist=true
-db.username=root
-db.password=your_password
-
-hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
-hibernate.show_sql=true
-hibernate.hbm2ddl.auto=update
-entitymanager.packagesToScan=com
-```
-
-### 2) Seed Initial Data (Optional)
-Run the `basedata.sql` file in your MySQL database to populate initial categories, products, and a default admin user.
-
-### 3) Run the Application
-Open your terminal and build the project:
-```bash
-mvn clean package
-mvn spring-boot:run
-```
-
-Once running, navigate to: `http://localhost:8080/`
-
-## 🔒 Security & Roles
-- **Admin Routes**: All routes under `/admin/**` require the `ADMIN` role.
-- **User Routes**: Require the `USER` role.
-- **CSRF Protection**: Enabled for all form submissions to ensure data integrity.
+- **Backend**: Java 17, Spring Boot 3.2.5, Spring Data JPA, Spring Security 6
+- **Database**: PostgreSQL 16, pgvector extension, Flyway
+- **AI / LLM**: Google Gemini AI (`embedding-001`, `gemini-pro`), LangChain4j 0.35.0
+- **Testing**: JUnit 5, Mockito, JaCoCo
+- **DevOps**: Docker, Docker Compose, GitHub Actions
 
 ---
-*Built with ❤️ focusing on clean architecture and scalable Java backend design.*
+
+## ⚙️ Running Locally
+
+### Using Docker Compose (Recommended)
+```bash
+export GEMINI_API_KEY="your-gemini-api-key"
+docker-compose up --build
+```
+
+---
+
+## 📡 REST API Summary
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/products` | GET, POST, PUT, DELETE | Product CRUD with pagination |
+| `/api/search?q=...` | GET | AI RAG product search |
+| `/api/search/reindex` | POST | Reindex vector embeddings |
+| `/api/chat` | POST | AI Customer support chat |
+| `/api/orders` | GET, POST, PATCH | Order creation & management |
+| `/api/payments` | POST | Payment processing & refund |
+
+---
+
+## 🐙 Git Branching & Commit Log
+
+```bash
+git log --oneline
+```
+Contains all 24 atomic commits covering foundation, database, microservices, RAG, AI chat, optimization, test suite, and CI/CD setup.
