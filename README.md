@@ -6,7 +6,7 @@ A production-grade Java e-commerce platform built with **Java 17**, **Spring Boo
 
 ## 🚀 Key AI & Microservice Features
 
-- **RAG Product Search**: Gemini 768-dim embeddings stored in **pgvector** with HNSW cosine similarity search.
+- **RAG Product Search**: Gemini 768-dim embeddings stored in **pgvector** with  cosine similarity search.
 - **AI Customer Support Assistant**: LangChain4j conversational AI agent with chat memory, RAG context augmentation, and order/product lookup tools.
 - **4 RESTful Microservice Domains**: Product, User, Order, and Payment services with clean API contracts (`/api/products`, `/api/users`, `/api/orders`, `/api/payments`).
 - **PostgreSQL & Flyway Migrations**: Production schema with vector columns, Flyway migration scripts (`V1`, `V2`, `V3`), and optimized performance indexes.
