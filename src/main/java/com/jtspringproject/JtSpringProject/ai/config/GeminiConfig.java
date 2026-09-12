@@ -21,11 +21,27 @@ public class GeminiConfig {
     @Value("${gemini.chat.model}")
     private String chatModelName;
 
+    /**
+     * Vector width, which must match the {@code vector(...)} column declared in
+     * migration V2 and the pgvector store's configured dimension.
+     */
+    @Value("${pgvector.dimension:768}")
+    private int dimension;
+
+    /**
+     * The embedding model is pinned to the same dimensionality as the database
+     * column.
+     *
+     * <p>gemini-embedding-001 returns 3072 dimensions unless asked otherwise, so
+     * without {@code outputDimensionality} every insert into a {@code vector(768)}
+     * column would be rejected at runtime.
+     */
     @Bean
     public EmbeddingModel embeddingModel() {
         return GoogleAiEmbeddingModel.builder()
                 .apiKey(apiKey)
                 .modelName(embeddingModelName)
+                .outputDimensionality(dimension)
                 .build();
     }
 
