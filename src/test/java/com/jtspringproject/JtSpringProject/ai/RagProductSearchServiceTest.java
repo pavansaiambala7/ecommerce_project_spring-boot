@@ -1,5 +1,7 @@
 package com.jtspringproject.JtSpringProject.ai.service;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -50,7 +52,7 @@ class RagProductSearchServiceTest {
         testProduct = new Product();
         testProduct.setId(1);
         testProduct.setName("Red Apple");
-        testProduct.setPrice(3);
+        testProduct.setPrice(new BigDecimal("3"));
         testProduct.setDescription("Juicy apple");
         testProduct.setCategory(cat);
     }

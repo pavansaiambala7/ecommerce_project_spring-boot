@@ -1,5 +1,7 @@
 package com.jtspringproject.JtSpringProject.ai.service;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -49,7 +51,7 @@ class EmbeddingServiceTest {
         testProduct.setId(1);
         testProduct.setName("Fresh Apple");
         testProduct.setDescription("Juicy red apple");
-        testProduct.setPrice(3);
+        testProduct.setPrice(new BigDecimal("3"));
         testProduct.setQuantity(50);
         testProduct.setCategory(category);
     }
@@ -76,7 +78,7 @@ class EmbeddingServiceTest {
         int count = embeddingService.embedAllProducts();
 
         assertEquals(1, count);
-        verify(embeddingStore, times(1)).add(any(), any());
+        verify(embeddingStore, times(1)).add(any(Embedding.class), any(TextSegment.class));
     }
 
     @Test

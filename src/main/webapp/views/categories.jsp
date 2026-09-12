@@ -37,8 +37,7 @@
 				<ul class="navbar-nav">
 					<li class="nav-item active"><a class="nav-link" href="Dashboard">Home
 							Page</a></li>
-					<li class="nav-item active"><a class="nav-link" href="logout">Logout</a>
-					</li>
+					<li class="nav-item"><form action="/admin/logout" method="post" class="form-inline"><input type="hidden" name="" value=""/><button type="submit" class="btn btn-link nav-link">Logout</button></form></li>
 
 				</ul>
 

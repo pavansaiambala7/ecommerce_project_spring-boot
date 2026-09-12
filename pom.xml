@@ -19,6 +19,10 @@
 		<langchain4j.version>0.35.0</langchain4j.version>
 		<bucket4j.version>8.19.0</bucket4j.version>
 		<jjwt.version>0.12.6</jjwt.version>
+		<!-- Overrides the version managed by Spring Boot 3.2.5 (1.19.7), whose
+		     docker-java client negotiates an API version that Docker 29+ rejects
+		     with HTTP 400 on /info. -->
+		<testcontainers.version>1.20.6</testcontainers.version>
 	</properties>
 	<dependencies>
 

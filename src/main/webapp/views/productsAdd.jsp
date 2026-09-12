@@ -38,8 +38,7 @@
 				<ul class="navbar-nav">
 					<li class="nav-item active"><a class="nav-link"
 						href="/adminhome" >Home Page</a></li>
-					<li class="nav-item active"><a class="nav-link"
-						href="/logout" >Logout</a></li>
+					<li class="nav-item"><form action="/admin/logout" method="post" class="form-inline"><input type="hidden" name="" value=""/><button type="submit" class="btn btn-link nav-link">Logout</button></form></li>
 
 				</ul>
 
@@ -53,15 +52,6 @@
 			<div class="row">
 				<div class="col-sm-5">
 					
-					<div class="form-group">
-						<c:forEach var="product" items="${products}">
-						<label for="name">Id</label> 
-						<input type="number" readonly="readonly" class="form-control border border-warning" name="id"  value="${product.id + 1} ">
-						
-						</c:forEach>
-						
-
-					</div>
 					<div class="form-group">
 						<label for="name">Name</label> 
 						<input type="text" class="form-control border border-warning" required name="name" placeholder="Enter name">

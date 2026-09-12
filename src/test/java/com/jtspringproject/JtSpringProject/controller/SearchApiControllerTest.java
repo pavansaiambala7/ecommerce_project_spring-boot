@@ -1,5 +1,7 @@
 package com.jtspringproject.JtSpringProject.controller;
 
+import java.math.BigDecimal;
+
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.jtspringproject.JtSpringProject.ai.service.EmbeddingService;
@@ -24,6 +27,7 @@ import com.jtspringproject.JtSpringProject.models.Product;
 
 @WebMvcTest(SearchApiController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import({ com.jtspringproject.JtSpringProject.support.SliceTestConfig.class, com.jtspringproject.JtSpringProject.exception.GlobalApiExceptionHandler.class })
 class SearchApiControllerTest {
 
     @Autowired
@@ -40,7 +44,7 @@ class SearchApiControllerTest {
         Product p = new Product();
         p.setId(1);
         p.setName("Organic Apples");
-        p.setPrice(5);
+        p.setPrice(new BigDecimal("5"));
 
         RagProductSearchService.SearchResult searchResult = new RagProductSearchService.SearchResult(p, 0.95);
         when(ragSearchService.searchProducts(anyString(), anyInt())).thenReturn(List.of(searchResult));

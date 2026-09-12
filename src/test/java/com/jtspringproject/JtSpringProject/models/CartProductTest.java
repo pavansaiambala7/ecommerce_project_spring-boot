@@ -14,7 +14,7 @@ class CartProductTest {
         Product product = new Product();
         product.setId(100);
 
-        CartProduct cartProduct = new CartProduct(cart, product);
+        CartProduct cartProduct = new CartProduct(cart, product, 3);
 
         assertNotNull(cartProduct.getId(), "CartProductId should not be null");
         assertEquals(1, cartProduct.getId().getCartId(), "Cart ID should match");
@@ -22,6 +22,7 @@ class CartProductTest {
 
         assertEquals(cart, cartProduct.getCart(), "Cart should match");
         assertEquals(product, cartProduct.getProduct(), "Product should match");
+        assertEquals(3, cartProduct.getQuantity(), "Quantity should match");
     }
 
     @Test

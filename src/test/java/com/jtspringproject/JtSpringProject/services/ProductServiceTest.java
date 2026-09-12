@@ -1,5 +1,7 @@
 package com.jtspringproject.JtSpringProject.services;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import com.jtspringproject.JtSpringProject.exception.ResourceNotFoundException;
 import com.jtspringproject.JtSpringProject.dao.productDao;
 import com.jtspringproject.JtSpringProject.models.Category;
 import com.jtspringproject.JtSpringProject.models.Product;
@@ -43,7 +46,7 @@ class ProductServiceTest {
         testProduct.setId(1);
         testProduct.setName("Apple");
         testProduct.setDescription("Fresh and juicy");
-        testProduct.setPrice(3);
+        testProduct.setPrice(new BigDecimal("3"));
         testProduct.setQuantity(40);
         testProduct.setWeight(76);
         testProduct.setCategory(testCategory);
@@ -113,14 +116,36 @@ class ProductServiceTest {
     }
 
     @Test
-    void updateProduct_shouldSetIdAndUpdate() {
-        when(productDao.updateProduct(any(Product.class))).thenReturn(testProduct);
+    void updateProduct_shouldApplyChangesToExistingProduct() {
+        Product changes = new Product();
+        changes.setName("Green Apple");
+        changes.setDescription("Tart");
+        changes.setPrice(new BigDecimal("4.50"));
+        changes.setQuantity(12);
+        changes.setWeight(80);
 
-        Product result = productService.updateProduct(1, testProduct);
+        when(productDao.findById(1)).thenReturn(Optional.of(testProduct));
+        when(productDao.save(any(Product.class))).thenAnswer(i -> i.getArgument(0));
 
-        assertEquals(1, testProduct.getId());
-        assertNotNull(result);
-        verify(productDao).updateProduct(testProduct);
+        Product result = productService.updateProduct(1, changes);
+
+        assertEquals("Green Apple", result.getName());
+        assertEquals(0, new BigDecimal("4.50").compareTo(result.getPrice()));
+        assertEquals(1, result.getId());
+    }
+
+    /**
+     * Regression: an unknown id used to be written as a new row instead of
+     * reported as missing.
+     */
+    @Test
+    void updateProduct_shouldThrowForUnknownId() {
+        when(productDao.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () ->
+                productService.updateProduct(999, testProduct));
+
+        verify(productDao, never()).save(any(Product.class));
     }
 
     @Test
