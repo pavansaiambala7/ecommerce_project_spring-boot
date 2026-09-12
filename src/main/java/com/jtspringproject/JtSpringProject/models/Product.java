@@ -1,14 +1,17 @@
 package com.jtspringproject.JtSpringProject.models;
 
-import jakarta.persistence.CascadeType;
+import java.math.BigDecimal;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -23,20 +26,28 @@ public class Product {
 
 	private String image;
 
-	@OneToOne(cascade = CascadeType.ALL)
+	/**
+	 * Many products share one category. This was previously mapped as
+	 * {@code @OneToOne(cascade = ALL)}, which both misstated the cardinality and
+	 * caused deleting a product to cascade-delete the category other products
+	 * still referenced.
+	 */
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id", referencedColumnName = "category_id")
 	private Category category;
 
 	private int quantity;
 
-	private int price;
+	@Column(nullable = false, precision = 12, scale = 2)
+	private BigDecimal price = BigDecimal.ZERO;
 
 	private int weight;
 
 	private String description;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "customer_id")
+	@JsonIgnore
 	private User customer;
 
 	public int getId() {
@@ -79,11 +90,11 @@ public class Product {
 		this.quantity = quantity;
 	}
 
-	public int getPrice() {
+	public BigDecimal getPrice() {
 		return price;
 	}
 
-	public void setPrice(int price) {
+	public void setPrice(BigDecimal price) {
 		this.price = price;
 	}
 

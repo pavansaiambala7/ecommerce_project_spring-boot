@@ -1,24 +1,22 @@
 package com.jtspringproject.JtSpringProject.controller;
 
-import com.jtspringproject.JtSpringProject.models.Product;
-import com.jtspringproject.JtSpringProject.models.User;
-
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.jtspringproject.JtSpringProject.services.userService;
+import com.jtspringproject.JtSpringProject.exception.BusinessRuleException;
+import com.jtspringproject.JtSpringProject.models.Product;
+import com.jtspringproject.JtSpringProject.models.User;
 import com.jtspringproject.JtSpringProject.services.productService;
+import com.jtspringproject.JtSpringProject.services.userService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 public class UserController {
@@ -26,7 +24,6 @@ public class UserController {
 	private final userService userService;
 	private final productService productService;
 
-	@Autowired
 	public UserController(userService userService, productService productService) {
 		this.userService = userService;
 		this.productService = productService;
@@ -37,16 +34,11 @@ public class UserController {
 		return "register";
 	}
 
-	@GetMapping("/buy")
-	public String buy() {
-		return "buy";
-	}
-
 	@GetMapping("/login")
 	public ModelAndView userLogin(@RequestParam(required = false) String error) {
 		ModelAndView mv = new ModelAndView("userLogin");
 		if ("true".equals(error)) {
-			mv.addObject("msg", "Please enter correct email and password");
+			mv.addObject("msg", "Please enter a correct username and password");
 		}
 		return mv;
 	}
@@ -54,8 +46,7 @@ public class UserController {
 	@GetMapping("/")
 	public ModelAndView indexPage() {
 		ModelAndView mView = new ModelAndView("index");
-		String username = SecurityContextHolder.getContext().getAuthentication().getName();
-		mView.addObject("username", username);
+		mView.addObject("username", currentUsername());
 		List<Product> products = this.productService.getProducts();
 
 		if (products.isEmpty()) {
@@ -83,59 +74,62 @@ public class UserController {
 	}
 
 	@PostMapping("newuserregister")
-	public ModelAndView registerNewUser(@ModelAttribute User user) {
-		boolean exists = this.userService.checkUserExists(user.getUsername());
-
-		if (!exists) {
-			user.setRole("ROLE_NORMAL");
-			this.userService.addUser(user);
-			return new ModelAndView("userLogin");
-		} else {
+	public ModelAndView registerNewUser(@RequestParam("username") String username,
+			@RequestParam("email") String email,
+			@RequestParam("password") String password,
+			@RequestParam(value = "address", required = false) String address) {
+		try {
+			this.userService.register(username, email, password, address);
+		} catch (BusinessRuleException e) {
 			ModelAndView mView = new ModelAndView("register");
-			mView.addObject("msg", user.getUsername() + " is taken. Please choose a different username.");
+			mView.addObject("msg", e.getMessage());
 			return mView;
 		}
+		ModelAndView mView = new ModelAndView("userLogin");
+		mView.addObject("msg", "Registration successful. Please sign in.");
+		return mView;
 	}
 
 	@GetMapping("/profileDisplay")
 	public String profileDisplay(Model model) {
-
-		String username = SecurityContextHolder.getContext().getAuthentication().getName();
-		User user = userService.getUserByUsername(username);
-
-		if (user != null) {
-			model.addAttribute("userid", user.getId());
-			model.addAttribute("username", user.getUsername());
-			model.addAttribute("email", user.getEmail());
-			model.addAttribute("password", "");
-			model.addAttribute("address", user.getAddress());
-		} else {
-			model.addAttribute("msg", "User not found");
-		}
-
+		User user = this.userService.requireUserByUsername(currentUsername());
+		model.addAttribute("username", user.getUsername());
+		model.addAttribute("email", user.getEmail());
+		model.addAttribute("password", "");
+		model.addAttribute("address", user.getAddress());
 		return "updateProfile";
 	}
 
+	/**
+	 * Updates the signed-in user profile.
+	 *
+	 * <p>The account being edited is resolved from the security context. It used to
+	 * be read from a hidden {@code userid} form field, so any authenticated user
+	 * could post {@code userid=1} and take over the administrator account.
+	 */
 	@PostMapping("/updateuser")
-	public String updateUserProfile(@RequestParam("userid") int userid,
-			@RequestParam("username") String username,
+	public String updateUserProfile(@RequestParam("username") String username,
 			@RequestParam("email") String email,
 			@RequestParam("password") String password,
-			@RequestParam("address") String address) {
-		User updatedUser = this.userService.updateUserProfile(userid, username, email, password, address);
-		if (updatedUser != null) {
-			refreshAuthenticatedPrincipal(username);
+			@RequestParam("address") String address,
+			HttpServletRequest request) {
+		User current = this.userService.requireUserByUsername(currentUsername());
+		boolean identityChanged = !current.getUsername().equals(username)
+				|| (password != null && !password.isBlank());
+
+		this.userService.updateUserProfile(current.getId(), username, email, password, address);
+
+		if (identityChanged) {
+			// Identity or credentials changed: end the session so the user
+			// re-authenticates instead of continuing under a stale principal.
+			SecurityContextHolder.clearContext();
+			request.getSession().invalidate();
+			return "redirect:/login";
 		}
 		return "redirect:/";
 	}
 
-	private void refreshAuthenticatedPrincipal(String username) {
-		Authentication currentAuthentication = SecurityContextHolder.getContext().getAuthentication();
-		Authentication newAuthentication = new UsernamePasswordAuthenticationToken(
-				username,
-				currentAuthentication.getCredentials(),
-				currentAuthentication.getAuthorities());
-		SecurityContextHolder.getContext().setAuthentication(newAuthentication);
+	private String currentUsername() {
+		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
-
 }

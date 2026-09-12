@@ -33,7 +33,7 @@ public class EmbeddingService {
     }
 
     /**
-     * Generate embedding for a single product and store it in pgvector.
+     * Generates an embedding for a single product and stores it in pgvector.
      */
     public void embedProduct(Product product) {
         String text = buildProductText(product);
@@ -44,12 +44,19 @@ public class EmbeddingService {
     }
 
     /**
-     * Batch embed all products in the database.
+     * Rebuilds embeddings for the whole catalogue.
+     *
+     * <p>Existing vectors are cleared first. Without this every reindex appended a
+     * second copy of every product, so the store grew without bound and searches
+     * returned the same product repeatedly, crowding out other matches.
      */
     public int embedAllProducts() {
         List<Product> products = productService.getProducts();
-        int count = 0;
 
+        embeddingStore.removeAll();
+        log.info("Cleared existing product embeddings before reindex");
+
+        int count = 0;
         for (Product product : products) {
             try {
                 embedProduct(product);
@@ -64,14 +71,14 @@ public class EmbeddingService {
     }
 
     /**
-     * Generate an embedding vector for a given text query.
+     * Generates an embedding vector for a given text query.
      */
     public Embedding embedText(String text) {
         return embeddingModel.embed(text).content();
     }
 
     /**
-     * Build a rich text representation of a product for embedding.
+     * Builds a rich text representation of a product for embedding.
      */
     private String buildProductText(Product product) {
         StringBuilder sb = new StringBuilder();
@@ -85,7 +92,7 @@ public class EmbeddingService {
             sb.append(". Category: ").append(product.getCategory().getName());
         }
 
-        sb.append(". Price: $").append(product.getPrice());
+        sb.append(". Price: ").append(product.getPrice());
         sb.append(". Weight: ").append(product.getWeight()).append("g");
 
         if (product.getQuantity() > 0) {
@@ -98,7 +105,7 @@ public class EmbeddingService {
     }
 
     /**
-     * Build metadata for the embedding store entry.
+     * Builds metadata for the embedding store entry.
      */
     private Metadata buildMetadata(Product product) {
         Metadata metadata = new Metadata();

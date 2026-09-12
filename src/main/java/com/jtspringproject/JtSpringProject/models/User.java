@@ -1,5 +1,7 @@
 package com.jtspringproject.JtSpringProject.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,20 +13,32 @@ import jakarta.persistence.Table;
 @Table(name = "customer")
 public class User {
 
+	public static final String ROLE_ADMIN = "ROLE_ADMIN";
+	public static final String ROLE_NORMAL = "ROLE_NORMAL";
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 
-	@Column(unique = true)
+	@Column(unique = true, nullable = false)
 	private String username;
 
 	private String email;
 
+	/**
+	 * BCrypt hash. Never serialised: this entity used to be returned directly from
+	 * {@code /api/users}, which published every user's password hash.
+	 */
+	@JsonIgnore
 	private String password;
 
 	private String role;
 
 	private String address;
+
+	public boolean isAdmin() {
+		return ROLE_ADMIN.equals(role);
+	}
 
 	public int getId() {
 		return id;
