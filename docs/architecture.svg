@@ -1,126 +1,357 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 520" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1400 750" font-family="'Segoe UI', 'Inter', Arial, sans-serif">
   <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0B1220"/>
-      <stop offset="100%" stop-color="#111A2E"/>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#0A0F1C"/>
+      <stop offset="50%" stop-color="#0D1529"/>
+      <stop offset="100%" stop-color="#080C18"/>
     </linearGradient>
-    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.55"/>
+
+    <!-- Grid pattern for tech feel -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1E293B" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+
+    <!-- Isometric platform gradients -->
+    <linearGradient id="platTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#162033"/>
+    </linearGradient>
+    <linearGradient id="platLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#0B1121"/>
+    </linearGradient>
+    <linearGradient id="platRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#141D30"/>
+      <stop offset="100%" stop-color="#101828"/>
+    </linearGradient>
+
+    <!-- Box color sets -->
+    <!-- Client - Cyan -->
+    <linearGradient id="cyanTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="cyanLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#0891B2"/>
+    </linearGradient>
+    <linearGradient id="cyanRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0E7490"/>
+      <stop offset="100%" stop-color="#0A6277"/>
+    </linearGradient>
+
+    <!-- Security - Amber/Gold -->
+    <linearGradient id="amberTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </linearGradient>
+    <linearGradient id="amberLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="amberRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+
+    <!-- App Core - Emerald -->
+    <linearGradient id="emeraldTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6EE7B7"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="emeraldLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="emeraldRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#065F46"/>
+    </linearGradient>
+
+    <!-- AI Engine - Violet -->
+    <linearGradient id="violetTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C4B5FD"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+    <linearGradient id="violetLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="violetRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6D28D9"/>
+      <stop offset="100%" stop-color="#5B21B6"/>
+    </linearGradient>
+
+    <!-- Database - Indigo -->
+    <linearGradient id="indigoTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#A5B4FC"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+    <linearGradient id="indigoLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="indigoRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4338CA"/>
+      <stop offset="100%" stop-color="#3730A3"/>
+    </linearGradient>
+
+    <!-- Glow effects -->
+    <radialGradient id="cyanGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="amberGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.4"/>
       <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
     </radialGradient>
-    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000000" flood-opacity="0.45"/>
+    <radialGradient id="emeraldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violetGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="indigoGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Drop shadows -->
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5"/>
     </filter>
-    <marker id="arrowFwd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#38BDF8"/>
+    <filter id="heavyShadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Arrow markers -->
+    <marker id="arrowReq" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,1 L10,6 L0,11 z" fill="#38BDF8"/>
     </marker>
-    <marker id="arrowRtn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    <marker id="arrowRes" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,1 L10,6 L0,11 z" fill="#94A3B8"/>
     </marker>
+
+    <!-- Title gradient -->
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="25%" stop-color="#A78BFA"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="75%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
   </defs>
 
-  <rect x="0" y="0" width="1200" height="520" rx="18" fill="url(#bgGrad)"/>
+  <!-- ========== BACKGROUND ========== -->
+  <rect width="1400" height="750" rx="20" fill="url(#bgGrad)"/>
+  <rect width="1400" height="750" rx="20" fill="url(#grid)"/>
 
-  <text x="600" y="42" text-anchor="middle" fill="#F8FAFC" font-size="25" font-weight="700">AI-Powered E-Commerce &#8212; System Architecture</text>
-  <text x="600" y="68" text-anchor="middle" fill="#94A3B8" font-size="13">Request flow (top, solid) &#183; Response flow (bottom, dashed)</text>
-
-  <!-- glow behind Security layer -->
-  <circle cx="380" cy="325" r="170" fill="url(#glowGrad)">
-    <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
+  <!-- Ambient glow spots -->
+  <circle cx="200" cy="380" r="220" fill="url(#cyanGlow)" opacity="0.5">
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="460" cy="380" r="220" fill="url(#amberGlow)" opacity="0.5">
+    <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="720" cy="380" r="220" fill="url(#emeraldGlow)" opacity="0.4">
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="4.2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="980" cy="380" r="220" fill="url(#violetGlow)" opacity="0.4">
+    <animate attributeName="opacity" values="0.3;0.55;0.3" dur="3.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="1220" cy="380" r="220" fill="url(#indigoGlow)" opacity="0.4">
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="4.5s" repeatCount="indefinite"/>
   </circle>
 
-  <!-- forward flow arcs -->
-  <path id="fwd1" d="M240,280 Q265,250 290,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
-  <path id="fwd2" d="M470,280 Q495,250 520,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
-  <path id="fwd3" d="M700,280 Q725,250 750,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
-  <path id="fwd4" d="M930,280 Q955,250 980,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
+  <!-- ========== TITLE ========== -->
+  <text x="700" y="52" text-anchor="middle" fill="url(#titleGrad)" font-size="30" font-weight="800" letter-spacing="1">AI-Powered E-Commerce Platform</text>
+  <text x="700" y="80" text-anchor="middle" fill="#94A3B8" font-size="14" letter-spacing="0.5">System Architecture — Spring Boot · PostgreSQL · Gemini AI · pgvector</text>
 
-  <!-- return flow arcs -->
-  <path id="rtn1" d="M290,420 Q265,450 240,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
-  <path id="rtn2" d="M520,420 Q495,450 470,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
-  <path id="rtn3" d="M750,420 Q725,450 700,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
-  <path id="rtn4" d="M980,420 Q955,450 930,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
-
-  <!-- BOX 1: Client -->
-  <g filter="url(#dropShadow)">
-    <polygon points="150,245 240,290 150,335 60,290" fill="#60A5FA" stroke="#0B1220" stroke-width="1.5">
-      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0s" repeatCount="indefinite"/>
-    </polygon>
-    <polygon points="60,290 150,335 150,405 60,360" fill="#3B82F6"/>
-    <polygon points="150,335 240,290 240,360 150,405" fill="#2563EB"/>
+  <!-- Legend -->
+  <g transform="translate(420, 710)">
+    <line x1="0" y1="0" x2="40" y2="0" stroke="#38BDF8" stroke-width="3" filter="url(#neonGlow)"/>
+    <circle cx="20" cy="0" r="4" fill="#E0F2FE">
+      <animate attributeName="cx" values="0;40;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="50" y="4" fill="#CBD5E1" font-size="12" font-weight="500">Request Flow</text>
+    <line x1="170" y1="0" x2="210" y2="0" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5"/>
+    <circle cx="190" cy="0" r="3" fill="#CBD5E1">
+      <animate attributeName="cx" values="210;170;210" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="220" y="4" fill="#CBD5E1" font-size="12" font-weight="500">Response Flow</text>
+    <rect x="340" y="-8" width="16" height="16" rx="3" fill="#1E293B" stroke="#334155" stroke-width="1"/>
+    <text x="362" y="4" fill="#CBD5E1" font-size="12" font-weight="500">Isometric Layer</text>
   </g>
-  <circle cx="150" cy="220" r="15" fill="#0B1220" stroke="#60A5FA" stroke-width="2"/>
-  <text x="150" y="225" text-anchor="middle" fill="#60A5FA" font-size="13" font-weight="700">1</text>
-  <text x="150" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">Client</text>
-  <text x="150" y="368" text-anchor="middle" fill="#DBEAFE" font-size="10">JSP &#183; REST API</text>
+
+  <!-- ========== ISOMETRIC PLATFORM ========== -->
+  <g filter="url(#heavyShadow)">
+    <!-- Main platform - isometric rectangle -->
+    <polygon points="700,520  1350,440  700,620  50,540" fill="url(#platTop)" opacity="0.7"/>
+    <polygon points="50,540  700,620  700,650  50,570" fill="url(#platLeft)" opacity="0.7"/>
+    <polygon points="700,620  1350,440  1350,470  700,650" fill="url(#platRight)" opacity="0.7"/>
+  </g>
+
+  <!-- Platform edge glow -->
+  <line x1="50" y1="540" x2="700" y2="620" stroke="#334155" stroke-width="1" opacity="0.6"/>
+  <line x1="700" y1="620" x2="1350" y2="440" stroke="#334155" stroke-width="1" opacity="0.6"/>
+
+  <!-- ========== CONNECTION PATHS ========== -->
+  <!-- Forward request paths (top) -->
+  <path id="fwd1" d="M280,300 C320,260 360,260 400,300" fill="none" stroke="#38BDF8" stroke-width="2.5" opacity="0.8" filter="url(#neonGlow)"/>
+  <path id="fwd2" d="M540,300 C580,260 620,260 660,300" fill="none" stroke="#38BDF8" stroke-width="2.5" opacity="0.8" filter="url(#neonGlow)"/>
+  <path id="fwd3" d="M800,300 C840,260 880,260 920,300" fill="none" stroke="#38BDF8" stroke-width="2.5" opacity="0.8" filter="url(#neonGlow)"/>
+  <path id="fwd4" d="M1060,300 C1100,260 1140,260 1180,300" fill="none" stroke="#38BDF8" stroke-width="2.5" opacity="0.8" filter="url(#neonGlow)"/>
+
+  <!-- Return response paths (bottom) -->
+  <path id="rtn1" d="M400,480 C360,520 320,520 280,480" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-dasharray="6,5" opacity="0.6"/>
+  <path id="rtn2" d="M660,480 C620,520 580,520 540,480" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-dasharray="6,5" opacity="0.6"/>
+  <path id="rtn3" d="M920,480 C880,520 840,520 800,480" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-dasharray="6,5" opacity="0.6"/>
+  <path id="rtn4" d="M1180,480 C1140,520 1100,520 1060,480" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-dasharray="6,5" opacity="0.6"/>
+
+  <!-- Animated dots: request flow -->
+  <circle r="5" fill="#E0F2FE" filter="url(#neonGlow)"><animateMotion dur="1.8s" begin="0s" repeatCount="indefinite"><mpath xlink:href="#fwd1" href="#fwd1"/></animateMotion></circle>
+  <circle r="5" fill="#E0F2FE" filter="url(#neonGlow)"><animateMotion dur="1.8s" begin="0.45s" repeatCount="indefinite"><mpath xlink:href="#fwd2" href="#fwd2"/></animateMotion></circle>
+  <circle r="5" fill="#E0F2FE" filter="url(#neonGlow)"><animateMotion dur="1.8s" begin="0.9s" repeatCount="indefinite"><mpath xlink:href="#fwd3" href="#fwd3"/></animateMotion></circle>
+  <circle r="5" fill="#E0F2FE" filter="url(#neonGlow)"><animateMotion dur="1.8s" begin="1.35s" repeatCount="indefinite"><mpath xlink:href="#fwd4" href="#fwd4"/></animateMotion></circle>
+
+  <!-- Animated dots: response flow -->
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.8s" begin="1.8s" repeatCount="indefinite"><mpath xlink:href="#rtn4" href="#rtn4"/></animateMotion></circle>
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.8s" begin="2.25s" repeatCount="indefinite"><mpath xlink:href="#rtn3" href="#rtn3"/></animateMotion></circle>
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.8s" begin="2.7s" repeatCount="indefinite"><mpath xlink:href="#rtn2" href="#rtn2"/></animateMotion></circle>
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.8s" begin="3.15s" repeatCount="indefinite"><mpath xlink:href="#rtn1" href="#rtn1"/></animateMotion></circle>
+
+  <!-- ========== 3D ISOMETRIC BOXES ========== -->
+
+  <!-- BOX 1: Client Layer -->
+  <g filter="url(#softShadow)">
+    <!-- Top face -->
+    <polygon points="200,280  280,240  200,200  120,240" fill="url(#cyanTop)" opacity="0.95">
+      <animate attributeName="opacity" values="0.85;1;0.85" dur="3s" repeatCount="indefinite"/>
+    </polygon>
+    <!-- Left face -->
+    <polygon points="120,240  200,280  200,480  120,440" fill="url(#cyanLeft)"/>
+    <!-- Right face -->
+    <polygon points="200,280  280,240  280,440  200,480" fill="url(#cyanRight)"/>
+    <!-- Top face highlight line -->
+    <line x1="120" y1="240" x2="200" y2="200" stroke="#A5F3FC" stroke-width="1" opacity="0.5"/>
+    <line x1="200" y1="200" x2="280" y2="240" stroke="#A5F3FC" stroke-width="1" opacity="0.5"/>
+  </g>
+  <!-- Step badge -->
+  <circle cx="200" cy="175" r="18" fill="#0A0F1C" stroke="#22D3EE" stroke-width="2.5" filter="url(#neonGlow)"/>
+  <text x="200" y="181" text-anchor="middle" fill="#22D3EE" font-size="14" font-weight="800">1</text>
+  <!-- Labels -->
+  <text x="200" y="370" text-anchor="middle" fill="#F8FAFC" font-size="16" font-weight="700">Client</text>
+  <text x="200" y="390" text-anchor="middle" fill="#CFFAFE" font-size="11" font-weight="500">Browser · Mobile</text>
+  <text x="200" y="406" text-anchor="middle" fill="#67E8F9" font-size="10" opacity="0.8">JSP · REST API</text>
 
   <!-- BOX 2: Security Gateway -->
-  <g filter="url(#dropShadow)">
-    <polygon points="380,245 470,290 380,335 290,290" fill="#FBBF24" stroke="#0B1220" stroke-width="1.5">
-      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0.3s" repeatCount="indefinite"/>
+  <g filter="url(#softShadow)">
+    <polygon points="460,280  540,240  460,200  380,240" fill="url(#amberTop)" opacity="0.95">
+      <animate attributeName="opacity" values="0.85;1;0.85" dur="3s" begin="0.3s" repeatCount="indefinite"/>
     </polygon>
-    <polygon points="290,290 380,335 380,405 290,360" fill="#F59E0B"/>
-    <polygon points="380,335 470,290 470,360 380,405" fill="#D97706"/>
+    <polygon points="380,240  460,280  460,480  380,440" fill="url(#amberLeft)"/>
+    <polygon points="460,280  540,240  540,440  460,480" fill="url(#amberRight)"/>
+    <line x1="380" y1="240" x2="460" y2="200" stroke="#FDE68A" stroke-width="1" opacity="0.5"/>
+    <line x1="460" y1="200" x2="540" y2="240" stroke="#FDE68A" stroke-width="1" opacity="0.5"/>
   </g>
-  <circle cx="380" cy="220" r="15" fill="#0B1220" stroke="#FBBF24" stroke-width="2"/>
-  <text x="380" y="225" text-anchor="middle" fill="#FBBF24" font-size="13" font-weight="700">2</text>
-  <text x="380" y="348" text-anchor="middle" fill="#0B1220" font-size="12" font-weight="700">Security</text>
-  <text x="380" y="364" text-anchor="middle" fill="#3A2A05" font-size="9.5">JWT &#183; CORS &#183; Rate Limit</text>
+  <!-- Shield icon lines on front face -->
+  <polygon points="460,310  440,325  440,350  460,365  480,350  480,325" fill="none" stroke="#FDE68A" stroke-width="1.5" opacity="0.3"/>
+  <circle cx="460" cy="175" r="18" fill="#0A0F1C" stroke="#F59E0B" stroke-width="2.5" filter="url(#neonGlow)"/>
+  <text x="460" y="181" text-anchor="middle" fill="#F59E0B" font-size="14" font-weight="800">2</text>
+  <text x="460" y="370" text-anchor="middle" fill="#1C1917" font-size="15" font-weight="700">Security</text>
+  <text x="460" y="390" text-anchor="middle" fill="#451A03" font-size="11" font-weight="500">Gateway</text>
+  <text x="460" y="406" text-anchor="middle" fill="#78350F" font-size="10" opacity="0.9">JWT · CORS · Rate Limit</text>
 
   <!-- BOX 3: Application Core -->
-  <g filter="url(#dropShadow)">
-    <polygon points="610,245 700,290 610,335 520,290" fill="#34D399" stroke="#0B1220" stroke-width="1.5">
-      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
+  <g filter="url(#softShadow)">
+    <polygon points="720,280  800,240  720,200  640,240" fill="url(#emeraldTop)" opacity="0.95">
+      <animate attributeName="opacity" values="0.85;1;0.85" dur="3s" begin="0.6s" repeatCount="indefinite"/>
     </polygon>
-    <polygon points="520,290 610,335 610,405 520,360" fill="#10B981"/>
-    <polygon points="610,335 700,290 700,360 610,405" fill="#059669"/>
+    <polygon points="640,240  720,280  720,480  640,440" fill="url(#emeraldLeft)"/>
+    <polygon points="720,280  800,240  800,440  720,480" fill="url(#emeraldRight)"/>
+    <line x1="640" y1="240" x2="720" y2="200" stroke="#A7F3D0" stroke-width="1" opacity="0.5"/>
+    <line x1="720" y1="200" x2="800" y2="240" stroke="#A7F3D0" stroke-width="1" opacity="0.5"/>
   </g>
-  <circle cx="610" cy="220" r="15" fill="#0B1220" stroke="#34D399" stroke-width="2"/>
-  <text x="610" y="225" text-anchor="middle" fill="#34D399" font-size="13" font-weight="700">3</text>
-  <text x="610" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">App Core</text>
-  <text x="610" y="368" text-anchor="middle" fill="#D1FAE5" font-size="10">Controllers &#183; Services</text>
+  <!-- Gear icon hint -->
+  <circle cx="720" cy="340" r="18" fill="none" stroke="#A7F3D0" stroke-width="1" opacity="0.2"/>
+  <circle cx="720" cy="175" r="18" fill="#0A0F1C" stroke="#10B981" stroke-width="2.5" filter="url(#neonGlow)"/>
+  <text x="720" y="181" text-anchor="middle" fill="#10B981" font-size="14" font-weight="800">3</text>
+  <text x="720" y="370" text-anchor="middle" fill="#F8FAFC" font-size="16" font-weight="700">App Core</text>
+  <text x="720" y="390" text-anchor="middle" fill="#D1FAE5" font-size="11" font-weight="500">Controllers · Services</text>
+  <text x="720" y="406" text-anchor="middle" fill="#6EE7B7" font-size="10" opacity="0.8">DTOs · Validation</text>
 
   <!-- BOX 4: AI Engine -->
-  <g filter="url(#dropShadow)">
-    <polygon points="840,245 930,290 840,335 750,290" fill="#A78BFA" stroke="#0B1220" stroke-width="1.5">
-      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0.9s" repeatCount="indefinite"/>
+  <g filter="url(#softShadow)">
+    <polygon points="980,280  1060,240  980,200  900,240" fill="url(#violetTop)" opacity="0.95">
+      <animate attributeName="opacity" values="0.85;1;0.85" dur="3s" begin="0.9s" repeatCount="indefinite"/>
     </polygon>
-    <polygon points="750,290 840,335 840,405 750,360" fill="#8B5CF6"/>
-    <polygon points="840,335 930,290 930,360 840,405" fill="#7C3AED"/>
+    <polygon points="900,240  980,280  980,480  900,440" fill="url(#violetLeft)"/>
+    <polygon points="980,280  1060,240  1060,440  980,480" fill="url(#violetRight)"/>
+    <line x1="900" y1="240" x2="980" y2="200" stroke="#DDD6FE" stroke-width="1" opacity="0.5"/>
+    <line x1="980" y1="200" x2="1060" y2="240" stroke="#DDD6FE" stroke-width="1" opacity="0.5"/>
   </g>
-  <circle cx="840" cy="220" r="15" fill="#0B1220" stroke="#A78BFA" stroke-width="2"/>
-  <text x="840" y="225" text-anchor="middle" fill="#A78BFA" font-size="13" font-weight="700">4</text>
-  <text x="840" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">AI Engine</text>
-  <text x="840" y="368" text-anchor="middle" fill="#EDE9FE" font-size="10">Gemini &#183; RAG</text>
+  <!-- Brain pulse animation -->
+  <circle cx="980" cy="340" r="12" fill="none" stroke="#C4B5FD" stroke-width="1" opacity="0">
+    <animate attributeName="r" values="8;25;8" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.4;0;0.4" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="980" cy="175" r="18" fill="#0A0F1C" stroke="#8B5CF6" stroke-width="2.5" filter="url(#neonGlow)"/>
+  <text x="980" y="181" text-anchor="middle" fill="#8B5CF6" font-size="14" font-weight="800">4</text>
+  <text x="980" y="370" text-anchor="middle" fill="#F8FAFC" font-size="16" font-weight="700">AI Engine</text>
+  <text x="980" y="390" text-anchor="middle" fill="#EDE9FE" font-size="11" font-weight="500">Gemini · LangChain4j</text>
+  <text x="980" y="406" text-anchor="middle" fill="#C4B5FD" font-size="10" opacity="0.8">RAG · Chat · Embeddings</text>
 
   <!-- BOX 5: Database -->
-  <g filter="url(#dropShadow)">
-    <polygon points="1070,245 1160,290 1070,335 980,290" fill="#818CF8" stroke="#0B1220" stroke-width="1.5">
-      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+  <g filter="url(#softShadow)">
+    <polygon points="1220,280  1300,240  1220,200  1140,240" fill="url(#indigoTop)" opacity="0.95">
+      <animate attributeName="opacity" values="0.85;1;0.85" dur="3s" begin="1.2s" repeatCount="indefinite"/>
     </polygon>
-    <polygon points="980,290 1070,335 1070,405 980,360" fill="#6366F1"/>
-    <polygon points="1070,335 1160,290 1160,360 1070,405" fill="#4F46E5"/>
+    <polygon points="1140,240  1220,280  1220,480  1140,440" fill="url(#indigoLeft)"/>
+    <polygon points="1220,280  1300,240  1300,440  1220,480" fill="url(#indigoRight)"/>
+    <line x1="1140" y1="240" x2="1220" y2="200" stroke="#C7D2FE" stroke-width="1" opacity="0.5"/>
+    <line x1="1220" y1="200" x2="1300" y2="240" stroke="#C7D2FE" stroke-width="1" opacity="0.5"/>
   </g>
-  <circle cx="1070" cy="220" r="15" fill="#0B1220" stroke="#818CF8" stroke-width="2"/>
-  <text x="1070" y="225" text-anchor="middle" fill="#818CF8" font-size="13" font-weight="700">5</text>
-  <text x="1070" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">PostgreSQL</text>
-  <text x="1070" y="368" text-anchor="middle" fill="#E0E7FF" font-size="10">+ pgvector</text>
+  <!-- Database cylinder hint -->
+  <ellipse cx="1220" cy="325" rx="20" ry="8" fill="none" stroke="#C7D2FE" stroke-width="1" opacity="0.2"/>
+  <ellipse cx="1220" cy="345" rx="20" ry="8" fill="none" stroke="#C7D2FE" stroke-width="1" opacity="0.15"/>
+  <circle cx="1220" cy="175" r="18" fill="#0A0F1C" stroke="#6366F1" stroke-width="2.5" filter="url(#neonGlow)"/>
+  <text x="1220" y="181" text-anchor="middle" fill="#6366F1" font-size="14" font-weight="800">5</text>
+  <text x="1220" y="370" text-anchor="middle" fill="#F8FAFC" font-size="16" font-weight="700">PostgreSQL</text>
+  <text x="1220" y="390" text-anchor="middle" fill="#E0E7FF" font-size="11" font-weight="500">+ pgvector · Flyway</text>
+  <text x="1220" y="406" text-anchor="middle" fill="#A5B4FC" font-size="10" opacity="0.8">Cosine Search · Migrations</text>
 
-  <!-- flowing dots: request -->
-  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="0s" repeatCount="indefinite"><mpath xlink:href="#fwd1" href="#fwd1"/></animateMotion></circle>
-  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="0.4s" repeatCount="indefinite"><mpath xlink:href="#fwd2" href="#fwd2"/></animateMotion></circle>
-  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="0.8s" repeatCount="indefinite"><mpath xlink:href="#fwd3" href="#fwd3"/></animateMotion></circle>
-  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="1.2s" repeatCount="indefinite"><mpath xlink:href="#fwd4" href="#fwd4"/></animateMotion></circle>
+  <!-- ========== LAYER LABELS (side) ========== -->
+  <g opacity="0.5">
+    <text x="30" y="250" fill="#64748B" font-size="11" font-weight="600" transform="rotate(-90, 30, 250)" letter-spacing="2">PRESENTATION</text>
+    <text x="30" y="470" fill="#64748B" font-size="11" font-weight="600" transform="rotate(-90, 30, 470)" letter-spacing="2">DATA</text>
+  </g>
 
-  <!-- flowing dots: response -->
-  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="1.6s" repeatCount="indefinite"><mpath xlink:href="#rtn4" href="#rtn4"/></animateMotion></circle>
-  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="2.0s" repeatCount="indefinite"><mpath xlink:href="#rtn3" href="#rtn3"/></animateMotion></circle>
-  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="2.4s" repeatCount="indefinite"><mpath xlink:href="#rtn2" href="#rtn2"/></animateMotion></circle>
-  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="2.8s" repeatCount="indefinite"><mpath xlink:href="#rtn1" href="#rtn1"/></animateMotion></circle>
+  <!-- Vertical connecting line (layer separator) -->
+  <line x1="60" y1="130" x2="60" y2="650" stroke="#1E293B" stroke-width="1" stroke-dasharray="4,8" opacity="0.4"/>
 
-  <!-- legend -->
-  <line x1="430" y1="492" x2="465" y2="492" stroke="#38BDF8" stroke-width="3"/>
-  <text x="472" y="496" fill="#CBD5E1" font-size="12">Request</text>
-  <line x1="560" y1="492" x2="595" y2="492" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5"/>
-  <text x="602" y="496" fill="#CBD5E1" font-size="12">Response</text>
+  <!-- ========== EXTERNAL SERVICE CONNECTOR ========== -->
+  <!-- Gemini API cloud -->
+  <g transform="translate(980, 120)" opacity="0.7">
+    <rect x="-55" y="-20" width="110" height="40" rx="10" fill="#1E1530" stroke="#7C3AED" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="0" y="5" text-anchor="middle" fill="#C4B5FD" font-size="11" font-weight="600">☁ Gemini API</text>
+    <line x1="0" y1="20" x2="0" y2="55" stroke="#7C3AED" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+  </g>
+
+  <!-- Docker label -->
+  <g transform="translate(700, 660)" opacity="0.5">
+    <rect x="-80" y="-14" width="160" height="28" rx="6" fill="#0B1121" stroke="#334155" stroke-width="1"/>
+    <text x="0" y="5" text-anchor="middle" fill="#64748B" font-size="11" font-weight="500">🐳 Docker Compose</text>
+  </g>
+
+  <!-- Version badge -->
+  <g transform="translate(1330, 30)" opacity="0.4">
+    <text x="0" y="0" text-anchor="end" fill="#475569" font-size="10">v3.2.5</text>
+  </g>
 </svg>
