@@ -40,3 +40,9 @@ target
 secrets.yml
 .gradletasknamecache
 .sts4-cache
+# Generated on the production host by deploy/fetch-secrets.sh — real secrets,
+# never committed. Listed defensively in case these scripts are ever run
+# inside a checkout instead of at their intended /opt/ecommerce/ location.
+deploy/.env
+deploy/.last_good_tag
+.env

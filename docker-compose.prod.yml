@@ -1,0 +1,59 @@
+# Production compose file for the app EC2 host.
+#
+# Unlike docker-compose.yml (which builds the image locally for local/dev use),
+# this pulls a pre-built image from ECR. Jenkins builds and pushes that image;
+# the app host only ever pulls and runs it, so no compiler/JDK/Maven footprint
+# is needed on the production instance and a deploy is just an image swap.
+#
+# ECR_IMAGE and the runtime secrets are supplied via a .env file that
+# deploy/fetch-secrets.sh generates on the host immediately before this file
+# is used - never commit that .env file.
+
+services:
+  app:
+    image: ${ECR_IMAGE}
+    container_name: ecommerce-app
+    ports:
+      - "80:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ecommjava
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: ecommerce-db
+    # Never published to the host's public interface. The app reaches it over
+    # the compose-internal network only.
+    environment:
+      - POSTGRES_DB=ecommjava
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ecommjava"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
