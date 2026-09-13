@@ -29,9 +29,13 @@ pipeline {
     }
 
     environment {
-        SPRING_DATASOURCE_URL = 'jdbc:postgresql://localhost:5432/ecommjava'
-        SPRING_DATASOURCE_USERNAME = 'postgres'
-        SPRING_DATASOURCE_PASSWORD = 'postgres'
+        // No SPRING_DATASOURCE_* here on purpose: PostgresTestBase starts its own
+        // Testcontainers PostgreSQL+pgvector container when no external database
+        // URL is set, which is what the integration tests actually need on a
+        // bare Jenkins host that has no Postgres of its own. Setting a hardcoded
+        // localhost URL here (as an earlier version of this file did) makes
+        // PostgresTestBase try to connect to a database that doesn't exist,
+        // failing the Spring context for every test in the affected classes.
         GEMINI_API_KEY = credentials('gemini-api-key')
         JWT_SECRET = credentials('jwt-secret')
         IMAGE_TAG = "${env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : env.BUILD_NUMBER}"
