@@ -170,6 +170,14 @@ APP_PUBLIC_IP=$(aws ec2 describe-addresses --allocation-ids "$APP_EIP_ALLOC" --q
 echo "App host: $APP_PUBLIC_IP  <- this is your Jenkinsfile PROD_HOST parameter"
 ```
 
+`app-sg`'s SSH rule only allows `jenkins-sg` as a source (step 1) — correct for Jenkins' automated deploys later, but it means *you* can't SSH in directly yet from CloudShell or your own machine. Open it to your current IP too, the same way you did for `jenkins-sg`:
+
+```bash
+MY_IP=$(curl -s https://checkip.amazonaws.com)/32
+aws ec2 authorize-security-group-ingress --group-id "$APP_SG" \
+  --ip-permissions IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges="[{CidrIp=$MY_IP}]"
+```
+
 SSH in (`ssh -i ecommerce-deploy-key.pem ec2-user@$APP_PUBLIC_IP` from CloudShell, or copy the `.pem` to wherever you'll actually run Jenkins deploys from) and, one time:
 
 ```bash
