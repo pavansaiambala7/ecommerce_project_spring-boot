@@ -212,10 +212,10 @@ echo "Jenkins host: $JENKINS_PUBLIC_IP"
 
 No Elastic IP needed here — you'll only ever open this by IP occasionally, unlike the app host which needs a stable address for the pipeline's `PROD_HOST` parameter. If you stop/start this instance, re-check the public IP with the `describe-instances` command above.
 
-SSH in (`ssh -i ecommerce-deploy-key.pem ec2-user@$JENKINS_PUBLIC_IP`) and install Java 17, Docker, and Jenkins itself, **in this order** — Jenkins has to exist before you can add its user to the `docker` group:
+SSH in (`ssh -i ecommerce-deploy-key.pem ec2-user@$JENKINS_PUBLIC_IP`) and install Java, Docker, and Jenkins itself, **in this order** — Jenkins has to exist before you can add its user to the `docker` group:
 
 ```bash
-sudo dnf install -y java-17-amazon-corretto docker git
+sudo dnf install -y java-21-amazon-corretto docker git
 sudo systemctl enable --now docker
 
 sudo curl -fsSL -o /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
@@ -226,10 +226,19 @@ sudo curl -fsSL -o /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-s
 # itself is more resilient to exactly that kind of drift.
 sudo dnf install -y jenkins
 
+# Current Jenkins requires Java 21+ (it will fail to start on 17 with
+# "Running with Java 17 ... older than the minimum required version" in the
+# journal). Pin it explicitly rather than relying on whichever `java`
+# `alternatives` happens to default to.
+JAVA21_HOME=$(ls -d /usr/lib/jvm/java-21-amazon-corretto* | head -1)
+echo "JENKINS_JAVA_CMD=\"$JAVA21_HOME/bin/java\"" | sudo tee -a /etc/sysconfig/jenkins
+
 sudo usermod -aG docker jenkins
 sudo systemctl enable --now jenkins
 sudo systemctl restart jenkins   # picks up the docker group membership
 ```
+
+If Jenkins still won't start, `sudo systemctl status jenkins --no-pager -l` and `sudo journalctl -xeu jenkins.service --no-pager | tail -60` show the real reason — Jenkins' own Java-version check logs plainly to the journal, so this is usually enough to diagnose directly rather than guess.
 
 Visit `http://<jenkins-public-ip>:8080`, unlock with `sudo cat /var/lib/jenkins/secrets/initialAdminPassword`, and install the suggested plugins plus:
 
