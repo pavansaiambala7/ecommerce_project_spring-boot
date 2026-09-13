@@ -81,7 +81,14 @@ The app's Postgres container is never exposed — `docker-compose.prod.yml` publ
 
 ## 2. IAM roles
 
-Two roles, each scoped to only what its instance needs — see the policy JSON in this directory.
+Two roles, each scoped to only what its instance needs:
+
+- **`jenkins-ec2-role`** — can push to the `ecommerce-app` ECR repository and nothing else. This is the whole reason Jenkins never needs a static AWS access key: the CLI on that instance picks up temporary credentials from the instance metadata service automatically.
+- **`app-ec2-role`** — read-only ECR pull, plus read-only access to this app's own `/ecommerce/*` SSM parameters. It can never read or write anything outside that path.
+
+Both trust `deploy/iam/ec2-trust-policy.json` — the standard EC2 assume-role document, which only says "an EC2 instance may assume this role"; the actual permissions come from the two policies above, attached alongside it.
+
+> **If you hit `MalformedPolicyDocument: Unknown field ...`:** `git pull` first. An earlier version of these three JSON files had a `"Comment"` field at the top for documentation — harmless in most JSON, but IAM's policy parser accepts only a fixed set of top-level keys (`Version`, `Statement`, optionally `Id`) and rejects anything else outright. That's fixed now; if you created any of the four roles/profiles before pulling the fix, re-running the block below is safe — `EntityAlreadyExists` on `create-role`/`create-instance-profile` just means that part already exists, and `put-role-policy`/`add-role-to-instance-profile` will succeed now that the role itself was actually created.
 
 ```bash
 # Jenkins role: can push to this one ECR repo, nothing else

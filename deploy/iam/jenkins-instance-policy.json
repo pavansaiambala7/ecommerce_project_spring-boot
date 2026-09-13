@@ -1,5 +1,4 @@
 {
-  "Comment": "Attach to the Jenkins EC2 instance's IAM role. Grants exactly what the pipeline needs to push to ECR - nothing else. No static AWS keys are stored in Jenkins because of this: the instance metadata service supplies temporary credentials automatically to the AWS CLI.",
   "Version": "2012-10-17",
   "Statement": [
     {

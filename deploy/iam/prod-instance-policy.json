@@ -1,5 +1,4 @@
 {
-  "Comment": "Attach to the app (production) EC2 instance's IAM role. Read-only ECR pull, plus read-only SSM access scoped to this app's own parameter path - this host can never write or read anything outside /ecommerce/*.",
   "Version": "2012-10-17",
   "Statement": [
     {
