@@ -1,3 +1,4 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -22,12 +23,11 @@
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <div class="form-group">
                 <label for="firstName">User Name</label>
-                <input type="hidden" name="userid" value="${userid }">
-                <input type="text" name="username" id="firstName" required placeholder="Your Username*" value="${username }" required class="form-control form-control-lg">
+                <input type="text" name="username" id="firstName" required placeholder="Your Username*" value="<c:out value='${username}'/>" required class="form-control form-control-lg">
             </div>
             <div class="form-group">
                 <label for="email">Email address</label>
-                <input type="email" class="form-control form-control-lg" required minlength="6" placeholder="Email*" value="${email }" required name="email" id="email"
+                <input type="email" class="form-control form-control-lg" required minlength="6" placeholder="Email*" value="<c:out value='${email}'/>" required name="email" id="email"
                        aria-describedby="emailHelp">
                 <small id="emailHelp" class="form-text text-muted">We'll never share your email with
                     anyone else.</small>
@@ -39,7 +39,7 @@
             </div>
             <div class="form-group">
                 <label for="Address">Address</label>
-                <textarea class="form-control form-control-lg" rows="3" placeholder="Enter Your Address" name="address">${address }</textarea>
+                <textarea class="form-control form-control-lg" rows="3" placeholder="Enter Your Address" name="address"><c:out value="${address}"/></textarea>
             </div>
 
             <input type="submit" value="Update Profile" class="btn btn-primary btn-block"><br>

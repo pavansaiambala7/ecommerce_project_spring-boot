@@ -1,130 +1,90 @@
-<%@page import="java.sql.*"%>
-<%@page import="java.util.*"%>
-<%@page import="java.text.*"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!doctype html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-	content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="ie=edge">
 <link rel="stylesheet"
 	href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
 	integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
 	crossorigin="anonymous">
-
-<title>Document</title>
+<title>Products</title>
 </head>
 <body class="bg-light">
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 		<div class="container-fluid">
-			<a class="navbar-brand" href="#"> <img
-				th:src="@{/images/logo.png}" src="../static/images/logo.png"
-				width="auto" height="40" class="d-inline-block align-top" alt="" />
-			</a>
-			<button class="navbar-toggler" type="button" data-toggle="collapse"
-				data-target="#navbarSupportedContent"
-				aria-controls="navbarSupportedContent" aria-expanded="false"
-				aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav mr-auto"></ul>
-				<ul class="navbar-nav">
-					<li class="nav-item active"><a class="nav-link" href="/adminhome">Home
-							Page</a></li>
-					<li class="nav-item active"><a class="nav-link" href="/logout">Logout</a>
+			<a class="navbar-brand" href="/">Perishable Shop</a>
+			<div class="collapse navbar-collapse">
+				<ul class="navbar-nav ml-auto">
+					<li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+					<li class="nav-item"><a class="nav-link" href="/cart">Cart</a></li>
+					<li class="nav-item">
+						<form action="/logout" method="post" class="form-inline">
+							<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+							<button type="submit" class="btn btn-link nav-link">Logout</button>
+						</form>
 					</li>
-
 				</ul>
-
 			</div>
 		</div>
 	</nav>
-	<div class="container-fluid">
 
+	<div class="container-fluid mt-4">
 
-		<table class="table">
+		<c:if test="${not empty msg}">
+			<div class="alert alert-info"><c:out value="${msg}" /></div>
+		</c:if>
 
-			<tr>
-				<th scope="col">Serial No.</th>
-				<th scope="col">Product Name</th>
-				<th scope="col">Category</th>
-				<th scope="col">Preview</th>
-				<th scope="col">Quantity</th>
-				<th scope="col">Price</th>
-				<th scope="col">Weight</th>
-				<th scope="col">Descrption</th>
-				<th scope="col">Buy</th>
-
-			</tr>
-			<tbody>
-			<c:forEach var="product" items="${products}">
+		<table class="table bg-white">
+			<thead>
 				<tr>
-
-
-
-
-					<td>
-                    						${product.id}
-                    					</td>
-                    					<td>
-                    						${product.name }
-                    					</td>
-                    					<td>
-                    						${product.category.name}
-
-                    					</td>
-
-                    					<td><img src="${product.image}"
-                    						height="100px" width="100px"></td>
-                    					<td>
-                    						${product.quantity }
-                    					</td>
-                    					<td>S
-                    						${product.price }
-                    					</td>
-                    					<td>
-                    						${product.weight }
-                    					</td>
-                    					<td>
-                    						${product.description }
-                    					</td>
-
-
-					<td>
-
-
-				    <form action="products/addtocart" method="get">
-							<input type="hidden" name="id" value="${product.id}">
-							<input type="submit" value="Add To Cart" class="btn btn-warning">
-					</form>
-					</td>
-
-
+					<th scope="col">Id</th>
+					<th scope="col">Product Name</th>
+					<th scope="col">Category</th>
+					<th scope="col">Preview</th>
+					<th scope="col">Quantity</th>
+					<th scope="col">Price</th>
+					<th scope="col">Weight</th>
+					<th scope="col">Description</th>
+					<th scope="col">Buy</th>
 				</tr>
-           </c:forEach>
-
+			</thead>
+			<tbody>
+				<c:forEach var="product" items="${products}">
+					<tr>
+						<td>${product.id}</td>
+						<td><c:out value="${product.name}" /></td>
+						<td><c:out value="${product.category.name}" /></td>
+						<td><img src="<c:out value='${product.image}'/>" height="100" width="100"
+							style="object-fit: contain;" alt="<c:out value='${product.name}'/>"></td>
+						<td>${product.quantity}</td>
+						<td><fmt:formatNumber value="${product.price}" type="currency" /></td>
+						<td>${product.weight}</td>
+						<td><c:out value="${product.description}" /></td>
+						<td>
+							<c:choose>
+								<c:when test="${product.quantity gt 0}">
+									<%-- POST to the real cart endpoint. This form used to GET
+									     products/addtocart, which no controller ever handled. --%>
+									<form action="/cart/add" method="post">
+										<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+										<input type="hidden" name="productId" value="${product.id}">
+										<input type="hidden" name="quantity" value="1">
+										<button type="submit" class="btn btn-warning">Add To Cart</button>
+									</form>
+								</c:when>
+								<c:otherwise>
+									<button class="btn btn-secondary" disabled>Out of stock</button>
+								</c:otherwise>
+							</c:choose>
+						</td>
+					</tr>
+				</c:forEach>
 			</tbody>
 		</table>
 
 	</div>
-
-
-
-	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-		integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
-		crossorigin="anonymous"></script>
-	<script
-		src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-		crossorigin="anonymous"></script>
-	<script
-		src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-		integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
-		crossorigin="anonymous"></script>
 </body>
 </html>

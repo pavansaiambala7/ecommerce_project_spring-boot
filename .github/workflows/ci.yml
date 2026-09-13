@@ -10,21 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_DB: ecommjava
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,14 +23,22 @@ jobs:
 
       - name: Build and run unit & integration tests
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/ecommjava
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: postgres
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'dummy-test-key' }}
-        run: mvn clean verify -B
+          # Test-only signing key. The application refuses to start without one,
+          # which is the intended behaviour.
+          JWT_SECRET: ci-only-secret-key-at-least-32-bytes-long-for-hs256-padding
+        run: ./mvnw -B clean verify
 
       - name: Upload JaCoCo Code Coverage Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-coverage-report
           path: target/site/jacoco/
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -10,9 +8,13 @@ services:
       - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ecommjava
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-your-gemini-api-key}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      # Required. The application refuses to start without a signing secret.
+      # Generate one with: openssl rand -base64 48
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set - generate with "openssl rand -base64 48"}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
     depends_on:
       db:
         condition: service_healthy
@@ -21,16 +23,18 @@ services:
   db:
     image: pgvector/pgvector:pg16
     container_name: ecommerce-db
-    ports:
-      - "5432:5432"
+    # Not published to the host by default. Uncomment only if you need to
+    # connect from outside the compose network.
+    # ports:
+    #   - "5432:5432"
     environment:
       - POSTGRES_DB=ecommjava
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ecommjava"]
       interval: 5s
       timeout: 5s
       retries: 5

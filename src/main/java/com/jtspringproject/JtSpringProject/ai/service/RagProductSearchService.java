@@ -90,7 +90,7 @@ public class RagProductSearchService {
         StringBuilder context = new StringBuilder("Relevant products found:\n");
         for (int i = 0; i < results.size(); i++) {
             Product p = results.get(i).getProduct();
-            context.append(String.format("%d. %s - $%d (%s) - %s [Score: %.2f]\n",
+            context.append(String.format("%d. %s - $%s (%s) - %s [Score: %.2f]\n",
                     i + 1,
                     p.getName(),
                     p.getPrice(),
