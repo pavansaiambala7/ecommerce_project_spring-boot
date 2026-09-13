@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 520" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111A2E"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arrowFwd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrowRtn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="520" rx="18" fill="url(#bgGrad)"/>
+
+  <text x="600" y="42" text-anchor="middle" fill="#F8FAFC" font-size="25" font-weight="700">AI-Powered E-Commerce &#8212; System Architecture</text>
+  <text x="600" y="68" text-anchor="middle" fill="#94A3B8" font-size="13">Request flow (top, solid) &#183; Response flow (bottom, dashed)</text>
+
+  <!-- glow behind Security layer -->
+  <circle cx="380" cy="325" r="170" fill="url(#glowGrad)">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- forward flow arcs -->
+  <path id="fwd1" d="M240,280 Q265,250 290,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
+  <path id="fwd2" d="M470,280 Q495,250 520,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
+  <path id="fwd3" d="M700,280 Q725,250 750,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
+  <path id="fwd4" d="M930,280 Q955,250 980,280" fill="none" stroke="#38BDF8" stroke-width="3" marker-end="url(#arrowFwd)"/>
+
+  <!-- return flow arcs -->
+  <path id="rtn1" d="M290,420 Q265,450 240,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
+  <path id="rtn2" d="M520,420 Q495,450 470,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
+  <path id="rtn3" d="M750,420 Q725,450 700,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
+  <path id="rtn4" d="M980,420 Q955,450 930,420" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrowRtn)"/>
+
+  <!-- BOX 1: Client -->
+  <g filter="url(#dropShadow)">
+    <polygon points="150,245 240,290 150,335 60,290" fill="#60A5FA" stroke="#0B1220" stroke-width="1.5">
+      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0s" repeatCount="indefinite"/>
+    </polygon>
+    <polygon points="60,290 150,335 150,405 60,360" fill="#3B82F6"/>
+    <polygon points="150,335 240,290 240,360 150,405" fill="#2563EB"/>
+  </g>
+  <circle cx="150" cy="220" r="15" fill="#0B1220" stroke="#60A5FA" stroke-width="2"/>
+  <text x="150" y="225" text-anchor="middle" fill="#60A5FA" font-size="13" font-weight="700">1</text>
+  <text x="150" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">Client</text>
+  <text x="150" y="368" text-anchor="middle" fill="#DBEAFE" font-size="10">JSP &#183; REST API</text>
+
+  <!-- BOX 2: Security Gateway -->
+  <g filter="url(#dropShadow)">
+    <polygon points="380,245 470,290 380,335 290,290" fill="#FBBF24" stroke="#0B1220" stroke-width="1.5">
+      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0.3s" repeatCount="indefinite"/>
+    </polygon>
+    <polygon points="290,290 380,335 380,405 290,360" fill="#F59E0B"/>
+    <polygon points="380,335 470,290 470,360 380,405" fill="#D97706"/>
+  </g>
+  <circle cx="380" cy="220" r="15" fill="#0B1220" stroke="#FBBF24" stroke-width="2"/>
+  <text x="380" y="225" text-anchor="middle" fill="#FBBF24" font-size="13" font-weight="700">2</text>
+  <text x="380" y="348" text-anchor="middle" fill="#0B1220" font-size="12" font-weight="700">Security</text>
+  <text x="380" y="364" text-anchor="middle" fill="#3A2A05" font-size="9.5">JWT &#183; CORS &#183; Rate Limit</text>
+
+  <!-- BOX 3: Application Core -->
+  <g filter="url(#dropShadow)">
+    <polygon points="610,245 700,290 610,335 520,290" fill="#34D399" stroke="#0B1220" stroke-width="1.5">
+      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
+    </polygon>
+    <polygon points="520,290 610,335 610,405 520,360" fill="#10B981"/>
+    <polygon points="610,335 700,290 700,360 610,405" fill="#059669"/>
+  </g>
+  <circle cx="610" cy="220" r="15" fill="#0B1220" stroke="#34D399" stroke-width="2"/>
+  <text x="610" y="225" text-anchor="middle" fill="#34D399" font-size="13" font-weight="700">3</text>
+  <text x="610" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">App Core</text>
+  <text x="610" y="368" text-anchor="middle" fill="#D1FAE5" font-size="10">Controllers &#183; Services</text>
+
+  <!-- BOX 4: AI Engine -->
+  <g filter="url(#dropShadow)">
+    <polygon points="840,245 930,290 840,335 750,290" fill="#A78BFA" stroke="#0B1220" stroke-width="1.5">
+      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="0.9s" repeatCount="indefinite"/>
+    </polygon>
+    <polygon points="750,290 840,335 840,405 750,360" fill="#8B5CF6"/>
+    <polygon points="840,335 930,290 930,360 840,405" fill="#7C3AED"/>
+  </g>
+  <circle cx="840" cy="220" r="15" fill="#0B1220" stroke="#A78BFA" stroke-width="2"/>
+  <text x="840" y="225" text-anchor="middle" fill="#A78BFA" font-size="13" font-weight="700">4</text>
+  <text x="840" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">AI Engine</text>
+  <text x="840" y="368" text-anchor="middle" fill="#EDE9FE" font-size="10">Gemini &#183; RAG</text>
+
+  <!-- BOX 5: Database -->
+  <g filter="url(#dropShadow)">
+    <polygon points="1070,245 1160,290 1070,335 980,290" fill="#818CF8" stroke="#0B1220" stroke-width="1.5">
+      <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+    </polygon>
+    <polygon points="980,290 1070,335 1070,405 980,360" fill="#6366F1"/>
+    <polygon points="1070,335 1160,290 1160,360 1070,405" fill="#4F46E5"/>
+  </g>
+  <circle cx="1070" cy="220" r="15" fill="#0B1220" stroke="#818CF8" stroke-width="2"/>
+  <text x="1070" y="225" text-anchor="middle" fill="#818CF8" font-size="13" font-weight="700">5</text>
+  <text x="1070" y="352" text-anchor="middle" fill="#F8FAFC" font-size="13" font-weight="700">PostgreSQL</text>
+  <text x="1070" y="368" text-anchor="middle" fill="#E0E7FF" font-size="10">+ pgvector</text>
+
+  <!-- flowing dots: request -->
+  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="0s" repeatCount="indefinite"><mpath xlink:href="#fwd1" href="#fwd1"/></animateMotion></circle>
+  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="0.4s" repeatCount="indefinite"><mpath xlink:href="#fwd2" href="#fwd2"/></animateMotion></circle>
+  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="0.8s" repeatCount="indefinite"><mpath xlink:href="#fwd3" href="#fwd3"/></animateMotion></circle>
+  <circle r="5" fill="#E0F2FE"><animateMotion dur="1.6s" begin="1.2s" repeatCount="indefinite"><mpath xlink:href="#fwd4" href="#fwd4"/></animateMotion></circle>
+
+  <!-- flowing dots: response -->
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="1.6s" repeatCount="indefinite"><mpath xlink:href="#rtn4" href="#rtn4"/></animateMotion></circle>
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="2.0s" repeatCount="indefinite"><mpath xlink:href="#rtn3" href="#rtn3"/></animateMotion></circle>
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="2.4s" repeatCount="indefinite"><mpath xlink:href="#rtn2" href="#rtn2"/></animateMotion></circle>
+  <circle r="4" fill="#CBD5E1"><animateMotion dur="1.6s" begin="2.8s" repeatCount="indefinite"><mpath xlink:href="#rtn1" href="#rtn1"/></animateMotion></circle>
+
+  <!-- legend -->
+  <line x1="430" y1="492" x2="465" y2="492" stroke="#38BDF8" stroke-width="3"/>
+  <text x="472" y="496" fill="#CBD5E1" font-size="12">Request</text>
+  <line x1="560" y1="492" x2="595" y2="492" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6,5"/>
+  <text x="602" y="496" fill="#CBD5E1" font-size="12">Response</text>
+</svg>
