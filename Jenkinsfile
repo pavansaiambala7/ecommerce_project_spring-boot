@@ -24,7 +24,7 @@ pipeline {
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'eu-north-1', description: 'AWS region for ECR and SSM')
         string(name: 'ECR_REPOSITORY', defaultValue: 'ecommerce-app', description: 'ECR repository name')
-        string(name: 'PROD_HOST', defaultValue: '', description: 'Public IP or DNS name of the app EC2 instance')
+        string(name: 'PROD_HOST', defaultValue: '13.50.19.252', description: 'Public IP or DNS name of the app EC2 instance')
         string(name: 'PROD_SSH_USER', defaultValue: 'ec2-user', description: 'SSH user on the app EC2 instance')
     }
 
