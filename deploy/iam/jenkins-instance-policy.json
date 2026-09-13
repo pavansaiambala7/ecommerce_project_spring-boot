@@ -1,0 +1,26 @@
+{
+  "Comment": "Attach to the Jenkins EC2 instance's IAM role. Grants exactly what the pipeline needs to push to ECR - nothing else. No static AWS keys are stored in Jenkins because of this: the instance metadata service supplies temporary credentials automatically to the AWS CLI.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EcrAuth",
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcrPushToThisRepoOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ],
+      "Resource": "arn:aws:ecr:*:*:repository/ecommerce-app"
+    }
+  ]
+}

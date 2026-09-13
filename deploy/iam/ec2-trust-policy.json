@@ -1,0 +1,11 @@
+{
+  "Comment": "Standard EC2 assume-role trust policy. Used for both jenkins-ec2-role and app-ec2-role - it only says 'an EC2 instance may assume this role'; the actual permissions come from jenkins-instance-policy.json / prod-instance-policy.json attached alongside it.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "ec2.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
