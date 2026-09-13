@@ -219,7 +219,11 @@ sudo dnf install -y java-17-amazon-corretto docker git
 sudo systemctl enable --now docker
 
 sudo curl -fsSL -o /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.repo.key
+# No separate `rpm --import` for the signing key: the .repo file's own gpgkey=
+# line points at the current key URL, and dnf imports it automatically during
+# the install below. An older guide had a hardcoded key URL here that 404s
+# now that Jenkins restructured their package repo layout - dnf handling it
+# itself is more resilient to exactly that kind of drift.
 sudo dnf install -y jenkins
 
 sudo usermod -aG docker jenkins
