@@ -218,7 +218,7 @@ SSH in (`ssh -i ecommerce-deploy-key.pem ec2-user@$JENKINS_PUBLIC_IP`) and insta
 sudo dnf install -y java-17-amazon-corretto docker git
 sudo systemctl enable --now docker
 
-sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo curl -fsSL -o /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
 sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.repo.key
 sudo dnf install -y jenkins
 
