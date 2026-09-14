@@ -14,6 +14,18 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>JtSpringProject</name>
 	<description>E-Commerce Spring Boot Project with AI-powered search and support</description>
+	<!--
+		war, not the default jar: this app renders its storefront and admin
+		pages with JSPs under src/main/webapp/views. Tomcat resolves JSPs
+		through a hard-coded path pattern that only works from a war or an
+		exploded directory, so from an executable jar every view silently
+		fails to resolve. The visible symptom is not a stack trace but an
+		infinite redirect: the unresolved view raises an error, /error is not
+		permitted by the storefront chain, Spring Security bounces it to
+		/login, which is itself an unresolvable JSP. The war still runs with
+		plain `java -jar` - embedded Tomcat stays on the compile classpath.
+	-->
+	<packaging>war</packaging>
 	<properties>
 		<java.version>17</java.version>
 		<langchain4j.version>0.35.0</langchain4j.version>

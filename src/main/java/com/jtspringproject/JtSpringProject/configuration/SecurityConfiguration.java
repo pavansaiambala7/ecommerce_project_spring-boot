@@ -123,7 +123,12 @@ public class SecurityConfiguration {
 		http
 			.cors(cors -> cors.configurationSource(corsConfigurationSource))
 			.authorizeHttpRequests(requests -> requests
-				.requestMatchers("/login", "/register", "/newuserregister", "/403").permitAll()
+				// /error is permitted so a failure surfaces as the error page
+				// rather than a redirect loop: an authenticated-only /error
+				// makes Spring Security bounce every error back to /login,
+				// which turns any view or rendering problem into
+				// ERR_TOO_MANY_REDIRECTS with nothing useful in the response.
+				.requestMatchers("/login", "/register", "/newuserregister", "/403", "/error").permitAll()
 				.requestMatchers("/css/**", "/js/**", "/images/**", "/static/**", "/favicon.ico").permitAll()
 				.anyRequest().hasRole("USER"))
 			.formLogin(login -> login
