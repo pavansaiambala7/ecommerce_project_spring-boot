@@ -39,13 +39,6 @@ public class AdminController {
 		this.productService = productService;
 	}
 
-	@GetMapping("/index")
-	public String index(Model model) {
-		model.addAttribute("username", currentUsername());
-		model.addAttribute("products", this.productService.getProducts());
-		return "index";
-	}
-
 	@GetMapping("login")
 	public ModelAndView adminLogin(@RequestParam(required = false) String error) {
 		ModelAndView mv = new ModelAndView("adminlogin");
@@ -191,7 +184,7 @@ public class AdminController {
 			request.getSession().invalidate();
 			return "redirect:/admin/login";
 		}
-		return "redirect:/admin/index";
+		return "redirect:/admin/";
 	}
 
 	private String currentUsername() {

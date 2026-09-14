@@ -46,3 +46,8 @@ secrets.yml
 deploy/.env
 deploy/.last_good_tag
 .env
+
+# React storefront: dependencies, and the Vite output that Docker regenerates
+# into the war at build time.
+frontend/node_modules/
+src/main/resources/static/

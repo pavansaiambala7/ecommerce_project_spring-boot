@@ -11,14 +11,16 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.jtspringproject.JtSpringProject.controller.AdminController;
-import com.jtspringproject.JtSpringProject.controller.CartController;
-import com.jtspringproject.JtSpringProject.controller.UserController;
 
 /**
- * Renders errors from the server-rendered controllers as HTML rather than
+ * Renders errors from the server-rendered admin controller as HTML rather than
  * letting them reach the container's default stack-trace page.
+ *
+ * <p>Only the admin pages are still server-rendered. The storefront is a React
+ * SPA that talks to {@code /api/**}, where {@link GlobalApiExceptionHandler}
+ * returns JSON instead.
  */
-@ControllerAdvice(assignableTypes = { UserController.class, AdminController.class, CartController.class })
+@ControllerAdvice(assignableTypes = { AdminController.class })
 public class GlobalMvcExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(GlobalMvcExceptionHandler.class);

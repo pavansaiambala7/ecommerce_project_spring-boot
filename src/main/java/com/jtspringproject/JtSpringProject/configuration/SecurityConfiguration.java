@@ -120,45 +120,29 @@ public class SecurityConfiguration {
 		return http.build();
 	}
 
-	/** Session + form login chain for the storefront. */
+	/**
+	 * Serves the React single-page app.
+	 *
+	 * <p>The bundle itself is public and carries no data: the storefront signs in
+	 * against {@code /api/auth/**} and every request for real data goes to
+	 * {@code /api/**}, where the JWT chain above enforces authorization. Guarding
+	 * the HTML and JavaScript would buy nothing, since an unauthenticated visitor
+	 * is meant to browse the catalogue anyway.
+	 *
+	 * <p>There is no form login here any more. The JSP storefront that needed one
+	 * is gone, and a server-side login page fighting a client-side router is what
+	 * produced the redirect loop this replaced.
+	 */
 	@Bean
 	@Order(3)
-	SecurityFilterChain userFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain storefrontFilterChain(HttpSecurity http) throws Exception {
 		http
 			.cors(cors -> cors.configurationSource(corsConfigurationSource))
-			.authorizeHttpRequests(requests -> requests
-				// Spring Security 6 runs the filter chain on every dispatch type,
-				// where Spring Security 5 only ran it on REQUEST. Rendering a JSP
-				// means forwarding to /views/*.jsp, and that forward is re-checked
-				// here: it matches no rule but anyRequest(), gets denied, and
-				// redirects to /login - which forwards to a JSP again. Every page
-				// in the app became an infinite redirect, /login included.
-				//
-				// Permitting FORWARD and ERROR is safe because a client cannot
-				// trigger either one; only the container can, and only after a
-				// REQUEST has already been authorized by the rules below. A direct
-				// hit on /views/adminHome.jsp is still a REQUEST and still denied.
-				//
-				// MockMvc records forwards instead of executing them, so no test
-				// can catch this - it only appears against a real servlet container.
-				.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-				.requestMatchers("/login", "/register", "/newuserregister", "/403", "/error").permitAll()
-				.requestMatchers("/css/**", "/js/**", "/images/**", "/static/**", "/favicon.ico").permitAll()
-				.anyRequest().hasRole("USER"))
-			.formLogin(login -> login
-				.loginPage("/login")
-				.loginProcessingUrl("/userloginvalidate")
-				.successHandler((request, response, authentication) -> response.sendRedirect("/"))
-				.failureHandler((request, response, exception) -> response.sendRedirect("/login?error=true")))
-			.logout(logout -> logout
-				// POST-only: a GET logout can be triggered by any third-party page
-				// embedding the URL, letting an attacker sign the user out at will.
-				.logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
-				.logoutSuccessUrl("/login")
-				.invalidateHttpSession(true)
-				.deleteCookies("JSESSIONID"))
-			.exceptionHandling(exception -> exception
-				.accessDeniedPage("/403"));
+			// The SPA sends its credentials as a Bearer token, never as a cookie,
+			// so there is no session for a cross-site request to ride on.
+			.csrf(csrf -> csrf.disable())
+			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.authorizeHttpRequests(requests -> requests.anyRequest().permitAll());
 		return http.build();
 	}
 

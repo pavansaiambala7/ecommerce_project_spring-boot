@@ -1,6 +1,26 @@
 # Multi-stage Dockerfile for the Spring Boot application.
 
 # ---------------------------------------------------------------------------
+# Stage 0: React storefront
+#
+# Built here rather than through Maven so the backend build stays free of a
+# Node toolchain. package.json is copied on its own first so `npm ci` is only
+# re-run when dependencies actually change, not on every source edit.
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS frontend
+WORKDIR /frontend
+COPY frontend/package*.json ./
+# `npm install`, not `npm ci`: there is no committed package-lock.json yet, and
+# npm ci fails outright without one. Run `npm install` locally once and commit
+# the generated lock file, then this can become `npm ci` for reproducible builds.
+RUN npm install
+COPY frontend/ ./
+# vite.config.js writes to ../src/main/resources/static, which resolves to
+# /src/main/resources/static from this WORKDIR - not /frontend/dist. That path
+# is what the builder stage copies from below.
+RUN npm run build
+
+# ---------------------------------------------------------------------------
 # Stage 1: dependencies (cached independently of source changes)
 # ---------------------------------------------------------------------------
 FROM maven:3.9-eclipse-temurin-17 AS deps
@@ -14,6 +34,10 @@ RUN mvn dependency:go-offline -B
 FROM deps AS builder
 WORKDIR /app
 COPY src ./src
+# The compiled SPA ships inside the war as ordinary static resources, so the
+# app is served from one origin and needs no CORS in production. A `mvn
+# package` run outside Docker skips this and produces a backend-only war.
+COPY --from=frontend /src/main/resources/static ./src/main/resources/static
 RUN mvn package -DskipTests -B
 
 # ---------------------------------------------------------------------------
