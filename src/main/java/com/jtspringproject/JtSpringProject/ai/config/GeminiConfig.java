@@ -1,8 +1,10 @@
 package com.jtspringproject.JtSpringProject.ai.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -37,11 +39,37 @@ public class GeminiConfig {
      * column would be rejected at runtime.
      */
     @Bean
+    @Primary
     public EmbeddingModel embeddingModel() {
         return GoogleAiEmbeddingModel.builder()
                 .apiKey(apiKey)
                 .modelName(embeddingModelName)
                 .outputDimensionality(dimension)
+                // Gemini's retrieval embeddings are asymmetric: a stored
+                // document and the query that should find it are embedded with
+                // different task types into the same space. Leaving this unset
+                // treats both as generic text and measurably weakens ranking.
+                // RETRIEVAL_DOCUMENT is correct here because this model is used
+                // for indexing; the query side is embedded separately.
+                .taskType(GoogleAiEmbeddingModel.TaskType.RETRIEVAL_DOCUMENT)
+                .build();
+    }
+
+    /**
+     * The query-side counterpart of {@link #embeddingModel()}.
+     *
+     * <p>Same model and dimensionality, different task type. Both must exist:
+     * embedding a search query as if it were a product description puts it in
+     * the wrong region of the space and costs recall.
+     */
+    @Bean
+    @Qualifier("queryEmbeddingModel")
+    public EmbeddingModel queryEmbeddingModel() {
+        return GoogleAiEmbeddingModel.builder()
+                .apiKey(apiKey)
+                .modelName(embeddingModelName)
+                .outputDimensionality(dimension)
+                .taskType(GoogleAiEmbeddingModel.TaskType.RETRIEVAL_QUERY)
                 .build();
     }
 

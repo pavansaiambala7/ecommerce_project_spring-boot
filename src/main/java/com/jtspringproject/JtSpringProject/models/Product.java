@@ -43,7 +43,25 @@ public class Product {
 
 	private int weight;
 
+	@Column(columnDefinition = "text")
 	private String description;
+
+	private String brand;
+
+	/** 0.0-5.0, or null for products that have never been rated. */
+	@Column(precision = 2, scale = 1)
+	private BigDecimal rating;
+
+	@Column(name = "rating_count")
+	private int ratingCount;
+
+	/**
+	 * Identifier from the source dataset, unique where present and null for
+	 * hand-written seed rows. Re-importing the catalogue updates the row with a
+	 * matching external id rather than inserting a duplicate.
+	 */
+	@Column(name = "external_id", length = 64)
+	private String externalId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "customer_id")
@@ -112,6 +130,38 @@ public class Product {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public String getBrand() {
+		return brand;
+	}
+
+	public void setBrand(String brand) {
+		this.brand = brand;
+	}
+
+	public BigDecimal getRating() {
+		return rating;
+	}
+
+	public void setRating(BigDecimal rating) {
+		this.rating = rating;
+	}
+
+	public int getRatingCount() {
+		return ratingCount;
+	}
+
+	public void setRatingCount(int ratingCount) {
+		this.ratingCount = ratingCount;
+	}
+
+	public String getExternalId() {
+		return externalId;
+	}
+
+	public void setExternalId(String externalId) {
+		this.externalId = externalId;
 	}
 
 	public User getCustomer() {

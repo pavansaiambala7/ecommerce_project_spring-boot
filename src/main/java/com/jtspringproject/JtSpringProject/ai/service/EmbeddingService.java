@@ -1,120 +1,208 @@
 package com.jtspringproject.JtSpringProject.ai.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.jtspringproject.JtSpringProject.models.Product;
-import com.jtspringproject.JtSpringProject.services.productService;
 
-import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.store.embedding.EmbeddingStore;
 
+/**
+ * Keeps {@code product.embedding} in step with the catalogue.
+ *
+ * <p>Vectors live on the product row rather than in a side table. That is what
+ * lets a search filter by price or category and still rank by vector distance
+ * in one statement, and it removes the follow-up query per hit that the old
+ * store-based lookup needed.
+ *
+ * <p>Two properties matter at catalogue scale:
+ *
+ * <ul>
+ * <li><b>Batched.</b> Gemini embeds up to 100 segments per call. Embedding one
+ * product per request turns a fifty-thousand product index into fifty thousand
+ * round trips; batching makes it five hundred.</li>
+ * <li><b>Resumable.</b> {@link #embedMissing()} only touches rows with no
+ * vector, so a run interrupted by a quota limit or a restart continues where it
+ * stopped. The previous implementation truncated the whole index before it
+ * began, which meant any failure left the catalogue unsearchable.</li>
+ * </ul>
+ */
 @Service
 public class EmbeddingService {
 
-    private static final Logger log = LoggerFactory.getLogger(EmbeddingService.class);
+	private static final Logger log = LoggerFactory.getLogger(EmbeddingService.class);
 
-    private final EmbeddingModel embeddingModel;
-    private final EmbeddingStore<TextSegment> embeddingStore;
-    private final productService productService;
+	/** Gemini's batchEmbedContents ceiling, and what LangChain4j batches to. */
+	private static final int BATCH_SIZE = 100;
 
-    public EmbeddingService(EmbeddingModel embeddingModel,
-                           EmbeddingStore<TextSegment> embeddingStore,
-                           productService productService) {
-        this.embeddingModel = embeddingModel;
-        this.embeddingStore = embeddingStore;
-        this.productService = productService;
-    }
+	private final EmbeddingModel embeddingModel;
+	private final EmbeddingModel queryEmbeddingModel;
+	private final JdbcTemplate jdbc;
 
-    /**
-     * Generates an embedding for a single product and stores it in pgvector.
-     */
-    public void embedProduct(Product product) {
-        String text = buildProductText(product);
-        TextSegment segment = TextSegment.from(text, buildMetadata(product));
-        Embedding embedding = embeddingModel.embed(segment).content();
-        embeddingStore.add(embedding, segment);
-        log.info("Embedded product: {} (id={})", product.getName(), product.getId());
-    }
+	public EmbeddingService(EmbeddingModel embeddingModel,
+			@Qualifier("queryEmbeddingModel") EmbeddingModel queryEmbeddingModel,
+			JdbcTemplate jdbc) {
+		this.embeddingModel = embeddingModel;
+		this.queryEmbeddingModel = queryEmbeddingModel;
+		this.jdbc = jdbc;
+	}
 
-    /**
-     * Rebuilds embeddings for the whole catalogue.
-     *
-     * <p>Existing vectors are cleared first. Without this every reindex appended a
-     * second copy of every product, so the store grew without bound and searches
-     * returned the same product repeatedly, crowding out other matches.
-     */
-    public int embedAllProducts() {
-        List<Product> products = productService.getProducts();
+	/**
+	 * A product's identity and the text that represents it for embedding.
+	 * Package-private so tests can drive the batching logic directly.
+	 */
+	record Row(int id, String text) {
+	}
 
-        embeddingStore.removeAll();
-        log.info("Cleared existing product embeddings before reindex");
+	/**
+	 * Embeds every product that has no vector yet.
+	 *
+	 * @return how many products were embedded
+	 */
+	public int embedMissing() {
+		return embed("SELECT p.product_id, p.name, p.description, p.brand, p.quantity, p.price, p.weight, "
+				+ "c.name AS category_name FROM product p "
+				+ "LEFT JOIN category c ON c.category_id = p.category_id "
+				+ "WHERE p.embedding IS NULL");
+	}
 
-        int count = 0;
-        for (Product product : products) {
-            try {
-                embedProduct(product);
-                count++;
-            } catch (Exception e) {
-                log.error("Failed to embed product: {} (id={})", product.getName(), product.getId(), e);
-            }
-        }
+	/**
+	 * Re-embeds the entire catalogue, including products that already have a
+	 * vector. Needed after changing the embedding model or the text template,
+	 * since vectors from different models are not comparable.
+	 */
+	public int reindexAll() {
+		return embed("SELECT p.product_id, p.name, p.description, p.brand, p.quantity, p.price, p.weight, "
+				+ "c.name AS category_name FROM product p "
+				+ "LEFT JOIN category c ON c.category_id = p.category_id");
+	}
 
-        log.info("Embedded {}/{} products successfully", count, products.size());
-        return count;
-    }
+	private int embed(String selectSql) {
+		List<Row> rows = jdbc.query(selectSql, (rs, n) -> new Row(
+				rs.getInt("product_id"),
+				buildProductText(
+						rs.getString("name"),
+						rs.getString("description"),
+						rs.getString("brand"),
+						rs.getString("category_name"),
+						rs.getBigDecimal("price") == null ? "" : rs.getBigDecimal("price").toPlainString(),
+						rs.getInt("weight"),
+						rs.getInt("quantity") > 0)));
 
-    /**
-     * Generates an embedding vector for a given text query.
-     */
-    public Embedding embedText(String text) {
-        return embeddingModel.embed(text).content();
-    }
+		if (rows.isEmpty()) {
+			log.info("No products need embedding");
+			return 0;
+		}
 
-    /**
-     * Builds a rich text representation of a product for embedding.
-     */
-    private String buildProductText(Product product) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Product: ").append(product.getName());
+		int embedded = 0;
+		for (int start = 0; start < rows.size(); start += BATCH_SIZE) {
+			List<Row> batch = rows.subList(start, Math.min(start + BATCH_SIZE, rows.size()));
+			try {
+				embedded += embedBatch(batch);
+			} catch (Exception e) {
+				// One bad batch must not abandon the rest. Because this only
+				// ever writes vectors for rows it successfully embedded, a
+				// later run picks up whatever this one missed.
+				log.error("Batch starting at offset {} failed ({} products skipped)", start, batch.size(), e);
+			}
+		}
 
-        if (product.getDescription() != null && !product.getDescription().isEmpty()) {
-            sb.append(". Description: ").append(product.getDescription());
-        }
+		log.info("Embedded {}/{} products", embedded, rows.size());
+		return embedded;
+	}
 
-        if (product.getCategory() != null && product.getCategory().getName() != null) {
-            sb.append(". Category: ").append(product.getCategory().getName());
-        }
+	private int embedBatch(List<Row> batch) {
+		List<TextSegment> segments = batch.stream().map(r -> TextSegment.from(r.text())).toList();
+		List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
 
-        sb.append(". Price: ").append(product.getPrice());
-        sb.append(". Weight: ").append(product.getWeight()).append("g");
+		List<Object[]> args = new ArrayList<>(batch.size());
+		for (int i = 0; i < batch.size(); i++) {
+			args.add(new Object[] { toVectorLiteral(embeddings.get(i).vector()), batch.get(i).id() });
+		}
 
-        if (product.getQuantity() > 0) {
-            sb.append(". In stock.");
-        } else {
-            sb.append(". Out of stock.");
-        }
+		// Cast in SQL rather than binding a vector type: the JDBC driver has no
+		// mapping for pgvector, so the value travels as text.
+		jdbc.batchUpdate("UPDATE product SET embedding = CAST(? AS vector) WHERE product_id = ?", args);
+		return batch.size();
+	}
 
-        return sb.toString();
-    }
+	/**
+	 * Embeds a search query, using the RETRIEVAL_QUERY task type rather than the
+	 * RETRIEVAL_DOCUMENT one used for indexing.
+	 */
+	public float[] embedQuery(String text) {
+		return queryEmbeddingModel.embed(text).content().vector();
+	}
 
-    /**
-     * Builds metadata for the embedding store entry.
-     */
-    private Metadata buildMetadata(Product product) {
-        Metadata metadata = new Metadata();
-        metadata.put("productId", String.valueOf(product.getId()));
-        metadata.put("productName", product.getName());
-        metadata.put("price", String.valueOf(product.getPrice()));
-        if (product.getCategory() != null) {
-            metadata.put("category", product.getCategory().getName());
-        }
-        return metadata;
-    }
+	/** Re-embeds one product after it is created or edited. */
+	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+	public void embedProduct(Product product) {
+		String text = buildProductText(
+				product.getName(),
+				product.getDescription(),
+				product.getBrand(),
+				product.getCategory() == null ? null : product.getCategory().getName(),
+				product.getPrice() == null ? "" : product.getPrice().toPlainString(),
+				product.getWeight(),
+				product.getQuantity() > 0);
+		Embedding embedding = embeddingModel.embed(TextSegment.from(text)).content();
+		jdbc.update("UPDATE product SET embedding = CAST(? AS vector) WHERE product_id = ?",
+				toVectorLiteral(embedding.vector()), product.getId());
+		log.debug("Embedded product {} (id={})", product.getName(), product.getId());
+	}
+
+	/** How many products still have no vector. Surfaced by the reindex endpoint. */
+	public int countMissing() {
+		Integer missing = jdbc.queryForObject(
+				"SELECT count(*) FROM product WHERE embedding IS NULL", Integer.class);
+		return missing == null ? 0 : missing;
+	}
+
+	/**
+	 * The text a product is embedded as.
+	 *
+	 * <p>Products are never chunked. Chunking exists to fit documents that
+	 * exceed a model's context window, and a product record is a few dozen
+	 * tokens; splitting one across several vectors would scatter its identity
+	 * so that no single vector represented the whole item. One product, one
+	 * vector, built from the fields a shopper would actually search on.
+	 */
+	private String buildProductText(String name, String description, String brand,
+			String category, String price, int weight, boolean inStock) {
+		StringBuilder sb = new StringBuilder(256);
+		sb.append("Product: ").append(name);
+		if (brand != null && !brand.isBlank()) {
+			sb.append(". Brand: ").append(brand);
+		}
+		if (category != null && !category.isBlank()) {
+			sb.append(". Category: ").append(category);
+		}
+		if (description != null && !description.isBlank()) {
+			sb.append(". Description: ").append(description);
+		}
+		sb.append(". Price: ").append(price);
+		sb.append(". Weight: ").append(weight).append("g");
+		sb.append(inStock ? ". In stock." : ". Out of stock.");
+		return sb.toString();
+	}
+
+	private static String toVectorLiteral(float[] vector) {
+		StringBuilder sb = new StringBuilder(vector.length * 8 + 2).append('[');
+		for (int i = 0; i < vector.length; i++) {
+			if (i > 0) {
+				sb.append(',');
+			}
+			sb.append(vector[i]);
+		}
+		return sb.append(']').toString();
+	}
 }

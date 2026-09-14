@@ -31,19 +31,21 @@ class CustomerSupportAgentTest {
     private ChatLanguageModel chatModel;
 
     @Mock
-    private RagProductSearchService ragSearchService;
+    private CatalogueSearchService catalogueSearchService;
 
     @Mock
     private OrderService orderService;
 
     private CustomerSupportAgent customerSupportAgent;
 
+    private static final int USER_ID = 42;
+
     @BeforeEach
     void setUp() {
         // Constructed explicitly rather than with @InjectMocks: the cache bounds
         // are @Value constructor parameters, and Mockito would inject 0 for them,
         // producing a zero-capacity session cache.
-        customerSupportAgent = new CustomerSupportAgent(chatModel, ragSearchService, orderService, 100, 60);
+        customerSupportAgent = new CustomerSupportAgent(chatModel, catalogueSearchService, orderService, 100, 60);
     }
 
     @Test
@@ -52,7 +54,7 @@ class CustomerSupportAgentTest {
         ChatResponse chatResponse = ChatResponse.builder().aiMessage(aiMessage).build();
         when(chatModel.chat(any(ChatRequest.class))).thenReturn(chatResponse);
 
-        String reply = customerSupportAgent.chat("session-1", "Hi");
+        String reply = customerSupportAgent.chat("session-1", "Hi", USER_ID);
 
         assertEquals("Hello! How can I help you today?", reply);
     }
@@ -63,8 +65,8 @@ class CustomerSupportAgentTest {
         when(chatModel.chat(any(ChatRequest.class)))
                 .thenReturn(ChatResponse.builder().aiMessage(aiMessage).build());
 
-        customerSupportAgent.chat("session-1", "First question");
-        customerSupportAgent.chat("session-1", "Second question");
+        customerSupportAgent.chat("session-1", "First question", USER_ID);
+        customerSupportAgent.chat("session-1", "Second question", USER_ID);
 
         // System prompt + 2 user turns + 1 stored AI reply from the first turn.
         org.mockito.ArgumentCaptor<ChatRequest> captor =
@@ -78,9 +80,9 @@ class CustomerSupportAgentTest {
         when(chatModel.chat(any(ChatRequest.class)))
                 .thenReturn(ChatResponse.builder().aiMessage(AiMessage.from("ok")).build());
 
-        customerSupportAgent.chat("session-1", "First");
+        customerSupportAgent.chat("session-1", "First", USER_ID);
         customerSupportAgent.clearSession("session-1");
-        customerSupportAgent.chat("session-1", "Second");
+        customerSupportAgent.chat("session-1", "Second", USER_ID);
 
         org.mockito.ArgumentCaptor<ChatRequest> captor =
                 org.mockito.ArgumentCaptor.forClass(ChatRequest.class);
@@ -95,8 +97,8 @@ class CustomerSupportAgentTest {
      */
     @Test
     void chat_shouldRejectBlankMessage() {
-        assertThrows(IllegalArgumentException.class, () -> customerSupportAgent.chat("session-1", "  "));
-        assertThrows(IllegalArgumentException.class, () -> customerSupportAgent.chat("session-1", null));
+        assertThrows(IllegalArgumentException.class, () -> customerSupportAgent.chat("session-1", "  ", USER_ID));
+        assertThrows(IllegalArgumentException.class, () -> customerSupportAgent.chat("session-1", null, USER_ID));
     }
 
     @Test

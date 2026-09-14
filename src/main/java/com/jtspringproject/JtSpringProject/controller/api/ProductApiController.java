@@ -1,5 +1,6 @@
 package com.jtspringproject.JtSpringProject.controller.api;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -18,8 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jtspringproject.JtSpringProject.ai.service.CatalogueSearchService;
 import com.jtspringproject.JtSpringProject.dto.ApiResponse;
+import com.jtspringproject.JtSpringProject.dto.request.CatalogueQuery;
 import com.jtspringproject.JtSpringProject.dto.request.ProductRequest;
+import com.jtspringproject.JtSpringProject.dto.response.FacetResponse;
 import com.jtspringproject.JtSpringProject.dto.response.ProductResponse;
 import com.jtspringproject.JtSpringProject.exception.BusinessRuleException;
 import com.jtspringproject.JtSpringProject.models.Product;
@@ -40,18 +44,90 @@ public class ProductApiController {
 
     private final productService productService;
     private final categoryService categoryService;
+    private final CatalogueSearchService catalogueSearchService;
 
-    public ProductApiController(productService productService, categoryService categoryService) {
+    public ProductApiController(productService productService, categoryService categoryService,
+            CatalogueSearchService catalogueSearchService) {
         this.productService = productService;
         this.categoryService = categoryService;
+        this.catalogueSearchService = catalogueSearchService;
     }
 
+    /**
+     * @deprecated Returns the entire catalogue in one response, which stops
+     *             being viable past a few thousand products. Use
+     *             {@code /api/products/search}, which filters and pages in the
+     *             database.
+     */
+    @Deprecated
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getAllProducts() {
         List<ProductResponse> products = productService.getProducts().stream()
                 .map(ProductResponse::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(products));
+    }
+
+    /**
+     * Browse or search the catalogue.
+     *
+     * <p>One endpoint covers both: with {@code q} it ranks by hybrid relevance,
+     * without it returns a plain filtered listing. Filters and sorting are
+     * relational operations applied in SQL either way - a price range or a
+     * "low to high" ordering is an exact constraint that vector similarity
+     * cannot express, so it never belongs in the retrieval step.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<CatalogueSearchService.Page>> search(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String brand,
+            @RequestParam(defaultValue = "false") boolean inStockOnly,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "24") int size) {
+
+        if (page < 0) {
+            throw new BusinessRuleException("page must not be negative.");
+        }
+        if (size < 1 || size > 100) {
+            throw new BusinessRuleException("size must be between 1 and 100.");
+        }
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw new BusinessRuleException("minPrice must not exceed maxPrice.");
+        }
+
+        CatalogueQuery query = new CatalogueQuery();
+        query.setQ(q);
+        query.setCategoryId(categoryId);
+        query.setMinPrice(minPrice);
+        query.setMaxPrice(maxPrice);
+        query.setBrand(brand);
+        query.setInStockOnly(inStockOnly);
+        query.setSort(sort);
+        query.setPage(page);
+        query.setSize(size);
+
+        return ResponseEntity.ok(ApiResponse.success(catalogueSearchService.search(query)));
+    }
+
+    /** Category counts and price range for the current filters, for the sidebar. */
+    @GetMapping("/facets")
+    public ResponseEntity<ApiResponse<FacetResponse>> facets(
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(defaultValue = "false") boolean inStockOnly) {
+
+        CatalogueQuery query = new CatalogueQuery();
+        query.setCategoryId(categoryId);
+        query.setMinPrice(minPrice);
+        query.setMaxPrice(maxPrice);
+        query.setInStockOnly(inStockOnly);
+
+        return ResponseEntity.ok(ApiResponse.success(catalogueSearchService.facets(query)));
     }
 
     @GetMapping("/paged")

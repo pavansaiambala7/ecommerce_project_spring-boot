@@ -56,7 +56,7 @@ public class CustomerSupportAgent {
             """;
 
     private final ChatLanguageModel chatModel;
-    private final RagProductSearchService ragSearchService;
+    private final CatalogueSearchService catalogueSearchService;
     private final OrderService orderService;
 
     /**
@@ -67,12 +67,12 @@ public class CustomerSupportAgent {
     private final Cache<String, ChatMemory> sessionMemories;
 
     public CustomerSupportAgent(ChatLanguageModel chatModel,
-                                RagProductSearchService ragSearchService,
+                                CatalogueSearchService catalogueSearchService,
                                 OrderService orderService,
                                 @Value("${app.chat.max-sessions:10000}") long maxSessions,
                                 @Value("${app.chat.session-ttl-minutes:60}") long sessionTtlMinutes) {
         this.chatModel = chatModel;
-        this.ragSearchService = ragSearchService;
+        this.catalogueSearchService = catalogueSearchService;
         this.orderService = orderService;
         this.sessionMemories = Caffeine.newBuilder()
                 .maximumSize(maxSessions)
@@ -82,15 +82,18 @@ public class CustomerSupportAgent {
 
     /**
      * Processes a customer message and returns an AI-generated response.
+     *
+     * @param requestingUserId the authenticated caller, used to decide which
+     *                         order details may be put in front of the model
      */
-    public String chat(String sessionId, String userMessage) {
+    public String chat(String sessionId, String userMessage, int requestingUserId) {
         String message = sanitise(userMessage);
         log.info("Chat session '{}': received {} chars", sessionId, message.length());
 
         ChatMemory memory = sessionMemories.get(sessionId,
                 id -> MessageWindowChatMemory.withMaxMessages(MEMORY_WINDOW_SIZE));
 
-        String context = buildContext(message);
+        String context = buildContext(message, requestingUserId);
         String augmentedMessage = context.isEmpty()
                 ? message
                 : "Context:\n" + context + "\n\nUser question: " + message;
@@ -151,27 +154,33 @@ public class CustomerSupportAgent {
     /**
      * Builds retrieval context from RAG search and order lookup.
      */
-    private String buildContext(String userMessage) {
+    private String buildContext(String userMessage, int requestingUserId) {
         StringBuilder context = new StringBuilder();
 
         try {
-            String productContext = ragSearchService.buildSearchContext(userMessage);
-            if (productContext != null && !productContext.contains("No relevant products")) {
+            String productContext = catalogueSearchService.buildSearchContext(userMessage);
+            if (productContext != null && !productContext.contains("No matching products")) {
                 context.append(productContext);
             }
         } catch (Exception e) {
-            log.warn("RAG search failed while building chat context", e);
+            log.warn("Catalogue search failed while building chat context", e);
         }
 
         try {
             String orderId = extractOrderId(userMessage);
             if (orderId != null) {
                 Order order = orderService.getOrderById(Integer.parseInt(orderId));
-                if (order != null) {
+                // Ownership check: the order number comes from whatever the user
+                // typed, so without this anyone could read any order's status and
+                // total just by naming its id in a chat message.
+                if (order != null && order.getCustomer() != null
+                        && order.getCustomer().getId() == requestingUserId) {
                     context.append("\nOrder #").append(order.getId())
                             .append(": Status=").append(order.getStatus())
                             .append(", Total=").append(order.getTotalAmount())
                             .append(", Items=").append(order.getItems().size());
+                } else if (order != null) {
+                    log.warn("User {} asked about order {} they do not own", requestingUserId, orderId);
                 }
             }
         } catch (Exception e) {

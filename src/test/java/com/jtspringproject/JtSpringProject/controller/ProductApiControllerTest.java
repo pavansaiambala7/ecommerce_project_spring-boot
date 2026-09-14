@@ -51,6 +51,9 @@ class ProductApiControllerTest {
     @MockBean
     private categoryService categoryService;
 
+    @MockBean
+    private com.jtspringproject.JtSpringProject.ai.service.CatalogueSearchService catalogueSearchService;
+
     private Product testProduct;
     private Category testCategory;
 

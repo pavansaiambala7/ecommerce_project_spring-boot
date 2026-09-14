@@ -114,11 +114,15 @@
 			<version>${langchain4j.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>dev.langchain4j</groupId>
-			<artifactId>langchain4j-pgvector</artifactId>
-			<version>${langchain4j.version}</version>
-		</dependency>
+		<!--
+			langchain4j-pgvector was removed deliberately. Its EmbeddingStore
+			computes the vector distance inside a CTE and orders on the derived
+			column, and pgvector can only use an HNSW index for a direct
+			`ORDER BY embedding <=> $1 LIMIT k`, so every search degraded to a
+			sequential scan over the whole table. Retrieval is now native SQL in
+			CatalogueSearchService, which also lets filters and ANN ranking
+			happen in one statement. LangChain4j is still used for model access.
+		-->
 
 		<!-- Jackson for JSON processing -->
 		<dependency>

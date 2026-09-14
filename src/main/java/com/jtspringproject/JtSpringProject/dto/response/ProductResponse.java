@@ -20,6 +20,9 @@ public class ProductResponse {
     private int quantity;
     private int weight;
     private boolean inStock;
+    private String brand;
+    private BigDecimal rating;
+    private int ratingCount;
     private CategoryResponse category;
 
     public ProductResponse() {
@@ -38,8 +41,35 @@ public class ProductResponse {
         dto.quantity = product.getQuantity();
         dto.weight = product.getWeight();
         dto.inStock = product.getQuantity() > 0;
+        dto.brand = product.getBrand();
+        dto.rating = product.getRating();
+        dto.ratingCount = product.getRatingCount();
         dto.category = CategoryResponse.from(product.getCategory());
         return dto;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public BigDecimal getRating() {
+        return rating;
+    }
+
+    public void setRating(BigDecimal rating) {
+        this.rating = rating;
+    }
+
+    public int getRatingCount() {
+        return ratingCount;
+    }
+
+    public void setRatingCount(int ratingCount) {
+        this.ratingCount = ratingCount;
     }
 
     public int getId() {
