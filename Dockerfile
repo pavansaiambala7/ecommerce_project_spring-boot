@@ -10,10 +10,9 @@
 FROM node:20-alpine AS frontend
 WORKDIR /frontend
 COPY frontend/package*.json ./
-# `npm install`, not `npm ci`: there is no committed package-lock.json yet, and
-# npm ci fails outright without one. Run `npm install` locally once and commit
-# the generated lock file, then this can become `npm ci` for reproducible builds.
-RUN npm install
+# ci, not install: it installs exactly what package-lock.json pins, so an image
+# built today and one built next month contain the same dependency tree.
+RUN npm ci
 COPY frontend/ ./
 # vite.config.js writes to ../src/main/resources/static, which resolves to
 # /src/main/resources/static from this WORKDIR - not /frontend/dist. That path
