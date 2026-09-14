@@ -47,6 +47,15 @@ pipeline {
         IMAGE_TAG = "${env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : env.BUILD_NUMBER}"
     }
 
+    triggers {
+        // Poll GitHub rather than take a webhook: jenkins-sg only opens 8080 to
+        // the operator's own IP, and GitHub's hooks would require opening that
+        // port to GitHub's address ranges - a poor trade for a host holding the
+        // IAM role that can push to ECR. H spreads the load to a stable random
+        // minute within each 5-minute window instead of every job firing at :00.
+        pollSCM('H/5 * * * *')
+    }
+
     options {
         timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
