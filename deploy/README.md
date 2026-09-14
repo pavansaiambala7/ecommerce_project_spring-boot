@@ -75,6 +75,8 @@ echo "APP_SG=$APP_SG"
 
 `MY_IP` picks up CloudShell's own outbound IP, which changes between sessions — if SSH/8080 access stops working later, re-run that `MY_IP` line and update the security group rule (`aws ec2 revoke-security-group-ingress` the old one, `authorize` the new one), or just use the EC2 console's "My IP" helper when editing the rule by hand.
 
+The last rule above lets Jenkins SSH to the app host by naming `jenkins-sg` as the *source group* rather than an IP, so it never goes stale the way `MY_IP` does. It comes with one condition that is easy to trip over: **AWS only applies a source-group reference to traffic arriving on the target's private IP.** If Jenkins connects to the app host's Elastic IP instead, the packet leaves through the internet gateway and comes back with Jenkins' *public* IP as its source, which this rule does not match — the connection then hangs until it times out. That is why the pipeline's `PROD_HOST` parameter defaults to the app instance's **private** IP (`aws ec2 describe-instances --filters "Name=tag:Name,Values=ecommerce-app" --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text`). The Elastic IP is only for browsing the app on port 80.
+
 The app's Postgres container is never exposed — `docker-compose.prod.yml` publishes no port for `db`, so there's nothing to open for it.
 
 **Note the two group IDs printed above (`JENKINS_SG`, `APP_SG`) — you'll pass them to `aws ec2 run-instances` in step 5.**
@@ -163,11 +165,14 @@ APP_INSTANCE_ID=$(aws ec2 run-instances --image-id "$AMI_ID" --instance-type t3.
 
 aws ec2 wait instance-running --instance-ids "$APP_INSTANCE_ID"
 
-# Elastic IP, so PROD_HOST never changes across stop/start
+# Elastic IP, so the address you browse the app on never changes across stop/start
 APP_EIP_ALLOC=$(aws ec2 allocate-address --query AllocationId --output text)
 aws ec2 associate-address --instance-id "$APP_INSTANCE_ID" --allocation-id "$APP_EIP_ALLOC"
 APP_PUBLIC_IP=$(aws ec2 describe-addresses --allocation-ids "$APP_EIP_ALLOC" --query 'Addresses[0].PublicIp' --output text)
-echo "App host: $APP_PUBLIC_IP  <- this is your Jenkinsfile PROD_HOST parameter"
+APP_PRIVATE_IP=$(aws ec2 describe-instances --instance-ids "$APP_INSTANCE_ID" \
+  --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
+echo "Browse the app at: http://$APP_PUBLIC_IP"
+echo "Jenkinsfile PROD_HOST parameter: $APP_PRIVATE_IP  <- private IP, see step 1"
 ```
 
 `app-sg`'s SSH rule only allows `jenkins-sg` as a source (step 1) — correct for Jenkins' automated deploys later, but it means *you* can't SSH in directly yet from CloudShell or your own machine. Open it to your current IP too, the same way you did for `jenkins-sg`:
@@ -257,7 +262,9 @@ Only two are needed — everything else is IAM instance roles, deliberately.
 
 ## 8. The pipeline job
 
-New Item → Pipeline → "Pipeline script from SCM" → point it at this repository and the `Jenkinsfile` at the repo root. Set the job parameters (or accept the Jenkinsfile's defaults) for `AWS_REGION`, `ECR_REPOSITORY`, and set `PROD_HOST` to the app instance's Elastic IP.
+New Item → Pipeline → "Pipeline script from SCM" → point it at this repository and the `Jenkinsfile` at the repo root. Set the job parameters (or accept the Jenkinsfile's defaults) for `AWS_REGION`, `ECR_REPOSITORY`, and set `PROD_HOST` to the app instance's **private** IP (not its Elastic IP — see step 1 for why).
+
+Note that when a job loads its pipeline via "Pipeline script from SCM", Jenkins re-syncs the job's parameter defaults from the `Jenkinsfile` on every run. Editing a default in the job's UI alone will not stick — change it in the `Jenkinsfile` and push.
 
 Run it. The five original stages behave exactly as before; three new ones follow:
 

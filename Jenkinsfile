@@ -24,7 +24,13 @@ pipeline {
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'eu-north-1', description: 'AWS region for ECR and SSM')
         string(name: 'ECR_REPOSITORY', defaultValue: 'ecommerce-app', description: 'ECR repository name')
-        string(name: 'PROD_HOST', defaultValue: '13.50.19.252', description: 'Public IP or DNS name of the app EC2 instance')
+        // Private IP, not the Elastic IP, on purpose: app-sg allows SSH from
+        // jenkins-sg as a source security group, and AWS only applies a
+        // source-group reference to traffic arriving on the private address.
+        // Dialing the public IP hairpins out through the internet gateway and
+        // arrives with Jenkins' public IP as the source, which app-sg does not
+        // allow - so it times out. The private IP also survives stop/start.
+        string(name: 'PROD_HOST', defaultValue: '172.31.11.210', description: 'Private IP of the app EC2 instance (reachable from Jenkins inside the VPC)')
         string(name: 'PROD_SSH_USER', defaultValue: 'ec2-user', description: 'SSH user on the app EC2 instance')
     }
 
