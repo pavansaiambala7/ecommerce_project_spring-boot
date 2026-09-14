@@ -18,15 +18,21 @@ COMPOSE="docker compose -f $DEPLOY_DIR/docker-compose.prod.yml --env-file $ENV_F
 log() { echo "[deploy] $*"; }
 
 smoke_test() {
-    # /login is unauthenticated (permitAll) and always renders, so it doubles
-    # as a cheap end-to-end check that Flyway migrated, the DB connection
-    # works, and Spring Security's filter chain came up correctly.
+    # /login is unauthenticated and always answers, so it doubles as a cheap
+    # end-to-end check that Flyway migrated, the DB connection works, and
+    # Spring Security's filter chain came up correctly.
+    #
+    # Any 2xx or 3xx counts as up. The app answers /login with a 302, so an
+    # earlier version of this check that insisted on 200 failed against a
+    # perfectly healthy app. What matters here is that Spring answered at all;
+    # a dead app gives connection-refused (000) and a broken one gives 5xx.
     for i in $(seq 1 12); do
-        if curl -sf -o /dev/null -w '%{http_code}' http://localhost/login | grep -q '^200$'; then
-            log "smoke test passed on attempt $i"
+        code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/login || echo 000)
+        if [[ "$code" =~ ^[23][0-9]{2}$ ]]; then
+            log "smoke test passed on attempt $i (HTTP $code)"
             return 0
         fi
-        log "smoke test attempt $i/12 not ready yet, retrying in 5s"
+        log "smoke test attempt $i/12 got HTTP $code, retrying in 5s"
         sleep 5
     done
     return 1

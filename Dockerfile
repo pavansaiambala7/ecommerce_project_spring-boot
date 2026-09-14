@@ -34,7 +34,11 @@ USER appuser
 
 EXPOSE 8080
 
+# bash, not sh: /dev/tcp is a bash feature and this image's /bin/sh is dash,
+# where the redirect silently fails and the container is marked unhealthy no
+# matter how well the app is serving. Any HTTP status line counts as alive -
+# /login answers 302, so grepping for a 200 here would be wrong too.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD ["sh", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /login HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q HTTP"]
+    CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /login HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q HTTP"]
 
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
