@@ -190,11 +190,20 @@ sudo dnf install -y docker
 sudo systemctl enable --now docker
 sudo usermod -aG docker ec2-user
 # aws-cli v2 ships preinstalled on Amazon Linux 2023; verify with: aws --version
+
+# Docker Compose v2. Amazon Linux 2023's `docker` package does NOT include it
+# and there is no docker-compose-plugin package in its repos, so install the
+# plugin binary directly. Without this, deploy.sh dies on `docker compose -f`
+# with a confusing top-level "unknown shorthand flag: 'f'" from the Docker CLI.
+sudo mkdir -p /usr/libexec/docker/cli-plugins
+sudo curl -sSL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o /usr/libexec/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+docker compose version   # must print a v2.x version before you go further
+
 sudo mkdir -p /opt/ecommerce/deploy
 sudo chown ec2-user:ec2-user /opt/ecommerce -R
 ```
-
-Docker Compose v2 ships as the `docker compose` plugin on recent Docker packages; if `docker compose version` doesn't resolve, install the `docker-compose-plugin` package for your AMI.
 
 Log out and back in after `usermod` so the group membership takes effect.
 
@@ -215,7 +224,7 @@ JENKINS_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids "$JENKINS_INSTANCE
 echo "Jenkins host: $JENKINS_PUBLIC_IP"
 ```
 
-No Elastic IP needed here — you'll only ever open this by IP occasionally, unlike the app host which needs a stable address for the pipeline's `PROD_HOST` parameter. If you stop/start this instance, re-check the public IP with the `describe-instances` command above.
+No Elastic IP needed here — you'll only ever open this by IP occasionally, unlike the app host whose Elastic IP is the stable address people browse the app on. If you stop/start this instance, re-check the public IP with the `describe-instances` command above.
 
 SSH in (`ssh -i ecommerce-deploy-key.pem ec2-user@$JENKINS_PUBLIC_IP`) and install Java, Docker, and Jenkins itself, **in this order** — Jenkins has to exist before you can add its user to the `docker` group:
 
