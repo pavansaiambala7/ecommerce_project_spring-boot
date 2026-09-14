@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import jakarta.servlet.DispatcherType;
+
 import com.jtspringproject.JtSpringProject.security.AppUserDetailsService;
 import com.jtspringproject.JtSpringProject.security.JwtAuthenticationFilter;
 import com.jtspringproject.JtSpringProject.security.RestAccessDeniedHandler;
@@ -99,6 +101,8 @@ public class SecurityConfiguration {
 			.securityMatcher("/admin/**")
 			.cors(cors -> cors.configurationSource(corsConfigurationSource))
 			.authorizeHttpRequests(requests -> requests
+				// See the storefront chain below for why FORWARD/ERROR are permitted.
+				.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
 				.requestMatchers("/admin/login").permitAll()
 				.requestMatchers("/admin/**").hasRole("ADMIN"))
 			.formLogin(login -> login
@@ -123,11 +127,21 @@ public class SecurityConfiguration {
 		http
 			.cors(cors -> cors.configurationSource(corsConfigurationSource))
 			.authorizeHttpRequests(requests -> requests
-				// /error is permitted so a failure surfaces as the error page
-				// rather than a redirect loop: an authenticated-only /error
-				// makes Spring Security bounce every error back to /login,
-				// which turns any view or rendering problem into
-				// ERR_TOO_MANY_REDIRECTS with nothing useful in the response.
+				// Spring Security 6 runs the filter chain on every dispatch type,
+				// where Spring Security 5 only ran it on REQUEST. Rendering a JSP
+				// means forwarding to /views/*.jsp, and that forward is re-checked
+				// here: it matches no rule but anyRequest(), gets denied, and
+				// redirects to /login - which forwards to a JSP again. Every page
+				// in the app became an infinite redirect, /login included.
+				//
+				// Permitting FORWARD and ERROR is safe because a client cannot
+				// trigger either one; only the container can, and only after a
+				// REQUEST has already been authorized by the rules below. A direct
+				// hit on /views/adminHome.jsp is still a REQUEST and still denied.
+				//
+				// MockMvc records forwards instead of executing them, so no test
+				// can catch this - it only appears against a real servlet container.
+				.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
 				.requestMatchers("/login", "/register", "/newuserregister", "/403", "/error").permitAll()
 				.requestMatchers("/css/**", "/js/**", "/images/**", "/static/**", "/favicon.ico").permitAll()
 				.anyRequest().hasRole("USER"))
