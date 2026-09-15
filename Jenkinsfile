@@ -89,7 +89,7 @@ pipeline {
         stage('Package') {
             steps {
                 sh './mvnw -B package -DskipTests'
-                archiveArtifacts artifacts: 'target/*.war', fingerprint: true
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
 

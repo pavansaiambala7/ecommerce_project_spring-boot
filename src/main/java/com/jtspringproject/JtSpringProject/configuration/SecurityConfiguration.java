@@ -14,10 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfigurationSource;
-
-import jakarta.servlet.DispatcherType;
 
 import com.jtspringproject.JtSpringProject.security.AppUserDetailsService;
 import com.jtspringproject.JtSpringProject.security.JwtAuthenticationFilter;
@@ -98,33 +95,6 @@ public class SecurityConfiguration {
 		return http.build();
 	}
 
-	/** Session + form login chain for the server-rendered admin pages. */
-	@Bean
-	@Order(2)
-	SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
-		http
-			.securityMatcher("/admin/**")
-			.cors(cors -> cors.configurationSource(corsConfigurationSource))
-			.authorizeHttpRequests(requests -> requests
-				// See the storefront chain below for why FORWARD/ERROR are permitted.
-				.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-				.requestMatchers("/admin/login").permitAll()
-				.requestMatchers("/admin/**").hasRole("ADMIN"))
-			.formLogin(login -> login
-				.loginPage("/admin/login")
-				.loginProcessingUrl("/admin/loginvalidate")
-				.successHandler((request, response, authentication) -> response.sendRedirect("/admin/"))
-				.failureHandler((request, response, exception) -> response.sendRedirect("/admin/login?error=true")))
-			.logout(logout -> logout
-				.logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout", "POST"))
-				.logoutSuccessUrl("/admin/login")
-				.invalidateHttpSession(true)
-				.deleteCookies("JSESSIONID"))
-			.exceptionHandling(exception -> exception
-				.accessDeniedPage("/403"));
-		return http.build();
-	}
-
 	/**
 	 * Serves the React single-page app.
 	 *
@@ -139,7 +109,7 @@ public class SecurityConfiguration {
 	 * produced the redirect loop this replaced.
 	 */
 	@Bean
-	@Order(3)
+	@Order(2)
 	SecurityFilterChain storefrontFilterChain(HttpSecurity http) throws Exception {
 		http
 			.cors(cors -> cors.configurationSource(corsConfigurationSource))

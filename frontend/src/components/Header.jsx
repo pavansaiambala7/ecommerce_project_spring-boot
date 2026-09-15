@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 
 export default function Header() {
   const [term, setTerm] = useState('');
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { itemCount } = useCart();
   const navigate = useNavigate();
 
@@ -38,6 +38,12 @@ export default function Header() {
       <div className="header-actions">
         {isAuthenticated ? (
           <>
+            {isAdmin && (
+              <Link to="/admin" className="header-link">
+                <small>Store</small>
+                <strong>Admin</strong>
+              </Link>
+            )}
             <Link to="/orders" className="header-link">
               <small>Hello, {user.username}</small>
               <strong>Orders</strong>

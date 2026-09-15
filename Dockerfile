@@ -33,9 +33,9 @@ RUN mvn dependency:go-offline -B
 FROM deps AS builder
 WORKDIR /app
 COPY src ./src
-# The compiled SPA ships inside the war as ordinary static resources, so the
+# The compiled SPA ships inside the jar as ordinary static resources, so the
 # app is served from one origin and needs no CORS in production. A `mvn
-# package` run outside Docker skips this and produces a backend-only war.
+# package` run outside Docker skips this and produces a backend-only jar.
 COPY --from=frontend /src/main/resources/static ./src/main/resources/static
 RUN mvn package -DskipTests -B
 
@@ -51,7 +51,7 @@ WORKDIR /app
 RUN groupadd --system --gid 1001 appuser \
  && useradd --system --uid 1001 --gid appuser --home /app appuser
 
-COPY --from=builder --chown=appuser:appuser /app/target/*.war app.war
+COPY --from=builder --chown=appuser:appuser /app/target/*.jar app.jar
 
 USER appuser
 
@@ -60,8 +60,8 @@ EXPOSE 8080
 # bash, not sh: /dev/tcp is a bash feature and this image's /bin/sh is dash,
 # where the redirect silently fails and the container is marked unhealthy no
 # matter how well the app is serving. Any HTTP status line counts as alive -
-# /login answers 302, so grepping for a 200 here would be wrong too.
+# the SPA shell answers 200 and the API answers JSON, so any status line does.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /login HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q HTTP"]
 
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.war"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
