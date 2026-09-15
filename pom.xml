@@ -131,6 +131,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Razorpay payment gateway -->
+		<dependency>
+			<groupId>com.razorpay</groupId>
+			<artifactId>razorpay-java</artifactId>
+			<version>1.4.8</version>
+		</dependency>
+
 		<!-- Rate limiting (token-bucket algorithm) -->
 		<dependency>
 			<groupId>com.bucket4j</groupId>

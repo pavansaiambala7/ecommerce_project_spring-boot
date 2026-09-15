@@ -83,12 +83,15 @@ async function refreshAccessToken() {
   return refreshInFlight;
 }
 
-async function send(path, { method = 'GET', body, auth = true, retryOn401 = true } = {}) {
+async function send(path, { method = 'GET', body, auth = true, retryOn401 = true, headers: extra } = {}) {
   // Only these four request headers pass CORS preflight. Adding any custom
   // header needs app.cors.allowed-headers extended on the backend first.
   const headers = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (auth && ACCESS_TOKEN.value) headers.Authorization = `Bearer ${ACCESS_TOKEN.value}`;
+  // Only Idempotency-Key is expected here. Any other custom header has to be
+  // added to the server's CORS allowed-headers list first or preflight fails.
+  if (extra) Object.assign(headers, extra);
 
   const response = await fetch(path, {
     method,
@@ -98,7 +101,9 @@ async function send(path, { method = 'GET', body, auth = true, retryOn401 = true
 
   if (response.status === 401 && retryOn401 && auth) {
     const fresh = await refreshAccessToken();
-    if (fresh) return send(path, { method, body, auth, retryOn401: false });
+    // The retry must carry the same headers, or an idempotent request would
+    // lose its key and execute a second time after a token refresh.
+    if (fresh) return send(path, { method, body, auth, retryOn401: false, headers: extra });
   }
 
   if (response.status === 429) {

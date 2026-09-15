@@ -18,6 +18,11 @@ get_param() {
 }
 
 JWT_SECRET_VALUE=$(get_param "/ecommerce/jwt-secret")
+# Payment credentials are optional: without them the storefront offers cash on
+# delivery only, which is a working shop rather than a broken deploy.
+RAZORPAY_KEY_ID_VALUE=$(get_param "/ecommerce/razorpay-key-id" 2>/dev/null || echo "")
+RAZORPAY_KEY_SECRET_VALUE=$(get_param "/ecommerce/razorpay-key-secret" 2>/dev/null || echo "")
+RAZORPAY_WEBHOOK_SECRET_VALUE=$(get_param "/ecommerce/razorpay-webhook-secret" 2>/dev/null || echo "")
 GEMINI_API_KEY_VALUE=$(get_param "/ecommerce/gemini-api-key" 2>/dev/null || echo "")
 POSTGRES_PASSWORD_VALUE=$(get_param "/ecommerce/db-password")
 
@@ -27,6 +32,9 @@ JWT_SECRET=${JWT_SECRET_VALUE}
 GEMINI_API_KEY=${GEMINI_API_KEY_VALUE}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD_VALUE}
 POSTGRES_USER=postgres
+RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID_VALUE}
+RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET_VALUE}
+RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET_VALUE}
 EOF
 chmod 600 "$ENV_FILE"
 

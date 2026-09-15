@@ -15,6 +15,11 @@ services:
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set - generate with "openssl rand -base64 48"}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      # Optional. Without them the app still starts and offers only cash on
+      # delivery, which is what local work and the test suite need.
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET:-}
     depends_on:
       db:
         condition: service_healthy

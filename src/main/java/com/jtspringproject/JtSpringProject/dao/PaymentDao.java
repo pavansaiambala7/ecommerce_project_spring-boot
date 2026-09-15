@@ -13,4 +13,10 @@ public interface PaymentDao extends JpaRepository<Payment, Integer> {
     Optional<Payment> findByOrderId(int orderId);
 
     Optional<Payment> findByTransactionId(String transactionId);
+
+    /** Looks a payment up by the gateway order the browser was sent to pay. */
+    Optional<Payment> findByRazorpayOrderId(String razorpayOrderId);
+
+    /** Used by the webhook, which identifies a payment rather than an order. */
+    Optional<Payment> findByRazorpayPaymentId(String razorpayPaymentId);
 }

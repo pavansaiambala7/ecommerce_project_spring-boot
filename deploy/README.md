@@ -402,3 +402,66 @@ It alerts on the second consecutive failure, not the first: a deploy restarts
 the container for about 30 seconds, and an alert that fires on every deploy is
 one that gets muted - at which point it protects nothing. It sends one message
 when the outage starts and one when it recovers, never a message per check.
+
+## 11. Razorpay payments
+
+Payments were simulated: the service generated a random UUID and declared
+every payment successful. This replaces that with a real gateway.
+
+Store the credentials. The key id is public and reaches the browser; the two
+secrets never leave the server:
+
+```bash
+export AWS_DEFAULT_REGION=eu-north-1
+
+aws ssm put-parameter --name /ecommerce/razorpay-key-id \
+  --value "rzp_test_xxxxxxxxxxxx" --type SecureString --overwrite
+aws ssm put-parameter --name /ecommerce/razorpay-key-secret \
+  --value "YOUR_KEY_SECRET" --type SecureString --overwrite
+```
+
+The webhook secret is a value you choose and then enter in the Razorpay
+dashboard. Generate one rather than inventing it by hand:
+
+```bash
+aws ssm put-parameter --name /ecommerce/razorpay-webhook-secret \
+  --value "$(openssl rand -base64 32)" --type SecureString --overwrite
+
+# You will need to read it once to paste into the dashboard
+aws ssm get-parameter --name /ecommerce/razorpay-webhook-secret \
+  --with-decryption --query 'Parameter.Value' --output text
+```
+
+In the Razorpay dashboard, under Settings → Webhooks, add:
+
+| Field | Value |
+|---|---|
+| URL | `http://13.50.19.252/api/payments/razorpay/webhook` |
+| Secret | the value printed above |
+| Events | `payment.captured`, `payment.failed`, `order.paid`, `refund.processed` |
+
+Redeploy so the host picks the secrets up, then confirm the storefront can
+see the gateway:
+
+```bash
+curl -s http://13.50.19.252/api/payments/razorpay/config
+# {"data":{"enabled":true,"keyId":"rzp_test_..."}}
+```
+
+`enabled: false` means the parameters were not read - check the app host's
+IAM role still grants `ssm:GetParameter` on `/ecommerce/*`.
+
+**Test cards.** In test mode Razorpay accepts `4111 1111 1111 1111` with any
+future expiry and any CVV. UPI succeeds with `success@razorpay`.
+
+**Webhooks and HTTP.** Razorpay will deliver to a plain HTTP endpoint, but the
+payload crosses the internet unencrypted and the signature is the only thing
+proving it is genuine. This is one more reason TLS matters before taking real
+payments; the signature check stops forgery, not eavesdropping.
+
+**What is verified where.** The browser reports a payment id and a signature;
+the server recomputes that signature with the key secret, which the browser
+never sees, so neither the amount nor the outcome can be tampered with. The
+webhook is the authoritative confirmation, because a browser can be closed
+between paying and reporting back. Both paths settle the same payment row and
+whichever arrives first wins.

@@ -50,8 +50,11 @@ export function CartProvider({ children }) {
       await api.del('/api/cart');
       return null;
     }),
-    checkout: async () => {
-      const order = await api.post('/api/cart/checkout');
+    checkout: async (idempotencyKey) => {
+      // The key makes a double-click or a retried request produce one order
+      // rather than two.
+      const order = await api.post('/api/cart/checkout', undefined,
+        idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined);
       setCart(null);
       return order;
     },

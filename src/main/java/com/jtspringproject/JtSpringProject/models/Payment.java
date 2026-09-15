@@ -45,6 +45,21 @@ public class Payment {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /** Razorpay order id (order_...), created before the customer pays. */
+    @Column(name = "razorpay_order_id", length = 64)
+    private String razorpayOrderId;
+
+    /** Razorpay payment id (pay_...), known only once payment completes. */
+    @Column(name = "razorpay_payment_id", length = 64)
+    private String razorpayPaymentId;
+
+    /** Evidence the confirmation genuinely came from Razorpay; kept for disputes. */
+    @Column(name = "razorpay_signature")
+    private String razorpaySignature;
+
+    @Column(name = "failure_reason")
+    private String failureReason;
+
     public enum PaymentMethod {
         COD, CARD, UPI
     }
@@ -114,5 +129,37 @@ public class Payment {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getRazorpayOrderId() {
+        return razorpayOrderId;
+    }
+
+    public void setRazorpayOrderId(String razorpayOrderId) {
+        this.razorpayOrderId = razorpayOrderId;
+    }
+
+    public String getRazorpayPaymentId() {
+        return razorpayPaymentId;
+    }
+
+    public void setRazorpayPaymentId(String razorpayPaymentId) {
+        this.razorpayPaymentId = razorpayPaymentId;
+    }
+
+    public String getRazorpaySignature() {
+        return razorpaySignature;
+    }
+
+    public void setRazorpaySignature(String razorpaySignature) {
+        this.razorpaySignature = razorpaySignature;
+    }
+
+    public String getFailureReason() {
+        return failureReason;
+    }
+
+    public void setFailureReason(String failureReason) {
+        this.failureReason = failureReason;
     }
 }

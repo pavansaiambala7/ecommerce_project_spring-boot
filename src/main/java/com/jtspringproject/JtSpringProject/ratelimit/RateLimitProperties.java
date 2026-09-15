@@ -40,6 +40,14 @@ public class RateLimitProperties {
 		// Credential endpoints: brute-force protection.
 		defaults.add(new Tier("auth", List.of("/api/auth/login", "/api/auth/register", "/api/auth/refresh",
 				"/userloginvalidate", "/admin/loginvalidate", "/newuserregister"), 5, Duration.ofMinutes(1)));
+		// Payment webhooks, deliberately generous. Razorpay delivers from shared
+		// addresses, so every merchant's callbacks would share one bucket keyed
+		// by IP; throttling them means answering non-2xx, which makes Razorpay
+		// retry, which spends more of the same budget. Forged calls are stopped
+		// by signature verification, not by this limit - its only job is to cap
+		// the damage from a flood of unsigned requests.
+		defaults.add(new Tier("webhook", List.of("/api/payments/razorpay/webhook"),
+				600, Duration.ofMinutes(1)));
 		// Everything else under the API.
 		defaults.add(new Tier("api", List.of("/api/**"), 100, Duration.ofMinutes(1)));
 		return defaults;

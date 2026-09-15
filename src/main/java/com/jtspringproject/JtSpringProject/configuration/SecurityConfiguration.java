@@ -75,6 +75,15 @@ public class SecurityConfiguration {
 				.requestMatchers(HttpMethod.GET, "/api/products/search", "/api/products/facets",
 						"/api/categories").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/search").permitAll()
+				// Razorpay posts webhooks server-to-server and holds no JWT, so
+				// this path cannot require one. It is not unprotected: the
+				// handler rejects anything without a valid HMAC signature over
+				// the raw body, computed with a secret only Razorpay and this
+				// server know.
+				.requestMatchers(HttpMethod.POST, "/api/payments/razorpay/webhook").permitAll()
+				// Whether online payment is available at all is not a secret,
+				// and the storefront needs it before anyone signs in.
+				.requestMatchers(HttpMethod.GET, "/api/payments/razorpay/config").permitAll()
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
 				// Administrative: catalogue mutation, user directory, reindexing, refunds.

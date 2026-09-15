@@ -19,7 +19,12 @@ public class CorsProperties {
 
 	private List<String> allowedMethods = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
 
-	private List<String> allowedHeaders = List.of("Authorization", "Content-Type", "Accept", "X-Requested-With");
+	// Idempotency-Key is here because checkout and payment send it. A custom
+	// header not on this list fails CORS preflight, and the request never
+	// reaches the server - which would silently disable retry protection for
+	// any browser calling across origins.
+	private List<String> allowedHeaders = List.of("Authorization", "Content-Type", "Accept",
+			"X-Requested-With", "Idempotency-Key");
 
 	/** Headers a browser client is allowed to read from the response. */
 	private List<String> exposedHeaders = List.of("X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After");
