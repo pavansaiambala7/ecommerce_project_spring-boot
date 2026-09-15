@@ -15,10 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.jtspringproject.JtSpringProject.dto.ApiResponse;
 import com.jtspringproject.JtSpringProject.dto.request.CartItemRequest;
 import com.jtspringproject.JtSpringProject.dto.request.CartQuantityRequest;
+import java.util.Optional;
+
+import org.springframework.web.bind.annotation.RequestHeader;
+
 import com.jtspringproject.JtSpringProject.dto.response.CartResponse;
 import com.jtspringproject.JtSpringProject.dto.response.OrderResponse;
 import com.jtspringproject.JtSpringProject.models.Order;
 import com.jtspringproject.JtSpringProject.security.AppUserDetails;
+import com.jtspringproject.JtSpringProject.idempotency.IdempotencyService;
 import com.jtspringproject.JtSpringProject.services.cartService;
 
 import jakarta.validation.Valid;
@@ -32,9 +37,11 @@ import jakarta.validation.Valid;
 public class CartApiController {
 
     private final cartService cartService;
+    private final IdempotencyService idempotencyService;
 
-    public CartApiController(cartService cartService) {
+    public CartApiController(cartService cartService, IdempotencyService idempotencyService) {
         this.cartService = cartService;
+        this.idempotencyService = idempotencyService;
     }
 
     @GetMapping
@@ -79,10 +86,31 @@ public class CartApiController {
         return ResponseEntity.ok(ApiResponse.success("Cart cleared", null));
     }
 
+    /**
+     * Turns the cart into an order.
+     *
+     * <p>Safe to retry when the caller sends an {@code Idempotency-Key}. Without
+     * one a double-tap, an impatient second click, or a proxy retrying a request
+     * whose response it never saw each create a second order and decrement stock
+     * twice. The header is optional so existing clients keep working, but the
+     * storefront always sends it.
+     */
     @PostMapping("/checkout")
     public ResponseEntity<ApiResponse<OrderResponse>> checkout(
-            @AuthenticationPrincipal AppUserDetails principal) {
-        Order order = cartService.checkout(principal.getId());
+            @AuthenticationPrincipal AppUserDetails principal,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+
+        Optional<String> key = idempotencyService.validate(idempotencyKey);
+        if (key.isEmpty()) {
+            return placeOrder(principal.getId());
+        }
+
+        return idempotencyService.run(key.get(), principal.getId(), "POST /api/cart/checkout", null,
+                () -> placeOrder(principal.getId()));
+    }
+
+    private ResponseEntity<ApiResponse<OrderResponse>> placeOrder(int customerId) {
+        Order order = cartService.checkout(customerId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Order placed", OrderResponse.from(order)));
     }
