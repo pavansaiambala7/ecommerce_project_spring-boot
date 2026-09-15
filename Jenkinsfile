@@ -125,7 +125,7 @@ pipeline {
                 sshagent(credentials: ['prod-ec2-ssh-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=accept-new ${params.PROD_SSH_USER}@${params.PROD_HOST} 'sudo mkdir -p /opt/ecommerce/deploy && sudo chown -R ${params.PROD_SSH_USER}: /opt/ecommerce'
-                        scp docker-compose.prod.yml deploy/deploy.sh deploy/fetch-secrets.sh ${params.PROD_SSH_USER}@${params.PROD_HOST}:/opt/ecommerce/deploy/
+                        scp docker-compose.prod.yml deploy/deploy.sh deploy/fetch-secrets.sh deploy/backup.sh deploy/restore.sh ${params.PROD_SSH_USER}@${params.PROD_HOST}:/opt/ecommerce/deploy/
                         ssh ${params.PROD_SSH_USER}@${params.PROD_HOST} 'chmod +x /opt/ecommerce/deploy/*.sh && /opt/ecommerce/deploy/deploy.sh ${env.ECR_IMAGE} ${params.AWS_REGION}'
                     """
                 }

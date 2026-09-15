@@ -290,3 +290,70 @@ Run it. The five original stages behave exactly as before; three new ones follow
 - **TLS / a domain.** The app is reachable over plain HTTP on the Elastic IP. Adding a domain means a Route 53 record; adding HTTPS on a single EC2 box without a load balancer usually means fronting it with Caddy or Nginx + Certbot in the compose file. Worth doing before this is anything but a demo — ask if you want that added.
 - **Zero-downtime deploys.** `docker compose up -d` briefly stops the old container before the new one is healthy. Fine for a single low-traffic box; a real zero-downtime setup wants at least two app instances behind a load balancer, which is the ECS Fargate path this plan deliberately avoided for cost.
 - **Database backups.** The Postgres data lives in a named Docker volume on the app instance. Nothing here snapshots it. At minimum, put the EBS volume backing that instance on a scheduled AWS Backup plan.
+
+## 9. Database backups
+
+The database lives in a Docker volume on a single instance. Without backups,
+losing that instance destroys every user, order and payment permanently.
+
+Create the bucket once, from CloudShell. Versioning is on so that an
+overwrite or a delete is itself recoverable; public access is blocked because
+the objects contain every customer record you hold.
+
+```bash
+export AWS_DEFAULT_REGION=eu-north-1
+BUCKET=ecommerce-db-backups-$(aws sts get-caller-identity --query Account --output text)
+
+aws s3api create-bucket --bucket "$BUCKET" \
+  --create-bucket-configuration LocationConstraint=$AWS_DEFAULT_REGION
+aws s3api put-bucket-versioning --bucket "$BUCKET" \
+  --versioning-configuration Status=Enabled
+aws s3api put-public-access-block --bucket "$BUCKET" \
+  --public-access-block-configuration \
+  "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+aws s3api put-bucket-encryption --bucket "$BUCKET" \
+  --server-side-encryption-configuration \
+  '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+
+echo "$BUCKET"
+```
+
+Then refresh the app host's IAM policy, which now also grants S3 access to this
+one bucket. The bucket name is hard-coded in `deploy/iam/prod-instance-policy.json`
+- change it there if your account id differs.
+
+```bash
+aws iam put-role-policy --role-name app-ec2-role \
+  --policy-name ecr-pull-and-ssm-read \
+  --policy-document file://deploy/iam/prod-instance-policy.json
+```
+
+Schedule it on the app host. 02:00 UTC is outside Indian shopping hours:
+
+```bash
+ssh -i "$KEY" ec2-user@"$APP"
+sudo mkdir -p /opt/ecommerce/deploy && sudo chown -R ec2-user: /opt/ecommerce
+# backup.sh and restore.sh are shipped by the pipeline alongside deploy.sh
+( crontab -l 2>/dev/null; \
+  echo "0 2 * * * /opt/ecommerce/deploy/backup.sh ecommerce-db-backups-792026110282 >> /var/log/ecommerce-backup.log 2>&1" \
+) | crontab -
+crontab -l
+```
+
+Verify immediately rather than waiting for 02:00 - a backup job nobody has
+watched run is an assumption, not a backup:
+
+```bash
+/opt/ecommerce/deploy/backup.sh ecommerce-db-backups-792026110282
+aws s3 ls s3://ecommerce-db-backups-792026110282/daily/
+```
+
+**Restoring.** `restore.sh` downloads a dump, asks you to type the database name
+to confirm, and replaces the current contents:
+
+```bash
+/opt/ecommerce/deploy/restore.sh ecommerce-db-backups-792026110282 latest
+```
+
+Practise this against a scratch database before you need it. A restore
+procedure that has never been run is not a recovery plan.

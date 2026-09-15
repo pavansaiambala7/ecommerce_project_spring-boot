@@ -31,6 +31,22 @@
       "Effect": "Allow",
       "Action": "kms:Decrypt",
       "Resource": "arn:aws:kms:*:*:alias/aws/ssm"
+    },
+    {
+      "Sid": "ListOwnBackupBucketOnly",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::ecommerce-db-backups-792026110282"
+    },
+    {
+      "Sid": "WriteAndRestoreOwnBackupsOnly",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::ecommerce-db-backups-792026110282/daily/*"
     }
   ]
 }
