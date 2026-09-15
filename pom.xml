@@ -138,6 +138,22 @@
 			<version>${bucket4j.version}</version>
 		</dependency>
 
+		<!-- Bucket state in Postgres rather than heap: an in-memory limiter
+		     resets to zero on every deploy and cannot be shared by two instances. -->
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j_jdk17-postgresql</artifactId>
+			<version>${bucket4j.version}</version>
+		</dependency>
+
+		<!-- In-memory bucket store, so the rate-limit tests run without a database -->
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j_jdk17-caffeine</artifactId>
+			<version>${bucket4j.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- Bounded caches for rate-limit buckets and AI chat sessions -->
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>

@@ -17,6 +17,11 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import com.jtspringproject.JtSpringProject.security.ApiErrorWriter;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+import io.github.bucket4j.caffeine.Bucket4jCaffeine;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
+
 class RateLimitFilterTest {
 
 	private RateLimitProperties properties;
@@ -30,7 +35,14 @@ class RateLimitFilterTest {
 				new RateLimitProperties.Tier("chat", List.of("/api/chat/**"), 2, Duration.ofMinutes(1)),
 				new RateLimitProperties.Tier("api", List.of("/api/**"), 5, Duration.ofMinutes(1))));
 
-		RateLimitService service = new RateLimitService(properties);
+		// An in-memory bucket store. Production keeps buckets in PostgreSQL so
+		// limits survive a deploy and can be shared by more than one instance;
+		// these tests only care about the counting behaviour, so they avoid
+		// needing a database to assert it.
+		ProxyManager<Long> buckets = Bucket4jCaffeine
+				.<Long>builderFor(Caffeine.newBuilder().maximumSize(1000))
+				.build();
+		RateLimitService service = new RateLimitService(properties, buckets);
 		// Built the way Spring Boot builds it, so the writer has the same modules
 		// registered as in production - a bare ObjectMapper cannot serialise the
 		// LocalDateTime on ApiResponse.
