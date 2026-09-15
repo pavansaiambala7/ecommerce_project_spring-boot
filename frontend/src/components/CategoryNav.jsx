@@ -1,22 +1,22 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useCatalog } from '../hooks/useCatalog';
+import { useCategories } from '../hooks/useCatalog';
 
 export default function CategoryNav() {
-  const { categories } = useCatalog();
+  const { categories } = useCategories();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const active = searchParams.get('category');
+  const active = searchParams.get('categoryId');
 
   function select(categoryId) {
-    // Category lives in the URL so the view is shareable and the back button
-    // behaves, rather than being hidden in component state.
-    navigate(categoryId ? `/?category=${categoryId}` : '/');
+    // Selecting a department clears the search text and paging: a shopper
+    // moving to Electronics does not expect their last query still applied.
+    navigate(categoryId ? `/?categoryId=${categoryId}` : '/');
   }
 
   if (categories.length === 0) return null;
 
   return (
-    <nav className="category-nav" aria-label="Product categories">
+    <nav className="category-nav" aria-label="Departments">
       <button type="button" data-active={!active} onClick={() => select(null)}>
         All
       </button>

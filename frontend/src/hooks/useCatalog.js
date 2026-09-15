@@ -1,41 +1,68 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 
-// The backend exposes no /api/categories endpoint - categories only exist
-// nested inside each product - so the category list is derived here from the
-// full catalogue. One request serves both the grid and the nav, cached at
-// module level so mounting several consumers doesn't refetch.
-let catalogPromise = null;
+// Categories come from their own endpoint now. This used to fetch the entire
+// product list and derive the category names in JavaScript, which quietly
+// became a multi-megabyte download as the catalogue grew.
+let categoriesPromise = null;
 
-function loadCatalog() {
-  if (!catalogPromise) {
-    catalogPromise = api.get('/api/products', { auth: false }).catch((error) => {
-      catalogPromise = null; // let a later mount retry instead of caching the failure
+function loadCategories() {
+  if (!categoriesPromise) {
+    categoriesPromise = api.get('/api/categories', { auth: false }).catch((error) => {
+      categoriesPromise = null; // let a later mount retry instead of caching the failure
       throw error;
     });
   }
-  return catalogPromise;
+  return categoriesPromise;
 }
 
-export function useCatalog() {
-  const [products, setProducts] = useState(null);
+export function useCategories() {
+  const [categories, setCategories] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
-    loadCatalog()
-      .then((data) => active && setProducts(data))
+    loadCategories()
+      .then((data) => active && setCategories(data))
       .catch((err) => active && setError(err));
     return () => {
       active = false;
     };
   }, []);
 
-  const categories = products
-    ? [...new Map(products.filter((p) => p.category).map((p) => [p.category.id, p.category])).values()].sort(
-        (a, b) => a.name.localeCompare(b.name),
-      )
-    : [];
+  return { categories, error };
+}
 
-  return { products, categories, error, loading: !products && !error };
+/**
+ * One page of products for the current filters. Filtering, sorting and paging
+ * all happen in the database - the browser only ever holds one page.
+ */
+export function useProductSearch(params) {
+  const [page, setPage] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== '' && value !== false) {
+      query.set(key, value);
+    }
+  });
+  const queryString = query.toString();
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    api
+      .get(`/api/products/search?${queryString}`, { auth: false })
+      .then((data) => active && setPage(data))
+      .catch((err) => active && setError(err))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [queryString]);
+
+  return { page, error, loading };
 }

@@ -1,16 +1,21 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import CategoryNav from './components/CategoryNav';
 import ChatWidget from './components/ChatWidget';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
-import SearchPage from './pages/SearchPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { useAuth } from './context/AuthContext';
+
+/** /search used to be its own page; keep old links working. */
+function SearchRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/${search}`} replace />;
+}
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -29,7 +34,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<HomePage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
-          <Route path="/search" element={<SearchPage />} />
+          <Route path="/search" element={<SearchRedirect />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route

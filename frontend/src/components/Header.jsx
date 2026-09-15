@@ -12,7 +12,10 @@ export default function Header() {
   function submitSearch(event) {
     event.preventDefault();
     const query = term.trim();
-    if (query) navigate(`/search?q=${encodeURIComponent(query)}`);
+    // Searching lands on the browse page: results there carry the same
+    // filters, sorting and paging as any other listing, rather than being a
+    // separate screen that loses them.
+    if (query) navigate(`/?q=${encodeURIComponent(query)}`);
   }
 
   return (

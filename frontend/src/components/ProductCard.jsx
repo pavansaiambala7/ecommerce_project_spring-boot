@@ -28,6 +28,16 @@ export default function ProductCard({ product }) {
         {product.name}
       </Link>
 
+      {product.brand && <div style={{ color: 'var(--muted)', fontSize: 13 }}>{product.brand}</div>}
+
+      {product.rating != null && (
+        <div className="rating">
+          {'★'.repeat(Math.round(product.rating))}
+          {'☆'.repeat(5 - Math.round(product.rating))}
+          <span>{product.ratingCount.toLocaleString()}</span>
+        </div>
+      )}
+
       <div className="price">{formatPrice(product.price)}</div>
 
       {product.inStock ? (

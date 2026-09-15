@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jtspringproject.JtSpringProject.dto.request.CatalogueQuery;
 import com.jtspringproject.JtSpringProject.dto.response.CategoryResponse;
 import com.jtspringproject.JtSpringProject.dto.response.FacetResponse;
@@ -85,6 +86,12 @@ public class CatalogueSearchService {
 
 	/** One page of results plus the total for pagination controls. */
 	public record Page(List<ProductResponse> items, long totalItems, int page, int size) {
+		/**
+		 * Explicitly annotated: Jackson serialises a record from its components,
+		 * and a derived method without a {@code getX} name is otherwise left out
+		 * of the JSON entirely, leaving the storefront with no page count.
+		 */
+		@JsonProperty("totalPages")
 		public int totalPages() {
 			return size == 0 ? 0 : (int) Math.ceil((double) totalItems / size);
 		}
@@ -102,10 +109,15 @@ public class CatalogueSearchService {
 
 		String sql;
 		if (hasText) {
-			params.addValue("queryVector", toVectorLiteral(embeddingService.embedQuery(query.getQ())));
 			params.addValue("q", query.getQ());
-			jdbc.getJdbcTemplate().execute("SET LOCAL hnsw.ef_search = " + EF_SEARCH);
-			sql = hybridSql(query.getSort());
+			float[] queryVector = embedQueryOrNull(query.getQ());
+			if (queryVector != null) {
+				params.addValue("queryVector", toVectorLiteral(queryVector));
+				jdbc.getJdbcTemplate().execute("SET LOCAL hnsw.ef_search = " + EF_SEARCH);
+				sql = hybridSql(query.getSort());
+			} else {
+				sql = lexicalSql(query.getSort());
+			}
 		} else {
 			sql = browseSql(query.getSort());
 		}
@@ -127,23 +139,24 @@ public class CatalogueSearchService {
 	public FacetResponse facets(CatalogueQuery query) {
 		MapSqlParameterSource params = filterParams(query);
 
+		// Aliased predicate: this query joins product and category, and both
+		// carry a category_id, so an unqualified reference is ambiguous.
 		String categorySql = """
 				SELECT c.category_id, c.name, count(*) AS hits
 				FROM product p JOIN category c ON c.category_id = p.category_id
 				WHERE %s
 				GROUP BY c.category_id, c.name
-				HAVING count(*) > 0
 				ORDER BY hits DESC, c.name
-				""".formatted(filterPredicate(false));
+				""".formatted(filterPredicate(true));
 
 		List<FacetResponse.CategoryFacet> categories = jdbc.query(categorySql, params,
 				(rs, row) -> new FacetResponse.CategoryFacet(
 						rs.getInt("category_id"), rs.getString("name"), rs.getLong("hits")));
 
 		String priceSql = """
-				SELECT min(price) AS min_price, max(price) AS max_price
+				SELECT min(p.price) AS min_price, max(p.price) AS max_price
 				FROM product p WHERE %s
-				""".formatted(filterPredicate(false));
+				""".formatted(filterPredicate(true));
 
 		Map<String, BigDecimal> range = jdbc.queryForObject(priceSql, params, (rs, row) -> {
 			Map<String, BigDecimal> m = new LinkedHashMap<>();
@@ -209,6 +222,38 @@ public class CatalogueSearchService {
 				filterPredicate(true), orderBy(sort, true));
 	}
 
+	/**
+	 * Embeds the query, or returns null if the embedding service is unavailable.
+	 *
+	 * <p>Search must not depend on a third party being up. An expired key, an
+	 * exhausted quota or a Gemini outage would otherwise take the entire
+	 * catalogue search down with a 500; degrading to keyword-only search keeps
+	 * the shop usable, just less clever.
+	 */
+	private float[] embedQueryOrNull(String text) {
+		try {
+			return embeddingService.embedQuery(text);
+		} catch (Exception e) {
+			log.warn("Query embedding failed, falling back to keyword-only search: {}", e.getMessage());
+			return null;
+		}
+	}
+
+	/** Keyword-only ranking, used when the embedding service is unreachable. */
+	private String lexicalSql(String sort) {
+		return """
+				SELECT p.product_id, p.name, p.description, p.image, p.price, p.quantity,
+				       p.weight, p.brand, p.rating, p.rating_count,
+				       c.category_id, c.name AS category_name,
+				       ts_rank(p.search_vector, websearch_to_tsquery('english', :q)) AS score
+				FROM product p
+				LEFT JOIN category c ON c.category_id = p.category_id
+				WHERE p.search_vector @@ websearch_to_tsquery('english', :q) AND %s
+				ORDER BY %s
+				LIMIT :limit OFFSET :offset
+				""".formatted(filterPredicate(true), orderBy(sort, true));
+	}
+
 	private String browseSql(String sort) {
 		return """
 				SELECT p.product_id, p.name, p.description, p.image, p.price, p.quantity,
@@ -255,12 +300,16 @@ public class CatalogueSearchService {
 	 */
 	private String filterPredicate(boolean aliased) {
 		String p = aliased ? "p." : "";
+		// Every parameter is cast explicitly. An absent filter binds as an
+		// untyped NULL, and Postgres cannot infer a type for a bare parameter
+		// that only ever appears beside NULL - it rejects the statement with
+		// "could not determine data type of parameter".
 		return """
-				(:categoryId IS NULL OR %scategory_id = :categoryId)
-				AND (:minPrice IS NULL OR %sprice >= :minPrice)
-				AND (:maxPrice IS NULL OR %sprice <= :maxPrice)
-				AND (:inStockOnly = false OR %squantity > 0)
-				AND (:brand IS NULL OR %sbrand = :brand)
+				(CAST(:categoryId AS integer) IS NULL OR %scategory_id = CAST(:categoryId AS integer))
+				AND (CAST(:minPrice AS numeric) IS NULL OR %sprice >= CAST(:minPrice AS numeric))
+				AND (CAST(:maxPrice AS numeric) IS NULL OR %sprice <= CAST(:maxPrice AS numeric))
+				AND (CAST(:inStockOnly AS boolean) = false OR %squantity > 0)
+				AND (CAST(:brand AS text) IS NULL OR %sbrand = CAST(:brand AS text))
 				""".formatted(p, p, p, p, p);
 	}
 

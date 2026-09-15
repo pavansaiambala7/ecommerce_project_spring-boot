@@ -72,6 +72,11 @@ public class SecurityConfiguration {
 				.requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/products", "/api/products/paged", "/api/products/*")
 					.permitAll()
+				// Browsing the catalogue and its departments is public: a
+				// shopper has to be able to see what is for sale before
+				// deciding to create an account.
+				.requestMatchers(HttpMethod.GET, "/api/products/search", "/api/products/facets",
+						"/api/categories").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/search").permitAll()
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
