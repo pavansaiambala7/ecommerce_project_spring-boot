@@ -18,23 +18,27 @@ COMPOSE="docker compose -f $DEPLOY_DIR/docker-compose.prod.yml --env-file $ENV_F
 log() { echo "[deploy] $*"; }
 
 smoke_test() {
-    # /login is unauthenticated and always answers, so it doubles as a cheap
-    # end-to-end check that Flyway migrated, the DB connection works, and
-    # Spring Security's filter chain came up correctly.
+    # Readiness, which answers UP only once Flyway has migrated and the
+    # datasource is reachable. Earlier versions accepted any 2xx/3xx from a
+    # page, which meant a container that had come up with a dead database
+    # still passed and got promoted - the deploy this check exists to catch.
     #
-    # Any 2xx or 3xx counts as up. The app answers /login with a 302, so an
-    # earlier version of this check that insisted on 200 failed against a
-    # perfectly healthy app. What matters here is that Spring answered at all;
-    # a dead app gives connection-refused (000) and a broken one gives 5xx.
+    # Two conditions have to hold together: HTTP 200, and a body reporting UP.
+    # Actuator answers 503 with a JSON body when a component is DOWN, so the
+    # status code alone would reject it, but checking both makes the intent
+    # explicit and survives someone changing the endpoint later.
     for i in $(seq 1 12); do
-        code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/login || echo 000)
-        if [[ "$code" =~ ^[23][0-9]{2}$ ]]; then
-            log "smoke test passed on attempt $i (HTTP $code)"
+        body=$(curl -s -o /tmp/health.json -w '%{http_code}' \
+                   http://localhost/actuator/health/readiness || echo 000)
+        if [ "$body" = "200" ] && grep -q '"status":"UP"' /tmp/health.json 2>/dev/null; then
+            log "smoke test passed on attempt $i (readiness UP)"
+            rm -f /tmp/health.json
             return 0
         fi
-        log "smoke test attempt $i/12 got HTTP $code, retrying in 5s"
+        log "smoke test attempt $i/12: HTTP $body $(cat /tmp/health.json 2>/dev/null | head -c 80)"
         sleep 5
     done
+    rm -f /tmp/health.json
     return 1
 }
 

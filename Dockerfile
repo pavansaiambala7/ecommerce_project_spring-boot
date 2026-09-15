@@ -57,11 +57,15 @@ USER appuser
 
 EXPOSE 8080
 
+# Readiness, not merely "is the port open". The previous check accepted any
+# HTTP status line, so a container whose database connection had failed still
+# reported healthy - the one failure worth catching was the one it missed.
+# /actuator/health/readiness reports DOWN when the datasource is unreachable.
+#
 # bash, not sh: /dev/tcp is a bash feature and this image's /bin/sh is dash,
 # where the redirect silently fails and the container is marked unhealthy no
-# matter how well the app is serving. Any HTTP status line counts as alive -
-# the SPA shell answers 200 and the API answers JSON, so any status line does.
+# matter how well the app is serving.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /login HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q HTTP"]
+    CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"status\":\"UP\"' <&3"]
 
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

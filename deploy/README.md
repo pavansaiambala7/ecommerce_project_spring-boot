@@ -357,3 +357,48 @@ to confirm, and replaces the current contents:
 
 Practise this against a scratch database before you need it. A restore
 procedure that has never been run is not a recovery plan.
+
+## 10. Health monitoring and outage alerts
+
+`/actuator/health` is exposed; everything else is not. The default Actuator set
+includes `env`, `beans` and `configprops`, which publish the resolved
+configuration - including property values - to anyone who asks.
+
+Two probes, answering different questions:
+
+| Probe | Question | Includes the database? |
+|---|---|---|
+| `/actuator/health/liveness` | Is this JVM broken? | No |
+| `/actuator/health/readiness` | Can it serve traffic? | Yes |
+
+The split matters. When the database goes down, readiness reports `503 DOWN`
+while liveness stays `200 UP` - the app should stop receiving traffic, but
+restarting the JVM would not fix anything. Both the container healthcheck and
+`deploy.sh` now check readiness, so a deploy whose database connection failed
+is rolled back instead of promoted.
+
+Create an SNS topic and subscribe to it (confirm the emailed link):
+
+```bash
+export AWS_DEFAULT_REGION=eu-north-1
+TOPIC_ARN=$(aws sns create-topic --name ecommerce-alerts --query TopicArn --output text)
+aws sns subscribe --topic-arn "$TOPIC_ARN" --protocol email --notification-endpoint you@example.com
+echo "$TOPIC_ARN"
+```
+
+Grant the app host permission to publish, then schedule the check:
+
+```bash
+aws iam put-role-policy --role-name app-ec2-role --policy-name publish-alerts \
+  --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"sns:Publish\",\"Resource\":\"$TOPIC_ARN\"}]}"
+
+ssh -i "$KEY" ec2-user@"$APP"
+( crontab -l 2>/dev/null; \
+  echo "*/5 * * * * /opt/ecommerce/deploy/healthcheck.sh $TOPIC_ARN >> /var/log/ecommerce-health.log 2>&1" \
+) | crontab -
+```
+
+It alerts on the second consecutive failure, not the first: a deploy restarts
+the container for about 30 seconds, and an alert that fires on every deploy is
+one that gets muted - at which point it protects nothing. It sends one message
+when the outage starts and one when it recovers, never a message per check.
