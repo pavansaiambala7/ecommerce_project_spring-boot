@@ -1,7 +1,17 @@
--- Loads the CSV produced by tools/import_catalogue.py into the product table.
+-- Loads the CSV produced by tools/generate_catalogue.py into the product table.
 --
 -- Run against the target database, from the directory holding catalogue.csv:
 --     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f load_catalogue.sql
+--
+-- \copy is a client-side command: it reads the file from whichever machine runs
+-- psql, relative to that machine's working directory. It also does not expand
+-- psql variables, so the filename below is deliberately fixed. For a database
+-- in a container, put the CSV inside the container and point psql's working
+-- directory at it with docker exec -w:
+--
+--     docker cp catalogue.csv ecommerce-db:/tmp/
+--     docker exec -w /tmp -i ecommerce-db \
+--         psql -U postgres -d ecommjava -v ON_ERROR_STOP=1 < load_catalogue.sql
 --
 -- Idempotent: re-running updates existing rows by external_id rather than
 -- inserting duplicates, so an interrupted load can simply be repeated.
