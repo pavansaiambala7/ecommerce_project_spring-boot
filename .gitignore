@@ -51,3 +51,5 @@ deploy/.last_good_tag
 # into the war at build time.
 frontend/node_modules/
 src/main/resources/static/
+tools/catalogue.csv
+tools/__pycache__/
