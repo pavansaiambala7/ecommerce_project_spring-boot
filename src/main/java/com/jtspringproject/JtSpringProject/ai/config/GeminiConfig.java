@@ -1,5 +1,10 @@
 package com.jtspringproject.JtSpringProject.ai.config;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +27,18 @@ public class GeminiConfig {
 
     @Value("${gemini.chat.model}")
     private String chatModelName;
+
+    /** Comma-separated models tried in order when the primary one fails. */
+    @Value("${gemini.chat.fallback-models:}")
+    private String fallbackModelNames;
+
+    /**
+     * Gemini 2.5 and later "think" before answering, and those hidden tokens
+     * count against this limit - a short reply measured about 600 of them. At
+     * the old 1024 a longer answer could be cut off, or come back empty.
+     */
+    @Value("${gemini.chat.max-output-tokens:4096}")
+    private int maxOutputTokens;
 
     /**
      * Vector width, which must match the {@code vector(...)} column declared in
@@ -73,13 +90,33 @@ public class GeminiConfig {
                 .build();
     }
 
+    /**
+     * The primary chat model with its fallbacks, so one retired or overloaded
+     * model does not take the assistant down. See {@link FallbackChatModel}.
+     */
     @Bean
     public ChatLanguageModel chatLanguageModel() {
-        return GoogleAiGeminiChatModel.builder()
-                .apiKey(apiKey)
-                .modelName(chatModelName)
-                .temperature(0.7)
-                .maxOutputTokens(1024)
-                .build();
+        Set<String> names = new LinkedHashSet<>();
+        names.add(chatModelName.strip());
+        for (String name : fallbackModelNames.split(",")) {
+            if (!name.isBlank()) {
+                names.add(name.strip());
+            }
+        }
+
+        List<FallbackChatModel.Candidate> candidates = new ArrayList<>();
+        for (String name : names) {
+            candidates.add(new FallbackChatModel.Candidate(name, GoogleAiGeminiChatModel.builder()
+                    .apiKey(apiKey)
+                    .modelName(name)
+                    .temperature(0.7)
+                    .maxOutputTokens(maxOutputTokens)
+                    .timeout(java.time.Duration.ofSeconds(45))
+                    // Retries belong to the fallback: retrying a retired model
+                    // three times only delays reaching one that works.
+                    .maxRetries(1)
+                    .build()));
+        }
+        return new FallbackChatModel(candidates);
     }
 }

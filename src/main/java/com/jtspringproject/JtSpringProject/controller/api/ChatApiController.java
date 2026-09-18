@@ -43,10 +43,11 @@ public class ChatApiController {
 
         String sessionId = scopedSessionId(principal, request.getSessionId());
 
-        String reply = supportAgent.chat(sessionId, request.getMessage(), principal.getId());
+        CustomerSupportAgent.ChatResult result = supportAgent.chat(sessionId, request.getMessage(), principal.getId());
         List<String> suggestedActions = supportAgent.getSuggestedActions(request.getMessage());
 
-        ChatResponse response = new ChatResponse(request.getSessionId(), reply, suggestedActions);
+        ChatResponse response = new ChatResponse(request.getSessionId(), result.reply(), suggestedActions);
+        response.setProducts(result.products());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
