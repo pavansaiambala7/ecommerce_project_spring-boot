@@ -37,6 +37,12 @@ public class RateLimitProperties {
 		defaults.add(new Tier("chat", List.of("/api/chat/**"), 10, Duration.ofMinutes(1)));
 		defaults.add(new Tier("reindex", List.of("/api/search/reindex"), 2, Duration.ofHours(1)));
 		defaults.add(new Tier("search", List.of("/api/search", "/api/search/**"), 30, Duration.ofMinutes(1)));
+		// Typeahead sends a request per pause in typing. It costs one indexed
+		// read, so it can be generous - but it gets its own bucket, so a fast
+		// typist does not exhaust the budget for browsing and checkout.
+		defaults.add(new Tier("suggest", List.of("/api/products/suggest"), 240, Duration.ofMinutes(1)));
+		// Address autofill calls public services with strict usage policies.
+		defaults.add(new Tier("geo", List.of("/api/geo/**"), 20, Duration.ofMinutes(1)));
 		// Credential endpoints: brute-force protection.
 		defaults.add(new Tier("auth", List.of("/api/auth/login", "/api/auth/register", "/api/auth/refresh",
 				"/userloginvalidate", "/admin/loginvalidate", "/newuserregister"), 5, Duration.ofMinutes(1)));

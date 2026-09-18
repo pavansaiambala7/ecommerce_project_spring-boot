@@ -66,7 +66,8 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
+			<!-- Compile scope: the catalogue import streams CSV through the
+			     driver's CopyManager, which has no JDBC-standard equivalent. -->
 		</dependency>
 
 		<dependency>

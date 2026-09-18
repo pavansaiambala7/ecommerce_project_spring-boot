@@ -28,6 +28,17 @@ public class OrderRequest {
         this.items = items;
     }
 
+    /** Optional here; the storefront checks out through the cart, which requires one. */
+    private Integer addressId;
+
+    public Integer getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(Integer addressId) {
+        this.addressId = addressId;
+    }
+
     public static class Item {
 
         @NotNull(message = "Product id is required")

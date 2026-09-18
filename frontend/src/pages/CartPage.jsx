@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import ProductImage from '../components/ProductImage';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../utils/format';
 
@@ -11,7 +12,7 @@ export default function CartPage() {
       <div className="panel">
         <h1 className="section-title">Your cart is empty</h1>
         <Link to="/" className="btn">
-          Browse products
+          Continue shopping
         </Link>
       </div>
     );
@@ -25,7 +26,7 @@ export default function CartPage() {
         {cart.items.map((item) => (
           <div className="cart-row" key={item.productId}>
             <Link to={`/product/${item.productId}`}>
-              <img src={item.image} alt={item.productName} />
+              <ProductImage src={item.image} alt={item.productName} />
             </Link>
 
             <div>

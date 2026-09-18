@@ -1,0 +1,449 @@
+{
+ "images": {
+  "brand:Laptops|Apple": [
+   "https://cdn.dummyjson.com/product-images/laptops/apple-macbook-pro-14-inch-space-grey/1.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/apple-macbook-pro-14-inch-space-grey/2.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/apple-macbook-pro-14-inch-space-grey/3.webp"
+  ],
+  "brand:Mobiles|Apple": [
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-6/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-6/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-6/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-13-pro/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-13-pro/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-13-pro/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-x/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-x/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/iphone-x/3.webp"
+  ],
+  "brand:Mobiles|OPPO": [
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-a57/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-a57/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-a57/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-f19-pro-plus/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-f19-pro-plus/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-f19-pro-plus/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/4.webp"
+  ],
+  "brand:Mobiles|Samsung": [
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s7/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s7/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s7/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s8/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s8/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s8/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/3.webp"
+  ],
+  "brand:Mobiles|realme": [
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-x/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-x/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-x/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-xt/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-xt/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-xt/3.webp"
+  ],
+  "brand:Mobiles|vivo": [
+   "https://cdn.dummyjson.com/product-images/smartphones/vivo-x21/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/vivo-x21/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/vivo-x21/3.webp"
+  ],
+  "dept:Laptops": [
+   "https://cdn.dummyjson.com/product-images/laptops/asus-zenbook-pro-dual-screen-laptop/1.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/asus-zenbook-pro-dual-screen-laptop/2.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/asus-zenbook-pro-dual-screen-laptop/3.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/huawei-matebook-x-pro/1.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/huawei-matebook-x-pro/2.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/huawei-matebook-x-pro/3.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/lenovo-yoga-920/1.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/lenovo-yoga-920/2.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/lenovo-yoga-920/3.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/new-dell-xps-13-9300-laptop/1.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/new-dell-xps-13-9300-laptop/2.webp",
+   "https://cdn.dummyjson.com/product-images/laptops/new-dell-xps-13-9300-laptop/3.webp"
+  ],
+  "dept:Mobiles": [
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-a57/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-a57/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-a57/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-f19-pro-plus/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-f19-pro-plus/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-f19-pro-plus/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/4.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-x/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-x/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-x/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-xt/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-xt/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/realme-xt/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/vivo-x21/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/vivo-x21/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/vivo-x21/3.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/1.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/2.webp",
+   "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/3.webp"
+  ],
+  "line:Bags & Luggage|Laptop Backpack": [
+   "https://cdn.dummyjson.com/product-images/womens-bags/white-faux-leather-backpack/1.webp",
+   "https://cdn.dummyjson.com/product-images/womens-bags/white-faux-leather-backpack/2.webp",
+   "https://cdn.dummyjson.com/product-images/womens-bags/white-faux-leather-backpack/3.webp"
+  ],
+  "line:Beauty & Personal Care|Kajal": [
+   "https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/1.webp",
+   "https://cdn.stocksnap.io/img-thumbs/960w/34MSYVUYS0.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/PZ0Z7K0JRR.jpg"
+  ],
+  "line:Beauty & Personal Care|Lipstick": [
+   "https://cdn.dummyjson.com/product-images/beauty/red-lipstick/1.webp",
+   "https://cdn.stocksnap.io/img-thumbs/960w/7BQYY7CGAE.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/WHDW45WQ8D.jpg"
+  ],
+  "line:Electronics|ColorFit": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/XW2IM1GSYM.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/ILQA1VXXOJ.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/6EMBFCXU0J.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/Z5IW9QEFL6.jpg"
+  ],
+  "line:Electronics|Keyboard": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/R7GVMRJWW9.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/TCSL0ZGITJ.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/FFPJ3S8U5Y.jpg"
+  ],
+  "line:Electronics|Monitor": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/SLZRDLFT96.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/9UPH197S3L.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/QUU0AQABSN.jpg"
+  ],
+  "line:Electronics|Smart Band": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/XW2IM1GSYM.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/ILQA1VXXOJ.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/6EMBFCXU0J.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/Z5IW9QEFL6.jpg"
+  ],
+  "line:Electronics|Wave Smartwatch": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/XW2IM1GSYM.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/ILQA1VXXOJ.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/6EMBFCXU0J.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/Z5IW9QEFL6.jpg"
+  ],
+  "line:Footwear|Running Shoes": [
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/4.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-&-red/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-&-red/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-&-red/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-&-red/4.webp"
+  ],
+  "line:Footwear|Sneakers": [
+   "https://cdn.dummyjson.com/product-images/mens-shoes/nike-air-jordan-1-red-and-black/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/nike-air-jordan-1-red-and-black/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/nike-air-jordan-1-red-and-black/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/nike-air-jordan-1-red-and-black/4.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-red/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-red/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-red/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-red/4.webp"
+  ],
+  "line:Footwear|Walking Shoes": [
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/4.webp"
+  ],
+  "line:Furniture|Bookshelf": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/14B430281B.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/0SP70JWWOK.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/1XAJHYVE9L.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/KVIJTZ5LHP.jpg"
+  ],
+  "line:Furniture|Office Chair": [
+   "https://cdn.dummyjson.com/product-images/furniture/knoll-saarinen-executive-conference-chair/1.webp",
+   "https://cdn.dummyjson.com/product-images/furniture/knoll-saarinen-executive-conference-chair/2.webp",
+   "https://cdn.dummyjson.com/product-images/furniture/knoll-saarinen-executive-conference-chair/3.webp"
+  ],
+  "line:Furniture|Queen Mattress": [
+   "https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-bed/1.webp",
+   "https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-bed/2.webp",
+   "https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-bed/3.webp"
+  ],
+  "line:Home & Kitchen|Casserole Set": [
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/silver-pot-with-glass-cap/1.webp"
+  ],
+  "line:Home & Kitchen|Dinner Set": [
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/plate/1.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/tray/1.webp"
+  ],
+  "line:Home & Kitchen|Induction Cooktop": [
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/electric-stove/1.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/electric-stove/2.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/electric-stove/3.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/electric-stove/4.webp"
+  ],
+  "line:Home & Kitchen|Kadai": [
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/carbon-steel-wok/1.webp"
+  ],
+  "line:Home & Kitchen|Lunch Box": [
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/lunch-box/1.webp"
+  ],
+  "line:Home & Kitchen|Mixer Grinder": [
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/boxed-blender/1.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/boxed-blender/2.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/boxed-blender/3.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/boxed-blender/4.webp",
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/hand-blender/1.webp"
+  ],
+  "line:Home & Kitchen|Non-Stick Tawa": [
+   "https://cdn.dummyjson.com/product-images/kitchen-accessories/pan/1.webp"
+  ],
+  "line:Men's Fashion|Blazer": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/J18ZCO3IPA.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/OERP9XI9YB.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/RJQ5YA1291.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/1ZSNQTSXVM.jpg"
+  ],
+  "line:Men's Fashion|Casual Shirt": [
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-plaid-shirt/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-plaid-shirt/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-plaid-shirt/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-plaid-shirt/4.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-short-sleeve-shirt/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-short-sleeve-shirt/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-short-sleeve-shirt/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/man-short-sleeve-shirt/4.webp"
+  ],
+  "line:Men's Fashion|Slim Fit Shirt": [
+   "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/4.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/men-check-shirt/1.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/men-check-shirt/2.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/men-check-shirt/3.webp",
+   "https://cdn.dummyjson.com/product-images/mens-shirts/men-check-shirt/4.webp"
+  ],
+  "line:Musical Instruments|Acoustic Guitar": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/HP2GGWWPIN.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/LBCPMZCQPT.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/X61WN91SJ7.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/4H8FT5VT7K.jpg"
+  ],
+  "line:Musical Instruments|Digital Piano": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/ZKCAWAC91T.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/DPYMRMG50T.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/R443TS2UXX.jpg"
+  ],
+  "line:Musical Instruments|Electric Guitar": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/SQ2DL1GFQF.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/UIT62UUU5X.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/D76S1KCTX0.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/LZDL90URQB.jpg"
+  ],
+  "line:Pet Supplies|Adult Dry Food": [
+   "https://cdn.dummyjson.com/product-images/groceries/dog-food/1.webp"
+  ],
+  "line:Pet Supplies|Cat Food": [
+   "https://cdn.dummyjson.com/product-images/groceries/cat-food/1.webp"
+  ],
+  "line:Pet Supplies|Puppy Food": [
+   "https://cdn.dummyjson.com/product-images/groceries/dog-food/1.webp"
+  ],
+  "line:Sports & Outdoors|Cricket Bat": [
+   "https://cdn.dummyjson.com/product-images/sports-accessories/cricket-bat/1.webp",
+   "https://cdn.dummyjson.com/product-images/sports-accessories/cricket-ball/1.webp"
+  ],
+  "line:Sports & Outdoors|Dumbbell Set": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/QP7WI19WFG.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/3H89EH3WIJ.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/FVUO0YIMKH.jpg"
+  ],
+  "line:Sports & Outdoors|Football": [
+   "https://cdn.dummyjson.com/product-images/sports-accessories/football/1.webp"
+  ],
+  "line:Sports & Outdoors|Yoga Mat": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/AYWO7QN7K7.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/ZCCL3FPLOX.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/K722OIZFTH.jpg"
+  ],
+  "line:Tools & Home Improvement|Cordless Drill": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/NQHDCWGEOH.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/L8IBQZYEAL.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/Z39ZXFULBC.jpg"
+  ],
+  "line:Tools & Home Improvement|Screwdriver Set": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/KD30XPQR0A.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/00F7DB5857.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/F91K0WLE2D.jpg"
+  ],
+  "line:Tools & Home Improvement|Tool Kit": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/KD30XPQR0A.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/00F7DB5857.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/F91K0WLE2D.jpg"
+  ],
+  "line:Tools & Home Improvement|Wrench Set": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/KD30XPQR0A.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/00F7DB5857.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/F91K0WLE2D.jpg"
+  ],
+  "line:Toys & Games|Board Game": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/SNCWBRB3C3.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/BLRAORQYEP.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/ITTLCAWYKW.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/NUAITIXILP.jpg"
+  ],
+  "line:Toys & Games|Card Game": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/C8301OWBND.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/G4IXBJ1V34.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/01NL1BZUS0.jpg"
+  ],
+  "line:Toys & Games|Jigsaw Puzzle": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/A8DQ8W3OCI.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/Z6NQG48GT0.jpg"
+  ],
+  "line:Video Games|Wireless Controller": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/D9ET42KESB.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/OZ4IBMDS8E.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/RCTXTLCXH6.jpg"
+  ],
+  "line:Women's Fashion|A-Line Dress": [
+   "https://cdn.dummyjson.com/product-images/tops/blue-frock/1.webp",
+   "https://cdn.dummyjson.com/product-images/tops/blue-frock/2.webp",
+   "https://cdn.dummyjson.com/product-images/tops/blue-frock/3.webp",
+   "https://cdn.dummyjson.com/product-images/tops/blue-frock/4.webp",
+   "https://cdn.dummyjson.com/product-images/tops/short-frock/1.webp",
+   "https://cdn.dummyjson.com/product-images/tops/short-frock/2.webp",
+   "https://cdn.dummyjson.com/product-images/tops/short-frock/3.webp",
+   "https://cdn.dummyjson.com/product-images/tops/short-frock/4.webp",
+   "https://cdn.dummyjson.com/product-images/tops/tartan-dress/1.webp",
+   "https://cdn.dummyjson.com/product-images/tops/tartan-dress/2.webp",
+   "https://cdn.dummyjson.com/product-images/tops/tartan-dress/3.webp",
+   "https://cdn.dummyjson.com/product-images/tops/tartan-dress/4.webp"
+  ],
+  "line:Women's Fashion|Banarasi Saree": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/2G3VPGYPBQ.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/DC17RTS8K9.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/WXYINWDULE.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/HKSJ19ZNPA.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/TNYTJ4YJBD.jpg"
+  ],
+  "line:Women's Fashion|Bodycon Dress": [
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-with-black-skirt/1.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-with-black-skirt/2.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-with-black-skirt/3.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-with-black-skirt/4.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-leather-with-skirt/1.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-leather-with-skirt/2.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-leather-with-skirt/3.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/corset-leather-with-skirt/4.webp"
+  ],
+  "line:Women's Fashion|Cotton Saree": [
+   "https://cdn.stocksnap.io/img-thumbs/960w/2G3VPGYPBQ.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/DC17RTS8K9.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/WXYINWDULE.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/HKSJ19ZNPA.jpg",
+   "https://cdn.stocksnap.io/img-thumbs/960w/TNYTJ4YJBD.jpg"
+  ],
+  "line:Women's Fashion|Maxi Dress": [
+   "https://cdn.dummyjson.com/product-images/womens-dresses/black-women's-gown/1.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/black-women's-gown/2.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/black-women's-gown/3.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/black-women's-gown/4.webp",
+   "https://cdn.dummyjson.com/product-images/tops/gray-dress/1.webp",
+   "https://cdn.dummyjson.com/product-images/tops/gray-dress/2.webp",
+   "https://cdn.dummyjson.com/product-images/tops/gray-dress/3.webp",
+   "https://cdn.dummyjson.com/product-images/tops/gray-dress/4.webp"
+  ],
+  "line:Women's Fashion|Wrap Dress": [
+   "https://cdn.dummyjson.com/product-images/womens-dresses/dress-pea/1.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/dress-pea/2.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/dress-pea/3.webp",
+   "https://cdn.dummyjson.com/product-images/womens-dresses/dress-pea/4.webp",
+   "https://cdn.dummyjson.com/product-images/tops/girl-summer-dress/1.webp",
+   "https://cdn.dummyjson.com/product-images/tops/girl-summer-dress/2.webp",
+   "https://cdn.dummyjson.com/product-images/tops/girl-summer-dress/3.webp",
+   "https://cdn.dummyjson.com/product-images/tops/girl-summer-dress/4.webp"
+  ]
+ },
+ "credits": {
+  "https://cdn.stocksnap.io/img-thumbs/960w/FVUO0YIMKH.jpg": "Fitness Weights - StockSnap, CC0 (https://stocksnap.io/photo/fitness-weights-FVUO0YIMKH)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/0SP70JWWOK.jpg": "Books Bookshelf - StockSnap, CC0 (https://stocksnap.io/photo/books-bookshelf-0SP70JWWOK)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/HP2GGWWPIN.jpg": "Acoustic Guitar - StockSnap, CC0 (https://stocksnap.io/photo/acoustic-guitar-HP2GGWWPIN)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/KD30XPQR0A.jpg": "Tools Workshop - StockSnap, CC0 (https://stocksnap.io/photo/tools-workshop-KD30XPQR0A)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/00F7DB5857.jpg": "Wood Tools - StockSnap, CC0 (https://stocksnap.io/photo/wood-tools-00F7DB5857)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/F91K0WLE2D.jpg": "Wrench Tools - StockSnap, CC0 (https://stocksnap.io/photo/wrench-tools-F91K0WLE2D)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/R7GVMRJWW9.jpg": "Iphone Keyboard - StockSnap, CC0 (https://stocksnap.io/photo/iphone-keyboard-R7GVMRJWW9)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/XW2IM1GSYM.jpg": "Smartwatch Gps - StockSnap, CC0 (https://stocksnap.io/photo/smartwatch-gps-XW2IM1GSYM)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/ILQA1VXXOJ.jpg": "Top Workspace - StockSnap, CC0 (https://stocksnap.io/photo/top-workspace-ILQA1VXXOJ)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/6EMBFCXU0J.jpg": "Apple Watch - StockSnap, CC0 (https://stocksnap.io/photo/apple-watch-6EMBFCXU0J)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/Z5IW9QEFL6.jpg": "Photography Gear - StockSnap, CC0 (https://stocksnap.io/photo/photography-gear-Z5IW9QEFL6)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/SLZRDLFT96.jpg": "Computer Monitors - StockSnap, CC0 (https://stocksnap.io/photo/computer-monitors-SLZRDLFT96)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/9UPH197S3L.jpg": "Business Office - StockSnap, CC0 (https://stocksnap.io/photo/business-office-9UPH197S3L)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/QUU0AQABSN.jpg": "Home Office - StockSnap, CC0 (https://stocksnap.io/photo/home-office-QUU0AQABSN)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/J18ZCO3IPA.jpg": "Suit Jacket - StockSnap, CC0 (https://stocksnap.io/photo/suit-jacket-J18ZCO3IPA)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/OERP9XI9YB.jpg": "Suit Tie - StockSnap, CC0 (https://stocksnap.io/photo/suit-tie-OERP9XI9YB)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/RJQ5YA1291.jpg": "Suit Tie - StockSnap, CC0 (https://stocksnap.io/photo/suit-tie-RJQ5YA1291)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/1ZSNQTSXVM.jpg": "Suit Blazer - StockSnap, CC0 (https://stocksnap.io/photo/suit-blazer-1ZSNQTSXVM)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/14B430281B.jpg": "Bookshelf Shelves - StockSnap, CC0 (https://stocksnap.io/photo/bookshelf-shelves-14B430281B)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/1XAJHYVE9L.jpg": "Book Bookshelf - StockSnap, CC0 (https://stocksnap.io/photo/book-bookshelf-1XAJHYVE9L)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/KVIJTZ5LHP.jpg": "Book Bookshelf - StockSnap, CC0 (https://stocksnap.io/photo/book-bookshelf-KVIJTZ5LHP)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/7BQYY7CGAE.jpg": "Lipstick Beauty - StockSnap, CC0 (https://stocksnap.io/photo/lipstick-beauty-7BQYY7CGAE)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/WHDW45WQ8D.jpg": "Lipstick Beauty - StockSnap, CC0 (https://stocksnap.io/photo/lipstick-beauty-WHDW45WQ8D)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/34MSYVUYS0.jpg": "Beauty Makeup - StockSnap, CC0 (https://stocksnap.io/photo/beauty-makeup-34MSYVUYS0)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/PZ0Z7K0JRR.jpg": "Makeup Brush - StockSnap, CC0 (https://stocksnap.io/photo/makeup-brush-PZ0Z7K0JRR)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/AYWO7QN7K7.jpg": "People Woman - StockSnap, CC0 (https://stocksnap.io/photo/people-woman-AYWO7QN7K7)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/ZCCL3FPLOX.jpg": "People Woman - StockSnap, CC0 (https://stocksnap.io/photo/people-woman-ZCCL3FPLOX)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/K722OIZFTH.jpg": "People Woman - StockSnap, CC0 (https://stocksnap.io/photo/people-woman-K722OIZFTH)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/QP7WI19WFG.jpg": "Weights Dumbbells - StockSnap, CC0 (https://stocksnap.io/photo/weights-dumbbells-QP7WI19WFG)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/3H89EH3WIJ.jpg": "Weights Fitness - StockSnap, CC0 (https://stocksnap.io/photo/weights-fitness-3H89EH3WIJ)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/SNCWBRB3C3.jpg": "Homework Text - StockSnap, CC0 (https://stocksnap.io/photo/homework-text-SNCWBRB3C3)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/BLRAORQYEP.jpg": "Word Letters - StockSnap, CC0 (https://stocksnap.io/photo/word-letters-BLRAORQYEP)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/ITTLCAWYKW.jpg": "Word Letters - StockSnap, CC0 (https://stocksnap.io/photo/word-letters-ITTLCAWYKW)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/NUAITIXILP.jpg": "Chess Board - StockSnap, CC0 (https://stocksnap.io/photo/chess-board-NUAITIXILP)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/C8301OWBND.jpg": "Playing Cards - StockSnap, CC0 (https://stocksnap.io/photo/playing-cards-C8301OWBND)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/G4IXBJ1V34.jpg": "Cards Game - StockSnap, CC0 (https://stocksnap.io/photo/cards-game-G4IXBJ1V34)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/01NL1BZUS0.jpg": "Cards Game - StockSnap, CC0 (https://stocksnap.io/photo/cards-game-01NL1BZUS0)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/LBCPMZCQPT.jpg": "Acoustic Guitar - StockSnap, CC0 (https://stocksnap.io/photo/acoustic-guitar-LBCPMZCQPT)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/X61WN91SJ7.jpg": "Acoustic Guitar - StockSnap, CC0 (https://stocksnap.io/photo/acoustic-guitar-X61WN91SJ7)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/4H8FT5VT7K.jpg": "Acoustic Guitar - StockSnap, CC0 (https://stocksnap.io/photo/acoustic-guitar-4H8FT5VT7K)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/SQ2DL1GFQF.jpg": "Electric Guitar - StockSnap, CC0 (https://stocksnap.io/photo/electric-guitar-SQ2DL1GFQF)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/UIT62UUU5X.jpg": "Electric Guitar - StockSnap, CC0 (https://stocksnap.io/photo/electric-guitar-UIT62UUU5X)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/D76S1KCTX0.jpg": "Electric Guitar - StockSnap, CC0 (https://stocksnap.io/photo/electric-guitar-D76S1KCTX0)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/LZDL90URQB.jpg": "Electric Guitar - StockSnap, CC0 (https://stocksnap.io/photo/electric-guitar-LZDL90URQB)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/D9ET42KESB.jpg": "Game Controller - StockSnap, CC0 (https://stocksnap.io/photo/game-controller-D9ET42KESB)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/OZ4IBMDS8E.jpg": "Controller Videogames - StockSnap, CC0 (https://stocksnap.io/photo/controller-videogames-OZ4IBMDS8E)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/RCTXTLCXH6.jpg": "Sony Playstation - StockSnap, CC0 (https://stocksnap.io/photo/sony-playstation-RCTXTLCXH6)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/2G3VPGYPBQ.jpg": "Sari Fabric - StockSnap, CC0 (https://stocksnap.io/photo/sari-fabric-2G3VPGYPBQ)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/DC17RTS8K9.jpg": "Colorful Sari - StockSnap, CC0 (https://stocksnap.io/photo/colorful-sari-DC17RTS8K9)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/WXYINWDULE.jpg": "Sari Fabric - StockSnap, CC0 (https://stocksnap.io/photo/sari-fabric-WXYINWDULE)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/HKSJ19ZNPA.jpg": "Sari Scarf - StockSnap, CC0 (https://stocksnap.io/photo/sari-scarf-HKSJ19ZNPA)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/TNYTJ4YJBD.jpg": "Colorful Sari - StockSnap, CC0 (https://stocksnap.io/photo/colorful-sari-TNYTJ4YJBD)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/TCSL0ZGITJ.jpg": "Keyboard Computer - StockSnap, CC0 (https://stocksnap.io/photo/keyboard-computer-TCSL0ZGITJ)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/FFPJ3S8U5Y.jpg": "Keyboard Computer - StockSnap, CC0 (https://stocksnap.io/photo/keyboard-computer-FFPJ3S8U5Y)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/NQHDCWGEOH.jpg": "Drills Drill - StockSnap, CC0 (https://stocksnap.io/photo/drills-drill-NQHDCWGEOH)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/L8IBQZYEAL.jpg": "Craftsman Drill - StockSnap, CC0 (https://stocksnap.io/photo/craftsman-drill-L8IBQZYEAL)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/Z39ZXFULBC.jpg": "Macro Drill - StockSnap, CC0 (https://stocksnap.io/photo/macro-drill-Z39ZXFULBC)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/ZKCAWAC91T.jpg": "Piano Music - StockSnap, CC0 (https://stocksnap.io/photo/piano-music-ZKCAWAC91T)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/DPYMRMG50T.jpg": "Piano Keys - StockSnap, CC0 (https://stocksnap.io/photo/piano-keys-DPYMRMG50T)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/R443TS2UXX.jpg": "Vintage Piano - StockSnap, CC0 (https://stocksnap.io/photo/vintage-piano-R443TS2UXX)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/A8DQ8W3OCI.jpg": "Blue Puzzle - StockSnap, CC0 (https://stocksnap.io/photo/blue-puzzle-A8DQ8W3OCI)",
+  "https://cdn.stocksnap.io/img-thumbs/960w/Z6NQG48GT0.jpg": "Paper Puzzle - StockSnap, CC0 (https://stocksnap.io/photo/paper-puzzle-Z6NQG48GT0)"
+ },
+ "_review": "Every photo here was checked by eye against the product line it illustrates on 2026-09-17; search results that did not show the product were removed. Re-running fetch_catalogue_images.py replaces this file and needs the same review."
+}

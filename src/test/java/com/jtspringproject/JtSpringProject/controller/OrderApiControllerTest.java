@@ -50,6 +50,9 @@ class OrderApiControllerTest {
     @MockBean
     private OrderService orderService;
 
+    @MockBean
+    private com.jtspringproject.JtSpringProject.services.AddressService addressService;
+
     private Order testOrder;
 
     @BeforeEach

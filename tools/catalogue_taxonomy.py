@@ -10,9 +10,9 @@ goods really cost in rupees.
 Every price band below is (min, max) in whole rupees.
 """
 
-# Department names must match those seeded by migration V9.
+# Department names must match the category table (V9, renamed in V14).
 CATALOGUE = {
-    "Mobile Phones": {
+    "Mobiles": {
         # Lines are bound to their brand. Drawing the two independently
         # produced "Apple Galaxy M" and "Bose SoundCore" - which anyone who
         # knows the market spots at a glance, and a catalogue that fails that
@@ -40,7 +40,9 @@ CATALOGUE = {
         # a flat band would put every phone in the same filter bucket.
         "price": (6999, 159900),
         "weight": (160, 240),
-        "blurb": "{brand} {line} with a {display} display, {camera} camera and {battery} battery.",
+        # "phone" in the text lets a keyword search for "phones" find every
+        # model, not only those whose name happens to contain the word.
+        "blurb": "{brand} {line} phone with a {display} display, {camera} camera and {battery} battery.",
         "extras": {
             "display": ["6.1-inch AMOLED", "6.5-inch Super AMOLED",
                         "6.67-inch LCD 120Hz", "6.7-inch OLED", "6.78-inch AMOLED 144Hz"],
@@ -65,8 +67,39 @@ CATALOGUE = {
             "Marshall": ["Emberton", "Acton", "Major"],
         },
         "variants": ["", "Pro", "Max", "Plus", "2nd Gen"],
-        "attributes": ["Bluetooth 5.3", "Active Noise Cancellation", "40H Playtime",
-                       "Wireless", "Dolby Atmos"],
+        # A television is not "Bluetooth 5.3", and nobody sells a blue one.
+        "line_attributes": {
+            "Bravia Smart TV": ["43 inch 4K Ultra HD", "55 inch 4K Ultra HD", "65 inch OLED"],
+            "Smart TV": ["32 inch HD Ready", "43 inch Full HD", "55 inch 4K Ultra HD"],
+            "Monitor": ["24 inch Full HD IPS", "27 inch QHD", "27 inch 4K"],
+            "Air Purifier": ["HEPA Filter", "For rooms up to 400 sq ft"],
+            "Air Fryer": ["4.2L", "6.5L Digital"], "Steam Iron": ["1600W", "2000W"],
+            "Trimmer": ["60 min runtime", "90 min runtime"],
+            "Power Bank": ["10000mAh", "20000mAh 22.5W"], "Charger": ["33W Type-C", "65W GaN"],
+            "Keyboard": ["Wireless", "Mechanical, Wired"], "Webcam": ["1080p", "2K with Mic"],
+            "Luna Ring": ["Size 8", "Size 10", "Size 12"],
+            "WH Headphones": ["Active Noise Cancellation", "30H Playtime"],
+            "QuietComfort": ["Active Noise Cancellation"], "Airdopes": ["Bluetooth 5.3", "ENx Noise Cancellation"],
+            "Buds": ["Active Noise Cancellation", "40H Playtime"], "Galaxy Buds": ["Active Noise Cancellation"],
+            "Air Buds": ["Bluetooth 5.3", "40H Playtime"], "Rockerz": ["40H Playtime", "Bluetooth 5.3"],
+            "Soundbar": ["Dolby Atmos", "5.1 Channel", "2.1 Channel"],
+            "Audio System": ["Dolby Atmos", "5.1 Channel"],
+            "Wave Smartwatch": ["1.96 inch AMOLED", "Bluetooth Calling", "SpO2 Monitoring"],
+            "ColorFit": ["1.96 inch AMOLED", "Bluetooth Calling", "SpO2 Monitoring"],
+            "Smart Band": ["Heart Rate Monitor", "SpO2 Monitoring"],
+            "Trimmer": ["60 min runtime", "90 min runtime"],
+        },
+        "line_colours": {
+            "Bravia Smart TV": ["Black"], "Smart TV": ["Black"], "Monitor": ["Black"],
+            "Air Purifier": ["White"], "Air Fryer": ["Black", "White"],
+            "Luna Ring": ["Black", "Silver", "Gold"],
+        },
+        "line_variants": {
+            "Bravia Smart TV": ["", "X75L", "X80L"], "Smart TV": ["", "Pro", "Plus"],
+            "Monitor": ["", "Pro"], "Air Purifier": ["", "Pro"], "Air Fryer": ["", "Pro"],
+            "Charger": [""], "Webcam": [""], "Luna Ring": ["", "Pro"],
+        },
+        "attributes": ["Bluetooth 5.3", "40H Playtime", "Wireless"],
         "colours": ["Black", "Blue", "Grey", "White", "Beige"],
         # One band for the whole department priced earbuds like televisions -
         # "Samsung Galaxy Buds, Rs 2,35,900" is the sort of thing that makes a
@@ -103,7 +136,7 @@ CATALOGUE = {
                          "6 month warranty on accessories"],
         },
     },
-    "Computers": {
+    "Laptops": {
         "brand_lines": {
             "HP": ["Pavilion", "Victus", "OmniBook", "15s"],
             "Dell": ["Inspiron", "Vostro", "XPS", "G15"],
@@ -116,6 +149,9 @@ CATALOGUE = {
         },
         # Apple has not shipped an Intel chip in years, so the shared
         # attribute pool would describe a machine that does not exist.
+        # Apple sells no "Gaming" MacBook and no "Shadow Black" one.
+        "brand_variants": {"Apple": ["", "13", "15"]},
+        "brand_colours": {"Apple": ["Silver", "Space Grey", "Midnight", "Starlight"]},
         "brand_attributes": {
             "Apple": ["M2 8GB 256GB", "M2 16GB 512GB", "M3 8GB 512GB",
                       "M3 Pro 18GB 1TB"],
@@ -123,7 +159,7 @@ CATALOGUE = {
         "variants": ["", "15", "14", "Gaming", "Thin and Light"],
         "attributes": ["i5 12th Gen 8GB 512GB SSD", "i7 13th Gen 16GB 1TB SSD",
                        "Ryzen 5 8GB 512GB SSD", "Ryzen 7 16GB 512GB SSD",
-                       "M2 8GB 256GB", "i3 11th Gen 8GB 256GB SSD"],
+                       "i3 11th Gen 8GB 256GB SSD"],
         "colours": ["Silver", "Space Grey", "Shadow Black", "Platinum"],
         "price": (24990, 289900),
         "weight": (1200, 2800),
@@ -133,20 +169,78 @@ CATALOGUE = {
                         "13.6-inch Liquid Retina"],
         },
     },
-    "Clothing": {
-        "brands": ["Allen Solly", "Levis", "Biba", "W for Woman", "FabIndia",
-                   "Manyavar", "Peter England", "Van Heusen", "Libas", "Roadster",
-                   "HRX", "Aurelia"],
-        "lines": ["Anarkali Kurta", "Straight Kurta", "Banarasi Saree",
-                  "Cotton Saree", "Slim Fit Shirt", "Formal Trousers",
-                  "Printed Kurti", "Sharara Set", "Lehenga Choli", "Nehru Jacket",
-                  "Chinos", "Regular Fit Jeans", "Anarkali Gown", "Palazzo Set"],
-        "variants": ["", "Set of 2", "with Dupatta", "Pack of 3"],
-        "attributes": ["S", "M", "L", "XL", "XXL", "Free Size"],
-        "colours": ["Maroon", "Navy Blue", "Mustard Yellow", "Emerald Green",
-                    "Rani Pink", "Off White", "Charcoal", "Peach"],
-        "price": (349, 24999),
+    # Men's and women's clothing are separate departments, as on every Indian
+    # marketplace: "deals for men" has to be answerable, and a shared pool put
+    # sarees and chinos under the same filter.
+    "Men's Fashion": {
+        "brands": ["Allen Solly", "Peter England", "Van Heusen", "Louis Philippe",
+                   "Levis", "Roadster", "HRX", "Manyavar", "U.S. Polo Assn.",
+                   "Jack & Jones", "Arrow", "Raymond"],
+        "lines": ["Slim Fit Shirt", "Casual Shirt", "Polo T-Shirt",
+                  "Round Neck T-Shirt", "Formal Trousers", "Chinos",
+                  "Regular Fit Jeans", "Slim Fit Jeans", "Kurta Pyjama Set",
+                  "Nehru Jacket", "Blazer", "Hoodie", "Track Pants", "Cargo Shorts"],
+        "variants": ["", "Pack of 2", "Combo"],
+        # A variant has to make sense for the garment: nobody sells a blazer in
+        # a pack of two.
+        "line_variants": {
+            "Blazer": [""], "Kurta Pyjama Set": ["", "Festive Edition"],
+            "Nehru Jacket": [""], "Formal Trousers": ["", "Pack of 2"],
+        },
+        "attributes": ["S", "M", "L", "XL", "XXL"],
+        "colours": ["Navy Blue", "Charcoal", "Olive Green", "White", "Sky Blue",
+                    "Black", "Maroon", "Beige"],
+        "line_prices": {
+            "Slim Fit Shirt": (599, 3999), "Casual Shirt": (499, 2999),
+            "Polo T-Shirt": (399, 2999), "Round Neck T-Shirt": (249, 1999),
+            "Formal Trousers": (799, 3999), "Chinos": (799, 3499),
+            "Regular Fit Jeans": (799, 4999), "Slim Fit Jeans": (899, 4999),
+            "Kurta Pyjama Set": (999, 7999), "Nehru Jacket": (999, 5999),
+            "Blazer": (2999, 14999), "Hoodie": (699, 3999),
+            "Track Pants": (399, 2499), "Cargo Shorts": (399, 1999),
+        },
+        "price": (249, 14999),
         "weight": (180, 1400),
+        "blurb": "{colour} {line} for men in {fabric}. {fit}. {care}.",
+        "extras": {
+            "fabric": ["pure cotton", "cotton blend", "linen", "stretch denim",
+                       "poly-viscose", "cotton fleece"],
+            "fit": ["Regular fit", "Slim fit", "Relaxed fit"],
+            "care": ["Machine wash cold", "Dry clean only", "Hand wash recommended"],
+        },
+    },
+    "Women's Fashion": {
+        "brands": ["Biba", "W for Woman", "FabIndia", "Libas", "Aurelia",
+                   "Global Desi", "Vero Moda", "ONLY", "Sassafras", "Rangriti",
+                   "Anouk", "Levis"],
+        "lines": ["Anarkali Kurta", "Straight Kurta", "Printed Kurti",
+                  "Banarasi Saree", "Cotton Saree", "Sharara Set", "Lehenga Choli",
+                  "Palazzo Set", "Maxi Dress", "A-Line Dress", "Bodycon Dress",
+                  "Wrap Dress", "Crop Top", "Wide Leg Jeans", "Co-ord Set"],
+        "variants": ["", "Set of 2"],
+        "line_variants": {
+            "Anarkali Kurta": ["", "with Dupatta"], "Straight Kurta": ["", "with Dupatta"],
+            "Banarasi Saree": ["", "with Blouse Piece"], "Cotton Saree": ["", "with Blouse Piece"],
+            "Sharara Set": ["", "with Dupatta"], "Lehenga Choli": ["", "with Dupatta"],
+            "Maxi Dress": [""], "A-Line Dress": [""], "Bodycon Dress": [""],
+            "Wrap Dress": [""], "Co-ord Set": [""], "Palazzo Set": ["", "with Dupatta"],
+            "Wide Leg Jeans": [""], "Crop Top": ["", "Pack of 2"],
+        },
+        "attributes": ["XS", "S", "M", "L", "XL", "XXL"],
+        "colours": ["Maroon", "Navy Blue", "Mustard Yellow", "Emerald Green",
+                    "Rani Pink", "Off White", "Black", "Peach", "Lavender"],
+        "line_prices": {
+            "Anarkali Kurta": (699, 4999), "Straight Kurta": (399, 3499),
+            "Printed Kurti": (299, 1999), "Banarasi Saree": (1499, 24999),
+            "Cotton Saree": (499, 3999), "Sharara Set": (999, 6999),
+            "Lehenga Choli": (1999, 24999), "Palazzo Set": (599, 3999),
+            "Maxi Dress": (599, 4999), "A-Line Dress": (499, 3999),
+            "Bodycon Dress": (499, 2999), "Wrap Dress": (599, 3999),
+            "Crop Top": (299, 1499), "Wide Leg Jeans": (799, 3499),
+            "Co-ord Set": (799, 3999),
+        },
+        "price": (299, 24999),
+        "weight": (150, 1400),
         "blurb": "{colour} {line} in {fabric}. {care}.",
         "extras": {
             "fabric": ["pure cotton", "rayon blend", "georgette", "chiffon",
@@ -154,11 +248,21 @@ CATALOGUE = {
             "care": ["Machine wash cold", "Dry clean only", "Hand wash recommended"],
         },
     },
-    "Shoes": {
-        "brands": ["Nike", "adidas", "Puma", "Bata", "Woodland", "Campus",
-                   "Sparx", "Red Chief", "Skechers", "Liberty"],
-        "lines": ["Running Shoes", "Sneakers", "Formal Derby", "Sports Sandals",
-                  "Trekking Boots", "Loafers", "Flip Flops", "Walking Shoes"],
+    "Footwear": {
+        "series": True,
+        # Brands make particular kinds of shoe: nobody sells adidas formal derbies.
+        "brand_lines": {
+            "Nike": ["Running Shoes", "Sneakers", "Walking Shoes", "Flip Flops"],
+            "adidas": ["Running Shoes", "Sneakers", "Sports Sandals", "Flip Flops"],
+            "Puma": ["Running Shoes", "Sneakers", "Walking Shoes", "Flip Flops"],
+            "Skechers": ["Walking Shoes", "Running Shoes", "Sneakers"],
+            "Campus": ["Running Shoes", "Walking Shoes", "Sneakers", "Sports Sandals"],
+            "Sparx": ["Running Shoes", "Sports Sandals", "Flip Flops"],
+            "Bata": ["Formal Derby", "Loafers", "Sports Sandals", "Flip Flops"],
+            "Red Chief": ["Formal Derby", "Loafers", "Trekking Boots"],
+            "Woodland": ["Trekking Boots", "Sports Sandals", "Loafers"],
+            "Liberty": ["Formal Derby", "Loafers", "Walking Shoes"],
+        },
         "variants": ["", "Pro", "Lite"],
         "attributes": ["UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11"],
         "colours": ["Black", "White", "Navy", "Tan", "Grey", "Olive"],
@@ -177,6 +281,24 @@ CATALOGUE = {
                   "Casserole Set", "Water Bottle", "Induction Cooktop",
                   "Dinner Set", "Kadai", "Electric Kettle", "Lunch Box"],
         "variants": ["", "3L", "5L", "750ml", "Set of 6", "1.5L"],
+        "line_variants": {
+            "Pressure Cooker": ["3L", "5L"], "Non-Stick Tawa": ["", "28cm"],
+            "Mixer Grinder": ["", "750W", "500W"], "Casserole Set": ["3 Pieces", "2 Pieces"],
+            "Water Bottle": ["750ml", "1L", "Set of 3"], "Induction Cooktop": ["", "2000W"],
+            "Dinner Set": ["24 Pieces", "36 Pieces"], "Kadai": ["", "2.5L"],
+            "Electric Kettle": ["1.5L", "1.2L"], "Lunch Box": ["", "3 Containers"],
+        },
+        "line_attributes": {
+            "Pressure Cooker": ["Stainless Steel", "Hard Anodised"],
+            "Non-Stick Tawa": ["Hard Anodised", "Non-Stick Coated"],
+            "Kadai": ["Hard Anodised", "Stainless Steel", "Cast Iron"],
+            "Mixer Grinder": ["3 Jars", "4 Jars"], "Induction Cooktop": ["Touch Panel", "Push Button"],
+            "Electric Kettle": ["Stainless Steel", "Borosilicate Glass"],
+            "Casserole Set": ["Insulated", "Stainless Steel"],
+            "Water Bottle": ["Stainless Steel", "Copper", "Food Grade Plastic"],
+            "Dinner Set": ["Opalware", "Borosilicate Glass", "Melamine"],
+            "Lunch Box": ["Stainless Steel", "Food Grade Plastic"],
+        },
         "attributes": ["Stainless Steel", "Hard Anodised", "Borosilicate Glass",
                        "Food Grade Plastic"],
         "colours": ["Steel", "Black", "Red", "Blue"],
@@ -195,7 +317,18 @@ CATALOGUE = {
                    "Wakefit", "Urban Ladder", "Pepperfry"],
         "lines": ["Office Chair", "Study Table", "Queen Mattress", "Shoe Rack",
                   "Bookshelf", "Folding Bed", "TV Unit", "Wardrobe"],
-        "variants": ["", "2 Door", "3 Seater", "6 inch"],
+        "variants": [""],
+        "line_variants": {
+            "Office Chair": ["", "High Back", "Mid Back"], "Study Table": ["", "with Drawer"],
+            "Queen Mattress": ["6 inch", "8 inch"], "Shoe Rack": ["4 Shelf", "5 Shelf"],
+            "Bookshelf": ["4 Shelf", "5 Shelf"], "Folding Bed": ["Single", ""],
+            "TV Unit": ["", "Wall Mounted"], "Wardrobe": ["2 Door", "3 Door"],
+        },
+        "line_attributes": {
+            "Office Chair": ["Mesh Back", "Leatherette", "Ergonomic"],
+            "Queen Mattress": ["Memory Foam", "Pocket Spring", "Orthopaedic"],
+            "Folding Bed": ["Metal Frame"],
+        },
         "attributes": ["Engineered Wood", "Solid Sheesham", "Metal Frame", "Plastic"],
         "colours": ["Walnut Brown", "Wenge", "White", "Black"],
         "price": (999, 89999),
@@ -217,7 +350,15 @@ CATALOGUE = {
         "variants": ["", "100ml", "200ml", "30ml", "Pack of 2"],
         "attributes": ["For Oily Skin", "For Dry Skin", "All Skin Types",
                        "Paraben Free", "Dermatologically Tested"],
-        "colours": ["", "Ruby Red", "Nude", "Coral"],
+        "colours": [""],
+        # Only make-up comes in shades.
+        "line_colours": {"Lipstick": ["Ruby Red", "Nude", "Coral", "Berry"], "Kajal": ["Black", "Brown"]},
+        "line_attributes": {
+            "Lipstick": ["Matte", "Creamy", "Long Lasting"], "Kajal": ["Smudge Proof", "Waterproof"],
+            "Hair Oil": ["For Hair Fall", "For Dry Hair", "All Hair Types"],
+            "Shampoo": ["For Hair Fall", "Anti-Dandruff", "For Dry Hair"],
+        },
+        "line_variants": {"Lipstick": [""], "Kajal": ["", "Pack of 2"]},
         "price": (99, 4999),
         "weight": (30, 500),
         "blurb": "{brand} {line} enriched with {ingredient}. {claim}.",
@@ -233,9 +374,15 @@ CATALOGUE = {
                    "HRX", "Strauss"],
         "lines": ["Cricket Bat", "Badminton Racket", "Football", "Yoga Mat",
                   "Dumbbell Set", "Skipping Rope", "Gym Gloves", "Cycling Helmet"],
-        "variants": ["", "Size 5", "10kg", "6mm"],
+        "variants": [""],
+        "line_variants": {
+            "Football": ["Size 5", "Size 4"], "Dumbbell Set": ["10kg", "20kg"],
+            "Yoga Mat": ["6mm", "8mm"], "Cricket Bat": ["Full Size", "Size 6"],
+            "Gym Gloves": ["", "Wrist Support"], "Cycling Helmet": ["", "with Visor"],
+        },
         "attributes": ["Beginner", "Intermediate", "Professional"],
         "colours": ["Black", "Blue", "Red", "Green"],
+        "line_colours": {"Cricket Bat": [""]},
         "price": (199, 34999),
         "weight": (150, 15000),
         "blurb": "{brand} {line} for {level} players. {detail}.",
@@ -251,8 +398,19 @@ CATALOGUE = {
         "lines": ["Building Blocks", "Board Game", "Jigsaw Puzzle",
                   "Remote Control Car", "Soft Toy", "Learning Tablet",
                   "Play Kitchen", "Card Game"],
-        "variants": ["", "Age 3+", "Age 6+", "1000 Pieces"],
-        "attributes": ["Educational", "Multiplayer", "Battery Operated"],
+        "variants": ["", "Age 3+", "Age 6+"],
+        "attributes": ["Educational", "Multiplayer"],
+        "line_attributes": {
+            "Remote Control Car": ["Rechargeable", "Battery Operated"],
+            "Learning Tablet": ["Battery Operated", "Rechargeable"],
+            "Soft Toy": ["Washable", "Hypoallergenic"],
+            "Jigsaw Puzzle": ["Educational"], "Building Blocks": ["Educational", "Creative"],
+            "Board Game": ["Multiplayer", "Family"], "Card Game": ["Multiplayer", "Party"],
+        },
+        "line_variants": {
+            "Jigsaw Puzzle": ["500 Pieces", "1000 Pieces"], "Building Blocks": ["Age 3+", "Age 6+"],
+            "Soft Toy": ["30cm", "60cm"],
+        },
         "colours": ["Multicolour", "Blue", "Pink"],
         "price": (149, 12999),
         "weight": (100, 4000),
@@ -284,12 +442,39 @@ CATALOGUE = {
         },
     },
     "Automotive": {
-        "brands": ["Bosch", "Castrol", "3M", "Amaron", "Exide", "MRF", "Steelbird"],
-        "lines": ["Engine Oil", "Car Battery", "Wiper Blades", "Car Cover",
-                  "Tyre Inflator", "Dashboard Polish", "Riding Helmet"],
-        "variants": ["", "1L", "3.5L", "Set of 2"],
-        "attributes": ["Petrol", "Diesel", "Universal Fit"],
-        "colours": ["Black", "Silver"],
+        "series": True,
+        "brand_lines": {
+            "Castrol": ["Engine Oil"], "Shell": ["Engine Oil"], "Mobil": ["Engine Oil"],
+            "Motul": ["Engine Oil"], "Gulf": ["Engine Oil"],
+            "Bosch": ["Wiper Blades", "Car Battery", "Tyre Inflator", "Car Vacuum Cleaner"],
+            "Amaron": ["Car Battery"], "Exide": ["Car Battery"], "SF Sonic": ["Car Battery"],
+            "3M": ["Dashboard Polish", "Car Cover", "Wiper Blades", "Seat Cover"],
+            "Valeo": ["Wiper Blades"], "Turtle Wax": ["Dashboard Polish"], "Formula 1": ["Dashboard Polish"],
+            "Michelin": ["Tyre Inflator"], "Qubo": ["Tyre Inflator", "Dash Camera"],
+            "70mai": ["Dash Camera"], "Autofurnish": ["Car Cover", "Seat Cover", "Phone Holder"],
+            "Portronics": ["Phone Holder", "Car Vacuum Cleaner"],
+            "Steelbird": ["Riding Helmet"], "Vega": ["Riding Helmet"], "Studds": ["Riding Helmet"],
+        },
+        "variants": [""],
+        "line_variants": {
+            "Engine Oil": ["1L", "3.5L"], "Wiper Blades": ["Set of 2", ""],
+            "Car Battery": ["35Ah", "65Ah"], "Dashboard Polish": ["200ml", "500ml"],
+            "Riding Helmet": ["", "with Visor"],
+            "Seat Cover": ["Set of 5", "Front Pair"], "Dash Camera": ["", "Pro"],
+            "Car Vacuum Cleaner": ["", "Cordless"], "Phone Holder": ["", "Magnetic"],
+        },
+        "attributes": ["Universal Fit"],
+        "line_attributes": {
+            "Engine Oil": ["Petrol", "Diesel", "5W-30 Synthetic"], "Car Battery": ["Petrol", "Diesel"],
+            "Car Cover": ["Hatchback", "Sedan", "SUV"], "Tyre Inflator": ["Digital", "Portable 12V"],
+            "Riding Helmet": ["ISI Certified", "Full Face"], "Wiper Blades": ["Universal Fit"],
+            "Dashboard Polish": ["Matte Finish", "Gloss Finish"],
+            "Seat Cover": ["Hatchback", "Sedan", "SUV"], "Dash Camera": ["1080p", "2.7K with GPS"],
+            "Car Vacuum Cleaner": ["120W", "Wet and Dry"], "Phone Holder": ["Dashboard Mount", "AC Vent Mount"],
+        },
+        "colours": [""],
+        "line_colours": {"Car Cover": ["Silver", "Grey"], "Riding Helmet": ["Black", "Red", "White"],
+                         "Seat Cover": ["Beige", "Black", "Tan"]},
         "price": (249, 18999),
         "weight": (200, 20000),
         "blurb": "{brand} {line} - {detail}. {compat}.",
@@ -301,12 +486,25 @@ CATALOGUE = {
         },
     },
     "Office Products": {
-        "brands": ["Classmate", "Camlin", "Faber-Castell", "Luxor", "Cello",
-                   "Navneet", "3M"],
-        "lines": ["Notebook", "Gel Pen Set", "Sticky Notes", "File Folder",
-                  "Whiteboard Marker", "Stapler", "Desk Organiser"],
-        "variants": ["", "Pack of 10", "Pack of 5", "A4"],
-        "attributes": ["Ruled", "Unruled", "Spiral Bound"],
+        "series": True,
+        "brand_lines": {
+            "Classmate": ["Notebook", "Gel Pen Set"], "Navneet": ["Notebook"],
+            "Camlin": ["Gel Pen Set", "Whiteboard Marker"],
+            "Faber-Castell": ["Gel Pen Set", "Whiteboard Marker"], "Luxor": ["Whiteboard Marker", "Gel Pen Set"],
+            "Cello": ["Gel Pen Set", "File Folder", "Desk Organiser"],
+            "3M": ["Sticky Notes"], "Kangaro": ["Stapler"], "Solo": ["File Folder", "Desk Organiser"],
+        },
+        "variants": [""],
+        "line_variants": {
+            "Notebook": ["Pack of 6", "A4", ""], "Gel Pen Set": ["Pack of 10", "Pack of 5"],
+            "Sticky Notes": ["Pack of 5", "400 Sheets"], "File Folder": ["Pack of 10", "A4"],
+            "Whiteboard Marker": ["Pack of 4", "Pack of 10"],
+        },
+        "attributes": [""],
+        "line_attributes": {
+            "Notebook": ["Ruled", "Unruled", "Spiral Bound"], "Gel Pen Set": ["0.5mm", "0.7mm"],
+            "Stapler": ["No. 10", "Heavy Duty"], "File Folder": ["Plastic", "Cardboard"],
+        },
         "colours": ["Blue", "Black", "Assorted"],
         "price": (39, 4999),
         "weight": (50, 2000),
@@ -318,11 +516,27 @@ CATALOGUE = {
         },
     },
     "Pet Supplies": {
-        "brands": ["Pedigree", "Whiskas", "Drools", "Himalaya", "Trixie", "Farmina"],
-        "lines": ["Adult Dry Food", "Puppy Food", "Cat Food", "Chew Toy",
-                  "Pet Shampoo", "Collar", "Feeding Bowl"],
-        "variants": ["", "1.2kg", "3kg", "Medium", "Large"],
+        "series": True,
+        "brand_lines": {
+            "Pedigree": ["Adult Dry Food", "Puppy Food"],
+            "Whiskas": ["Cat Food"],
+            "Drools": ["Adult Dry Food", "Puppy Food", "Cat Food"],
+            "Farmina": ["Adult Dry Food", "Puppy Food", "Cat Food"],
+            "Himalaya": ["Pet Shampoo", "Adult Dry Food"],
+            "Trixie": ["Chew Toy", "Collar", "Feeding Bowl", "Pet Shampoo"],
+        },
+        "variants": [""],
+        "line_variants": {
+            "Adult Dry Food": ["1.2kg", "3kg"], "Puppy Food": ["1.2kg", "3kg"], "Cat Food": ["1.2kg", "Pack of 12"],
+            "Collar": ["Medium", "Large"], "Pet Shampoo": ["200ml", "500ml"], "Feeding Bowl": ["Medium", "Large"],
+        },
         "attributes": ["Chicken", "Lamb and Rice", "Ocean Fish", "Grain Free"],
+        # Food and shampoo do not come in colours.
+        "line_colours": {"Adult Dry Food": [""], "Puppy Food": [""], "Cat Food": [""], "Pet Shampoo": [""]},
+        "line_attributes": {
+            "Chew Toy": ["Rubber", "Rope"], "Pet Shampoo": ["Anti-Tick", "For Sensitive Skin"],
+            "Collar": ["Nylon", "Leather"], "Feeding Bowl": ["Stainless Steel", "Anti-Skid"],
+        },
         "colours": ["", "Red", "Blue"],
         "price": (99, 6499),
         "weight": (100, 15000),
@@ -340,7 +554,13 @@ CATALOGUE = {
         "lines": ["Disinfectant Liquid", "Floor Cleaner", "Toilet Cleaner",
                   "Detergent Powder", "Dishwash Gel", "Hand Sanitiser",
                   "Glass Cleaner"],
-        "variants": ["", "1L", "500ml", "2kg", "Pack of 3"],
+        "variants": [""],
+        "line_variants": {
+            "Disinfectant Liquid": ["1L", "500ml"], "Floor Cleaner": ["1L", "2L"],
+            "Toilet Cleaner": ["500ml", "Pack of 3"], "Detergent Powder": ["1kg", "4kg"],
+            "Dishwash Gel": ["750ml", "2L"], "Hand Sanitiser": ["500ml", "Pack of 3"],
+            "Glass Cleaner": ["500ml"],
+        },
         "attributes": ["Citrus", "Lavender", "Original", "Lemon"],
         "colours": [""],
         "price": (49, 2999),
@@ -358,7 +578,12 @@ CATALOGUE = {
                    "Mee Mee", "LuvLap"],
         "lines": ["Diaper Pants", "Baby Wipes", "Baby Lotion", "Feeding Bottle",
                   "Baby Carrier", "Sterilizer", "Baby Powder"],
-        "variants": ["", "Small", "Medium", "Large", "Pack of 72"],
+        "variants": [""],
+        "line_variants": {
+            "Diaper Pants": ["Small, 86 Count", "Medium, 76 Count", "Large, 64 Count"],
+            "Baby Wipes": ["Pack of 3", "72 Wipes"], "Baby Lotion": ["200ml", "400ml"],
+            "Feeding Bottle": ["125ml", "250ml"], "Baby Powder": ["200g", "400g"],
+        },
         "attributes": ["0-6 Months", "6-12 Months", "1-2 Years"],
         "colours": ["", "Pink", "Blue"],
         "price": (99, 8999),
@@ -371,13 +596,22 @@ CATALOGUE = {
                      "BPA free materials"],
         },
     },
-    "Luggage": {
+    "Bags & Luggage": {
         "brands": ["American Tourister", "Skybags", "VIP", "Safari", "Wildcraft",
                    "Aristocrat"],
         "lines": ["Cabin Trolley", "Check-in Trolley", "Laptop Backpack",
                   "Duffel Bag", "Travel Organiser"],
-        "variants": ["", "55cm", "68cm", "35L"],
-        "attributes": ["Hard Shell", "Soft Shell", "Water Resistant"],
+        "variants": [""],
+        "line_variants": {
+            "Cabin Trolley": ["55cm"], "Check-in Trolley": ["68cm", "78cm"],
+            "Laptop Backpack": ["30L", "35L"], "Duffel Bag": ["45L", "60L"],
+        },
+        "attributes": ["Water Resistant"],
+        "line_attributes": {
+            "Cabin Trolley": ["Hard Shell", "Soft Shell"], "Check-in Trolley": ["Hard Shell", "Soft Shell"],
+            "Laptop Backpack": ["Water Resistant", "Fits 15.6 inch Laptop"],
+            "Travel Organiser": ["Set of 6", "Water Resistant"],
+        },
         "colours": ["Black", "Navy", "Teal", "Maroon"],
         "price": (599, 21999),
         "weight": (500, 6000),
@@ -390,12 +624,25 @@ CATALOGUE = {
         },
     },
     "Musical Instruments": {
-        "brands": ["Yamaha", "Casio", "Kadence", "Juarez", "Fender", "Hertz"],
-        "lines": ["Acoustic Guitar", "Digital Piano", "Tabla Set", "Harmonium",
-                  "Ukulele", "Cajon", "Electric Guitar"],
-        "variants": ["", "61 Keys", "38 inch", "Beginner Kit"],
+        "series": True,
+        "brand_lines": {
+            "Yamaha": ["Acoustic Guitar", "Digital Piano", "Electric Guitar", "Ukulele"],
+            "Casio": ["Digital Piano"],
+            "Kadence": ["Acoustic Guitar", "Ukulele", "Cajon", "Electric Guitar"],
+            "Juarez": ["Acoustic Guitar", "Ukulele"],
+            "Fender": ["Acoustic Guitar", "Electric Guitar", "Ukulele"],
+            "Hertz": ["Acoustic Guitar", "Ukulele", "Cajon"],
+            "Bina": ["Harmonium", "Tabla Set"], "Maharaja Musicals": ["Tabla Set", "Harmonium"],
+        },
+        "variants": [""],
+        "line_variants": {
+            "Digital Piano": ["61 Keys", "88 Keys"], "Acoustic Guitar": ["38 inch", "40 inch", "Beginner Kit"],
+            "Electric Guitar": ["", "Beginner Kit"], "Ukulele": ["Soprano", "Concert"],
+            "Tabla Set": ["", "with Cover"], "Harmonium": ["3.5 Octave", "Folding"], "Cajon": [""],
+        },
         "attributes": ["Beginner", "Intermediate", "Professional"],
         "colours": ["Natural", "Black", "Sunburst"],
+        "line_colours": {"Digital Piano": ["Black", "White"], "Tabla Set": [""], "Harmonium": [""]},
         "price": (1499, 89999),
         "weight": (1000, 25000),
         "blurb": "{brand} {line} - {detail}. {includes}.",
@@ -411,7 +658,13 @@ CATALOGUE = {
                    "Ibell"],
         "lines": ["Cordless Drill", "Screwdriver Set", "Angle Grinder",
                   "Measuring Tape", "Tool Kit", "Hammer", "Wrench Set"],
-        "variants": ["", "12V", "18V", "Set of 25", "5m"],
+        "variants": [""],
+        "line_variants": {
+            "Cordless Drill": ["12V", "18V"], "Angle Grinder": ["850W", "1200W"],
+            "Screwdriver Set": ["12 Pieces", "25 Pieces"], "Measuring Tape": ["5m", "3m"],
+            "Tool Kit": ["108 Pieces", "46 Pieces"], "Wrench Set": ["8 Pieces", "12 Pieces"],
+            "Hammer": ["500g", "Claw"],
+        },
         "attributes": ["Home Use", "Professional", "Heavy Duty"],
         "colours": ["Blue", "Yellow", "Red"],
         "price": (199, 24999),
@@ -428,8 +681,17 @@ CATALOGUE = {
         "brands": ["Ugaoo", "TrustBasket", "Sharpex", "Kraft Seeds", "Gardening Mart"],
         "lines": ["Seed Kit", "Ceramic Planter", "Garden Hose", "Pruning Shears",
                   "Organic Fertiliser", "Grow Bag", "Watering Can"],
-        "variants": ["", "Pack of 5", "10m", "1kg"],
+        "variants": [""],
+        "line_variants": {
+            "Seed Kit": ["Pack of 5", "Pack of 10"], "Ceramic Planter": ["6 inch", "Set of 2"],
+            "Garden Hose": ["10m", "15m"], "Organic Fertiliser": ["1kg", "5kg"],
+            "Grow Bag": ["Pack of 5", "15 inch"], "Watering Can": ["5L", "10L"],
+        },
         "attributes": ["Indoor", "Outdoor", "Balcony"],
+        "line_attributes": {
+            "Garden Hose": ["Kink Resistant"], "Pruning Shears": ["Carbon Steel Blade"],
+            "Watering Can": ["with Rose Head"], "Organic Fertiliser": ["Vermicompost", "Cocopeat Mix"],
+        },
         "colours": ["Terracotta", "White", "Green"],
         "price": (99, 7999),
         "weight": (100, 10000),
@@ -462,12 +724,24 @@ CATALOGUE = {
         },
     },
     "Video Games": {
-        "brands": ["Sony", "Microsoft", "Nintendo", "Ubisoft", "EA Sports", "Rockstar"],
-        "lines": ["PS5 Game", "Xbox Series X Game", "Nintendo Switch Game",
-                  "Wireless Controller", "Gaming Headset"],
+        "series": True,
+        # Publishers make games; console makers also make the accessories.
+        "brand_lines": {
+            "Sony": ["PS5 Game", "Wireless Controller", "Gaming Headset"],
+            "Microsoft": ["Xbox Series X Game", "Wireless Controller"],
+            "Nintendo": ["Nintendo Switch Game"],
+            "Ubisoft": ["PS5 Game", "Xbox Series X Game", "Nintendo Switch Game"],
+            "EA Sports": ["PS5 Game", "Xbox Series X Game"],
+            "Rockstar": ["PS5 Game", "Xbox Series X Game"],
+        },
         "variants": ["", "Standard Edition", "Deluxe Edition"],
         "attributes": ["Action", "Sports", "Racing", "Adventure", "Strategy"],
-        "colours": ["", "Black", "White"],
+        "colours": [""],
+        "line_colours": {"Wireless Controller": ["Black", "White", "Midnight Blue"],
+                         "Gaming Headset": ["Black", "White"]},
+        "line_attributes": {"Wireless Controller": ["Bluetooth", "Wireless"],
+                            "Gaming Headset": ["7.1 Surround", "Wireless"]},
+        "line_variants": {"Wireless Controller": [""], "Gaming Headset": [""]},
         "price": (499, 64999),
         "weight": (100, 1500),
         "blurb": "{line} - {detail}. {note}.",
@@ -493,3 +767,82 @@ SERIES = [
     "Ultra", "Neo", "Max", "Active", "Smart", "Comfort", "Endura", "Vantage",
     "Aura", "Crest", "Zenith", "Nova", "Orbit", "Fusion", "Vertex",
 ]
+
+
+# How each department discounts: (share of products on offer, smallest and
+# largest discount as fractions). Taken from how Indian marketplaces actually
+# price - fashion and audio accessories run 50-70% off MRP routinely, phones
+# rarely move more than a fifth, and books sit in between.
+DISCOUNTS = {
+    "Mobiles": (0.55, 0.05, 0.25),
+    "Electronics": (0.75, 0.10, 0.65),
+    "Laptops": (0.60, 0.05, 0.30),
+    "Men's Fashion": (0.85, 0.20, 0.75),
+    "Women's Fashion": (0.85, 0.20, 0.75),
+    "Footwear": (0.75, 0.15, 0.60),
+    "Home & Kitchen": (0.70, 0.10, 0.55),
+    "Furniture": (0.70, 0.15, 0.60),
+    "Beauty & Personal Care": (0.60, 0.05, 0.40),
+    "Sports & Outdoors": (0.60, 0.10, 0.50),
+    "Toys & Games": (0.55, 0.10, 0.45),
+    "Books": (0.50, 0.05, 0.35),
+    "Automotive": (0.50, 0.05, 0.40),
+    "Office Products": (0.50, 0.05, 0.40),
+    "Pet Supplies": (0.45, 0.05, 0.30),
+    "Health & Household": (0.50, 0.05, 0.35),
+    "Baby": (0.50, 0.05, 0.35),
+    "Bags & Luggage": (0.80, 0.30, 0.70),
+    "Musical Instruments": (0.50, 0.05, 0.35),
+    "Tools & Home Improvement": (0.60, 0.10, 0.50),
+    "Garden & Outdoor": (0.55, 0.10, 0.50),
+    "Movies & TV": (0.40, 0.05, 0.40),
+    "Video Games": (0.40, 0.05, 0.30),
+}
+
+
+# Book titles. Faker's sentences are lorem ipsum, which put Latin gibberish on
+# the shelf; these follow how titles in each genre are actually phrased. Faker
+# still supplies the authors, whose en_IN names are exactly what it is good at.
+BOOK_TITLES = {
+    "Fiction": [
+        "The {adj} {noun}", "The {noun} of {place}", "A {noun} in {place}",
+        "The Last {noun}", "Letters from {place}", "When the {noun} Returns",
+    ],
+    "Non-Fiction": [
+        "The Story of {topic}", "{topic}: A History", "Inside {topic}",
+        "The Making of {topic}",
+    ],
+    "Self Help": [
+        "The Power of {virtue}", "{number} Habits of {people}", "Think Like a {role}",
+        "The Art of {virtue}",
+    ],
+    "Competitive Exams": [
+        "{exam} Complete Guide {year}", "Objective {subject} for {exam}",
+        "{exam} Previous Year Papers {year}", "{subject} Made Easy for {exam}",
+    ],
+    "Children's": [
+        "The {adj} Little {animal}", "{kid} and the {thing}", "{kid} Goes to {place}",
+    ],
+}
+
+BOOK_WORDS = {
+    "adj": ["Silent", "Forgotten", "Hidden", "Burning", "Golden", "Midnight", "Broken",
+            "Distant", "Painted", "Restless", "Secret", "Wandering"],
+    "noun": ["River", "Monsoon", "Kingdom", "Garden", "Palace", "Promise", "Journey",
+             "Storm", "Stranger", "Mirror", "Island", "Harbour", "Orchard", "Lantern"],
+    "place": ["Varanasi", "Malabar", "Calcutta", "the Deccan", "Kashmir", "Bombay",
+              "Madras", "Shimla", "Goa", "Hampi", "Lucknow", "Coorg"],
+    "topic": ["Money", "the Mughal Empire", "Indian Railways", "Cricket", "the Himalayas",
+              "Modern India", "the Mind", "Startups", "the Spice Trade", "Bollywood"],
+    "virtue": ["Discipline", "Focus", "Patience", "Habit", "Kindness", "Letting Go", "Clarity"],
+    "number": ["5", "7", "10", "12"],
+    "people": ["Successful People", "Great Leaders", "Happy Families", "Top Students"],
+    "role": ["Monk", "Founder", "Scientist", "Champion"],
+    "exam": ["UPSC", "JEE Main", "NEET", "CAT", "SSC CGL", "GATE", "Bank PO"],
+    "subject": ["Physics", "Chemistry", "Quantitative Aptitude", "Reasoning",
+                "General Studies", "English", "Biology"],
+    "year": ["2025", "2026"],
+    "animal": ["Elephant", "Tiger", "Monkey", "Peacock", "Mongoose", "Tortoise"],
+    "kid": ["Chintu", "Meera", "Arjun", "Tara", "Kabir", "Anya"],
+    "thing": ["Magic Kite", "Lost Map", "Flying Rickshaw", "Moon Festival", "Secret Garden"],
+}

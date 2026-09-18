@@ -3,6 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useAddresses } from '../context/AddressContext';
+import Price from '../components/Price';
+import ProductImage from '../components/ProductImage';
+import { Stars } from '../components/ProductCard';
+import { browseLink, findInTree, useCategoryTree } from '../hooks/useCatalog';
 import { formatPrice } from '../utils/format';
 
 export default function ProductDetailPage() {
@@ -10,6 +15,8 @@ export default function ProductDetailPage() {
   const navigate = useNavigate();
   const { addItem, busy } = useCart();
   const { isAuthenticated } = useAuth();
+  const { defaultAddress } = useAddresses();
+  const { tree } = useCategoryTree();
   const [product, setProduct] = useState(null);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -41,32 +48,54 @@ export default function ProductDetailPage() {
     if (goToCart) navigate('/cart');
   }
 
+  const { parent } = product.category ? findInTree(tree, product.category.id) : { parent: null };
+  const savings = product.mrp && Number(product.mrp) > Number(product.price)
+    ? Number(product.mrp) - Number(product.price)
+    : 0;
+
   return (
+    <>
+      {product.category && (
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          {parent && (
+            <>
+              <Link to={browseLink({ categoryId: parent.id })}>{parent.name}</Link>
+              <span aria-hidden="true">›</span>
+            </>
+          )}
+          <Link to={browseLink({ categoryId: product.category.id })}>{product.category.name}</Link>
+        </nav>
+      )}
     <div className="detail">
-      <div>
-        <img src={product.image} alt={product.name} />
+      <div className="detail-image">
+        <ProductImage src={product.image} alt={product.name} loading="eager" />
       </div>
 
       <div>
         <h1>{product.name}</h1>
-        {product.category && (
-          <div className="meta-row">
-            Category:{' '}
-            <Link to={`/?category=${product.category.id}`} style={{ color: 'var(--link)' }}>
-              {product.category.name}
-            </Link>
-          </div>
+        {product.brand && (
+          <Link to={browseLink({ q: product.brand })} className="detail-brand">
+            Visit the {product.brand} Store
+          </Link>
         )}
-        <div className="price" style={{ margin: '12px 0' }}>
-          {formatPrice(product.price)}
-        </div>
+        <Stars rating={product.rating} count={product.ratingCount} />
+        <hr className="detail-rule" />
+        <Price product={product} size="lg" />
+        <div className="meta-row">Inclusive of all taxes</div>
+        <hr className="detail-rule" />
+        <h2 className="detail-subhead">About this item</h2>
         <p style={{ lineHeight: 1.6 }}>{product.description}</p>
-        <div className="meta-row">Weight: {product.weight} g</div>
-        <div className="meta-row">Units available: {product.quantity}</div>
+        <div className="meta-row">Item weight: {product.weight} g</div>
       </div>
 
       <aside className="buy-box">
-        <div className="price">{formatPrice(product.price)}</div>
+        <Price product={product} />
+        {savings > 0 && <div className="savings">You save {formatPrice(savings)}</div>}
+        {defaultAddress && (
+          <Link to="/account/addresses" className="deliver-line">
+            ⌖ Deliver to {defaultAddress.fullName.split(' ')[0]} - {defaultAddress.city} {defaultAddress.pincode}
+          </Link>
+        )}
         {product.inStock ? (
           <span className="stock-ok">In stock</span>
         ) : (
@@ -106,5 +135,6 @@ export default function ProductDetailPage() {
         </button>
       </aside>
     </div>
+    </>
   );
 }

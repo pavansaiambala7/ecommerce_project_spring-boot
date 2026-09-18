@@ -83,7 +83,7 @@ async function refreshAccessToken() {
   return refreshInFlight;
 }
 
-async function send(path, { method = 'GET', body, auth = true, retryOn401 = true, headers: extra } = {}) {
+async function send(path, { method = 'GET', body, rawBody, auth = true, retryOn401 = true, headers: extra, signal } = {}) {
   // Only these four request headers pass CORS preflight. Adding any custom
   // header needs app.cors.allowed-headers extended on the backend first.
   const headers = { Accept: 'application/json' };
@@ -96,14 +96,17 @@ async function send(path, { method = 'GET', body, auth = true, retryOn401 = true
   const response = await fetch(path, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    // rawBody sends a File or Blob untouched - a catalogue CSV is uploaded as
+    // the request body itself, never read into memory and re-encoded as JSON.
+    body: rawBody !== undefined ? rawBody : body === undefined ? undefined : JSON.stringify(body),
+    signal,
   });
 
   if (response.status === 401 && retryOn401 && auth) {
     const fresh = await refreshAccessToken();
     // The retry must carry the same headers, or an idempotent request would
     // lose its key and execute a second time after a token refresh.
-    if (fresh) return send(path, { method, body, auth, retryOn401: false, headers: extra });
+    if (fresh) return send(path, { method, body, rawBody, auth, retryOn401: false, headers: extra, signal });
   }
 
   if (response.status === 429) {

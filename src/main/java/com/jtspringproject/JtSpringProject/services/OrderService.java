@@ -15,6 +15,7 @@ import com.jtspringproject.JtSpringProject.exception.ResourceNotFoundException;
 import com.jtspringproject.JtSpringProject.models.Order;
 import com.jtspringproject.JtSpringProject.models.OrderItem;
 import com.jtspringproject.JtSpringProject.models.Product;
+import com.jtspringproject.JtSpringProject.models.ShippingAddress;
 import com.jtspringproject.JtSpringProject.models.User;
 
 @Service
@@ -32,6 +33,15 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(int userId, List<OrderItem> items) {
+        return createOrder(userId, items, null);
+    }
+
+    /**
+     * @param shipping a copy of the delivery address, frozen onto the order; may
+     *                 be null only for API clients that manage delivery elsewhere
+     */
+    @Transactional
+    public Order createOrder(int userId, List<OrderItem> items, ShippingAddress shipping) {
         if (items == null || items.isEmpty()) {
             throw new BusinessRuleException("An order must contain at least one item.");
         }
@@ -44,6 +54,7 @@ public class OrderService {
         Order order = new Order();
         order.setCustomer(user);
         order.setStatus(Order.OrderStatus.CREATED);
+        order.setShippingAddress(shipping);
 
         BigDecimal total = BigDecimal.ZERO;
         for (OrderItem item : items) {

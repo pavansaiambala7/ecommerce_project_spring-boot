@@ -41,6 +41,14 @@ public class Product {
 	@Column(nullable = false, precision = 12, scale = 2)
 	private BigDecimal price = BigDecimal.ZERO;
 
+	/**
+	 * Maximum retail price, the printed list price the selling price is
+	 * discounted from. Null when the product is not on offer. The database
+	 * rejects an MRP below the price.
+	 */
+	@Column(precision = 12, scale = 2)
+	private BigDecimal mrp;
+
 	private int weight;
 
 	@Column(columnDefinition = "text")
@@ -154,6 +162,14 @@ public class Product {
 
 	public void setRatingCount(int ratingCount) {
 		this.ratingCount = ratingCount;
+	}
+
+	public BigDecimal getMrp() {
+		return mrp;
+	}
+
+	public void setMrp(BigDecimal mrp) {
+		this.mrp = mrp;
 	}
 
 	public String getExternalId() {

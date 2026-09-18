@@ -13,15 +13,15 @@ import org.springframework.web.bind.annotation.GetMapping;
  *
  * <p>The routes are listed explicitly rather than matched with a catch-all
  * pattern: a catch-all would also swallow {@code /api/**}, {@code /admin/**}
- * and the static asset requests, breaking the API and static assets, breaking the API and the bundle itself.
+ * and the static asset requests, breaking the API and the bundle itself.
  * {@code /} needs no entry here - Spring Boot's welcome page handler already
  * serves the static {@code index.html}.
  */
 @Controller
 public class SpaForwardController {
 
-	@GetMapping({ "/products/**", "/product/**", "/cart", "/checkout", "/login", "/register",
-			"/orders/**", "/search", "/admin", "/admin/**" })
+	@GetMapping({ "/s", "/products/**", "/product/**", "/cart", "/checkout", "/login", "/register",
+			"/orders/**", "/account/**", "/search", "/admin", "/admin/**" })
 	public String forwardToSpa() {
 		return "forward:/index.html";
 	}

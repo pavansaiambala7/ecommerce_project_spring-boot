@@ -21,7 +21,9 @@ import com.jtspringproject.JtSpringProject.dto.response.OrderResponse;
 import com.jtspringproject.JtSpringProject.models.Order;
 import com.jtspringproject.JtSpringProject.models.OrderItem;
 import com.jtspringproject.JtSpringProject.models.Product;
+import com.jtspringproject.JtSpringProject.models.ShippingAddress;
 import com.jtspringproject.JtSpringProject.security.AppUserDetails;
+import com.jtspringproject.JtSpringProject.services.AddressService;
 import com.jtspringproject.JtSpringProject.services.OrderService;
 
 import jakarta.validation.Valid;
@@ -31,9 +33,11 @@ import jakarta.validation.Valid;
 public class OrderApiController {
 
     private final OrderService orderService;
+    private final AddressService addressService;
 
-    public OrderApiController(OrderService orderService) {
+    public OrderApiController(OrderService orderService, AddressService addressService) {
         this.orderService = orderService;
+        this.addressService = addressService;
     }
 
     /**
@@ -57,7 +61,11 @@ public class OrderApiController {
             return item;
         }).toList();
 
-        Order order = orderService.createOrder(principal.getId(), items);
+        ShippingAddress shipping = request.getAddressId() == null ? null
+                : addressService.requireOwned(principal.getId(), request.getAddressId()).toShippingAddress();
+        Order order = shipping == null
+                ? orderService.createOrder(principal.getId(), items)
+                : orderService.createOrder(principal.getId(), items, shipping);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Order created successfully", OrderResponse.from(order)));
     }

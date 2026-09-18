@@ -50,10 +50,10 @@ export function CartProvider({ children }) {
       await api.del('/api/cart');
       return null;
     }),
-    checkout: async (idempotencyKey) => {
+    checkout: async (idempotencyKey, addressId) => {
       // The key makes a double-click or a retried request produce one order
       // rather than two.
-      const order = await api.post('/api/cart/checkout', undefined,
+      const order = await api.post('/api/cart/checkout', { addressId },
         idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined);
       setCart(null);
       return order;

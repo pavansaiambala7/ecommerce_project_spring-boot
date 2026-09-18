@@ -18,7 +18,9 @@ public class CatalogueQuery {
 	private BigDecimal maxPrice;
 	private String brand;
 	private boolean inStockOnly;
-	/** One of: relevance, price_asc, price_desc, rating, name. */
+	/** Only products at least this many percent below their MRP. */
+	private Integer minDiscount;
+	/** One of: relevance, price_asc, price_desc, rating, name, discount. */
 	private String sort;
 	private int page = 0;
 	private int size = 24;
@@ -69,6 +71,14 @@ public class CatalogueQuery {
 
 	public void setInStockOnly(boolean inStockOnly) {
 		this.inStockOnly = inStockOnly;
+	}
+
+	public Integer getMinDiscount() {
+		return minDiscount;
+	}
+
+	public void setMinDiscount(Integer minDiscount) {
+		this.minDiscount = minDiscount;
 	}
 
 	public String getSort() {

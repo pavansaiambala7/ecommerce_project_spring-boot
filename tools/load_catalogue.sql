@@ -1,5 +1,9 @@
 -- Loads the CSV produced by tools/generate_catalogue.py into the product table.
 --
+-- Usually easier: POST the file to /api/admin/catalogue/import, which does the
+-- same work over HTTP and needs no access to the database host. This script is
+-- for when you are already on that host.
+--
 -- Run against the target database, from the directory holding catalogue.csv:
 --     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f load_catalogue.sql
 --
@@ -24,6 +28,7 @@ CREATE TEMP TABLE staging (
     description   text,
     image         varchar(255),
     price         numeric(12,2),
+    mrp           numeric(12,2),
     quantity      int,
     weight        int,
     brand         varchar(120),
@@ -39,9 +44,9 @@ CREATE TEMP TABLE staging (
 DELETE FROM staging s
 WHERE NOT EXISTS (SELECT 1 FROM category c WHERE c.name = s.category_name);
 
-INSERT INTO product (external_id, name, description, image, price, quantity,
+INSERT INTO product (external_id, name, description, image, price, mrp, quantity,
                      weight, brand, rating, rating_count, category_id)
-SELECT s.external_id, s.name, s.description, s.image, s.price, s.quantity,
+SELECT s.external_id, s.name, s.description, s.image, s.price, s.mrp, s.quantity,
        s.weight, s.brand, s.rating, s.rating_count, c.category_id
 FROM staging s
 JOIN category c ON c.name = s.category_name
@@ -51,18 +56,28 @@ ON CONFLICT (external_id) DO UPDATE SET
     description  = EXCLUDED.description,
     image        = EXCLUDED.image,
     price        = EXCLUDED.price,
+    mrp          = EXCLUDED.mrp,
     quantity     = EXCLUDED.quantity,
     brand        = EXCLUDED.brand,
     rating       = EXCLUDED.rating,
     rating_count = EXCLUDED.rating_count,
     category_id  = EXCLUDED.category_id,
-    -- Force re-embedding: the text changed, so the stored vector no longer
-    -- describes this product. The incremental reindex picks up NULLs.
-    embedding    = NULL;
+    -- Re-embed only when the text a vector was built from changed. Clearing it
+    -- on every re-import would re-spend hundreds of embedding calls on a file
+    -- that did not change.
+    embedding    = CASE
+        WHEN product.name IS DISTINCT FROM EXCLUDED.name
+          OR product.description IS DISTINCT FROM EXCLUDED.description
+          OR product.brand IS DISTINCT FROM EXCLUDED.brand
+          OR product.category_id IS DISTINCT FROM EXCLUDED.category_id
+        THEN NULL ELSE product.embedding END;
 
 COMMIT;
 
 ANALYZE product;
+
+-- Search-as-you-type reads a precomputed vocabulary; rebuild it for the new rows.
+REFRESH MATERIALIZED VIEW CONCURRENTLY search_term;
 
 SELECT count(*) AS products,
        count(embedding) AS embedded,

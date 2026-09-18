@@ -1,35 +1,42 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useCategories } from '../hooks/useCatalog';
+import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { browseLink, useCategoryTree } from '../hooks/useCatalog';
+import DepartmentDrawer from './DepartmentDrawer';
 
+/**
+ * The bar under the search box: the full department menu, today's deals, and
+ * the departments marked as featured. Everything else is one click away in the
+ * menu, so the bar stays a single line however large the catalogue grows.
+ */
 export default function CategoryNav() {
-  const { categories } = useCategories();
+  const { tree } = useCategoryTree();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const active = searchParams.get('categoryId');
-
-  function select(categoryId) {
-    // Selecting a department clears the search text and paging: a shopper
-    // moving to Electronics does not expect their last query still applied.
-    navigate(categoryId ? `/?categoryId=${categoryId}` : '/');
-  }
-
-  if (categories.length === 0) return null;
+  const onDeals = searchParams.get('sort') === 'discount' && !active;
 
   return (
-    <nav className="category-nav" aria-label="Departments">
-      <button type="button" data-active={!active} onClick={() => select(null)}>
-        All
-      </button>
-      {categories.map((category) => (
-        <button
-          key={category.id}
-          type="button"
-          data-active={active === String(category.id)}
-          onClick={() => select(category.id)}
-        >
-          {category.name}
+    <>
+      <nav className="category-nav" aria-label="Departments">
+        <button type="button" className="nav-all" onClick={() => setMenuOpen(true)}>
+          <span aria-hidden="true">☰</span> All
         </button>
-      ))}
-    </nav>
+        <Link to={browseLink({ minDiscount: 10, sort: 'discount' })} data-active={onDeals}>
+          Today&apos;s Deals
+        </Link>
+        {tree
+          .filter((department) => department.featured)
+          .map((department) => (
+            <Link
+              key={department.id}
+              to={browseLink({ categoryId: department.id })}
+              data-active={active === String(department.id)}
+            >
+              {department.name}
+            </Link>
+          ))}
+      </nav>
+      <DepartmentDrawer open={menuOpen} onClose={() => setMenuOpen(false)} tree={tree} />
+    </>
   );
 }

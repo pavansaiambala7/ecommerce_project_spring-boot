@@ -108,6 +108,43 @@ class ApiAuthorizationTest extends PostgresTestBase {
 				.andExpect(status().isUnauthorized());
 	}
 
+	@Test
+	void anonymous_cannotImportTheCatalogue() throws Exception {
+		mockMvc.perform(post("/api/admin/catalogue/import")
+				.contentType("text/csv")
+				.content("external_id,name,price,category_name\n"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void anonymous_cannotReadAddresses() throws Exception {
+		mockMvc.perform(get("/api/addresses"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void anonymous_cannotUseTheGeocoder() throws Exception {
+		mockMvc.perform(get("/api/geo/pincode/560001"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	/**
+	 * The landing page, department menu and typeahead are public, and run real
+	 * SQL here - the suggestion view and department tree from V14 included.
+	 */
+	@Test
+	void anonymous_mayLoadTheLandingPageDepartmentsAndSuggestions() throws Exception {
+		mockMvc.perform(get("/api/storefront/home"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.success").value(true));
+		mockMvc.perform(get("/api/categories/tree"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data[?(@.name == 'Grocery')].children").exists());
+		mockMvc.perform(get("/api/products/suggest").param("q", "app"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data[?(@.text == 'apples')]").exists());
+	}
+
 	/** The catalogue is intentionally public. */
 	@Test
 	void anonymous_mayBrowseProducts() throws Exception {
@@ -128,6 +165,24 @@ class ApiAuthorizationTest extends PostgresTestBase {
 	// ---------------------------------------------------------------------
 	// Ordinary authenticated users
 	// ---------------------------------------------------------------------
+
+	@Test
+	@WithMockAppUser(id = 2)
+	void user_cannotImportTheCatalogue() throws Exception {
+		mockMvc.perform(post("/api/admin/catalogue/import")
+				.contentType("text/csv")
+				.content("external_id,name,price,category_name\n"))
+				.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@WithMockAppUser(id = 2)
+	void user_cannotCheckOutToAnotherCustomersAddress() throws Exception {
+		mockMvc.perform(post("/api/cart/checkout")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"addressId\":999999}"))
+				.andExpect(status().isNotFound());
+	}
 
 	@Test
 	@WithMockAppUser(id = 2)

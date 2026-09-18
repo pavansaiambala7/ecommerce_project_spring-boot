@@ -19,6 +19,7 @@ import com.jtspringproject.JtSpringProject.ai.service.CatalogueSearchService;
 import com.jtspringproject.JtSpringProject.dto.ApiResponse;
 import com.jtspringproject.JtSpringProject.dto.request.CategoryRequest;
 import com.jtspringproject.JtSpringProject.dto.response.CategoryResponse;
+import com.jtspringproject.JtSpringProject.dto.response.CategoryTreeResponse;
 import com.jtspringproject.JtSpringProject.exception.BusinessRuleException;
 import com.jtspringproject.JtSpringProject.services.categoryService;
 
@@ -47,6 +48,15 @@ public class CategoryApiController {
 	@GetMapping
 	public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
 		return ResponseEntity.ok(ApiResponse.success(catalogueSearchService.categories()));
+	}
+
+	/**
+	 * Departments nested under their parents with product counts, in navigation
+	 * order. Empty departments are omitted.
+	 */
+	@GetMapping("/tree")
+	public ResponseEntity<ApiResponse<List<CategoryTreeResponse>>> getCategoryTree() {
+		return ResponseEntity.ok(ApiResponse.success(catalogueSearchService.categoryTree()));
 	}
 
 	/**

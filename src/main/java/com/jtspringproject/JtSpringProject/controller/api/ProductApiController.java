@@ -20,11 +20,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jtspringproject.JtSpringProject.ai.service.CatalogueSearchService;
+import com.jtspringproject.JtSpringProject.catalogue.SuggestionService;
 import com.jtspringproject.JtSpringProject.dto.ApiResponse;
 import com.jtspringproject.JtSpringProject.dto.request.CatalogueQuery;
 import com.jtspringproject.JtSpringProject.dto.request.ProductRequest;
 import com.jtspringproject.JtSpringProject.dto.response.FacetResponse;
 import com.jtspringproject.JtSpringProject.dto.response.ProductResponse;
+import com.jtspringproject.JtSpringProject.dto.response.SuggestionResponse;
 import com.jtspringproject.JtSpringProject.exception.BusinessRuleException;
 import com.jtspringproject.JtSpringProject.models.Product;
 import com.jtspringproject.JtSpringProject.services.categoryService;
@@ -45,12 +47,25 @@ public class ProductApiController {
     private final productService productService;
     private final categoryService categoryService;
     private final CatalogueSearchService catalogueSearchService;
+    private final SuggestionService suggestionService;
 
     public ProductApiController(productService productService, categoryService categoryService,
-            CatalogueSearchService catalogueSearchService) {
+            CatalogueSearchService catalogueSearchService, SuggestionService suggestionService) {
         this.productService = productService;
         this.categoryService = categoryService;
         this.catalogueSearchService = catalogueSearchService;
+        this.suggestionService = suggestionService;
+    }
+
+    /**
+     * Search-as-you-type completions for the search box. Public and cheap: it
+     * reads a precomputed vocabulary, never embeds anything.
+     */
+    @GetMapping("/suggest")
+    public ResponseEntity<ApiResponse<List<SuggestionResponse>>> suggest(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "8") int limit) {
+        return ResponseEntity.ok(ApiResponse.success(suggestionService.suggest(q, limit)));
     }
 
     /**
@@ -85,6 +100,7 @@ public class ProductApiController {
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String brand,
             @RequestParam(defaultValue = "false") boolean inStockOnly,
+            @RequestParam(required = false) Integer minDiscount,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int size) {
@@ -98,6 +114,9 @@ public class ProductApiController {
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
             throw new BusinessRuleException("minPrice must not exceed maxPrice.");
         }
+        if (minDiscount != null && (minDiscount < 0 || minDiscount > 100)) {
+            throw new BusinessRuleException("minDiscount must be between 0 and 100.");
+        }
 
         CatalogueQuery query = new CatalogueQuery();
         query.setQ(q);
@@ -106,6 +125,7 @@ public class ProductApiController {
         query.setMaxPrice(maxPrice);
         query.setBrand(brand);
         query.setInStockOnly(inStockOnly);
+        query.setMinDiscount(minDiscount);
         query.setSort(sort);
         query.setPage(page);
         query.setSize(size);
@@ -186,7 +206,14 @@ public class ProductApiController {
     }
 
     private Product toEntity(ProductRequest request) {
+        // Checked here with a clear message; the database would also refuse it,
+        // but as an anonymous constraint violation.
+        if (request.getMrp() != null && request.getPrice() != null
+                && request.getMrp().compareTo(request.getPrice()) < 0) {
+            throw new BusinessRuleException("MRP cannot be lower than the selling price.");
+        }
         Product product = new Product();
+        product.setMrp(request.getMrp());
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setImage(request.getImage());

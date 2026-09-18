@@ -1,39 +1,52 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useAddresses } from '../context/AddressContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import SearchBox from './SearchBox';
 
-export default function Header() {
-  const [term, setTerm] = useState('');
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
-  const { itemCount } = useCart();
-  const navigate = useNavigate();
+function DeliverTo() {
+  const { isAuthenticated, user } = useAuth();
+  const { defaultAddress } = useAddresses();
 
-  function submitSearch(event) {
-    event.preventDefault();
-    const query = term.trim();
-    // Searching lands on the browse page: results there carry the same
-    // filters, sorting and paging as any other listing, rather than being a
-    // separate screen that loses them.
-    if (query) navigate(`/?q=${encodeURIComponent(query)}`);
+  if (!isAuthenticated) {
+    return (
+      <Link to="/login" className="header-link deliver-to">
+        <span className="pin" aria-hidden="true">⌖</span>
+        <span>
+          <small>Hello</small>
+          <strong>Select your address</strong>
+        </span>
+      </Link>
+    );
   }
 
   return (
+    <Link to="/account/addresses" className="header-link deliver-to">
+      <span className="pin" aria-hidden="true">⌖</span>
+      <span>
+        <small>Deliver to {defaultAddress?.fullName?.split(' ')[0] ?? user.username}</small>
+        <strong>
+          {defaultAddress ? `${defaultAddress.city} ${defaultAddress.pincode}` : 'Add an address'}
+        </strong>
+      </span>
+    </Link>
+  );
+}
+
+export default function Header() {
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { itemCount } = useCart();
+
+  return (
     <header className="header">
-      <Link to="/" className="header-logo">
+      <Link to="/" className="header-logo" aria-label="ShopKart home">
         Shop<span>Kart</span>
+        <i>.in</i>
       </Link>
 
-      <form className="search" onSubmit={submitSearch}>
-        <input
-          type="search"
-          value={term}
-          onChange={(event) => setTerm(event.target.value)}
-          placeholder="Search ShopKart"
-          aria-label="Search products"
-        />
-        <button type="submit">Search</button>
-      </form>
+      <DeliverTo />
+
+      <SearchBox />
 
       <div className="header-actions">
         {isAuthenticated ? (
@@ -44,11 +57,15 @@ export default function Header() {
                 <strong>Admin</strong>
               </Link>
             )}
-            <Link to="/orders" className="header-link">
+            <Link to="/account/addresses" className="header-link">
               <small>Hello, {user.username}</small>
-              <strong>Orders</strong>
+              <strong>Account</strong>
             </Link>
-            <button type="button" className="header-link" onClick={logout}>
+            <Link to="/orders" className="header-link">
+              <small>Returns</small>
+              <strong>&amp; Orders</strong>
+            </Link>
+            <button type="button" className="header-link header-signout" onClick={logout}>
               <small>Not you?</small>
               <strong>Sign out</strong>
             </button>
@@ -56,13 +73,27 @@ export default function Header() {
         ) : (
           <Link to="/login" className="header-link">
             <small>Hello, sign in</small>
-            <strong>Account</strong>
+            <strong>Account &amp; Lists</strong>
           </Link>
         )}
 
-        <Link to="/cart" className="header-link cart-link">
-          <span className="cart-count">{itemCount}</span>
-          <span>Cart</span>
+        <Link to="/cart" className="header-link cart-link" aria-label={`Cart, ${itemCount} items`}>
+          <span className="cart-icon">
+            <svg width="38" height="30" viewBox="0 0 38 30" aria-hidden="true">
+              <path
+                d="M2 4h5l4.5 16h19L35 8H10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+              <circle cx="14" cy="26" r="2.2" fill="currentColor" />
+              <circle cx="28" cy="26" r="2.2" fill="currentColor" />
+            </svg>
+            <span className="cart-count">{itemCount}</span>
+          </span>
+          <strong>Cart</strong>
         </Link>
       </div>
     </header>

@@ -73,7 +73,8 @@ public class SecurityConfiguration {
 				// shopper has to be able to see what is for sale before
 				// deciding to create an account.
 				.requestMatchers(HttpMethod.GET, "/api/products/search", "/api/products/facets",
-						"/api/categories").permitAll()
+						"/api/products/suggest", "/api/categories", "/api/categories/tree",
+						"/api/storefront/home").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/search").permitAll()
 				// Razorpay posts webhooks server-to-server and holds no JWT, so
 				// this path cannot require one. It is not unprotected: the
@@ -91,6 +92,7 @@ public class SecurityConfiguration {
 				.requestMatchers(HttpMethod.PUT, "/api/products/*").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.DELETE, "/api/products/*").hasRole("ADMIN")
 				.requestMatchers("/api/search/reindex").hasRole("ADMIN")
+				.requestMatchers("/api/admin/**").hasRole("ADMIN")
 				.requestMatchers("/api/payments/refund/**").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.GET, "/api/users", "/api/users/*").hasRole("ADMIN")
 

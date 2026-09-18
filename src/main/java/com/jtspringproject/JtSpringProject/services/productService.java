@@ -60,6 +60,7 @@ public class productService {
 		existing.setDescription(changes.getDescription());
 		existing.setImage(changes.getImage());
 		existing.setPrice(changes.getPrice());
+		existing.setMrp(changes.getMrp());
 		existing.setWeight(changes.getWeight());
 		existing.setQuantity(changes.getQuantity());
 		if (changes.getCategory() != null) {

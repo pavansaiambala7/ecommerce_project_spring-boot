@@ -16,6 +16,7 @@ import com.jtspringproject.JtSpringProject.models.CartProduct;
 import com.jtspringproject.JtSpringProject.models.Order;
 import com.jtspringproject.JtSpringProject.models.OrderItem;
 import com.jtspringproject.JtSpringProject.models.Product;
+import com.jtspringproject.JtSpringProject.models.ShippingAddress;
 import com.jtspringproject.JtSpringProject.models.User;
 
 /**
@@ -32,14 +33,16 @@ public class cartService {
     private final productService productService;
     private final userService userService;
     private final OrderService orderService;
+    private final AddressService addressService;
 
     public cartService(cartDao cartDao, cartProductDao cartProductDao, productService productService,
-            userService userService, OrderService orderService) {
+            userService userService, OrderService orderService, AddressService addressService) {
         this.cartDao = cartDao;
         this.cartProductDao = cartProductDao;
         this.productService = productService;
         this.userService = userService;
         this.orderService = orderService;
+        this.addressService = addressService;
     }
 
     @Transactional
@@ -125,9 +128,13 @@ public class cartService {
      *
      * <p>Stock validation and decrement happen inside {@code OrderService} under a
      * row lock, so the check here is only to fail fast with a clearer message.
+     *
+     * <p>The address must belong to the caller. It is resolved before anything
+     * else so a bad address id fails without touching stock.
      */
     @Transactional
-    public Order checkout(int userId) {
+    public Order checkout(int userId, int addressId) {
+        ShippingAddress shipping = addressService.requireOwned(userId, addressId).toShippingAddress();
         Cart cart = getCart(userId);
         List<CartProduct> cartItems = cart.getItems();
 
@@ -143,7 +150,7 @@ public class cartService {
             orderItems.add(orderItem);
         }
 
-        Order order = orderService.createOrder(userId, orderItems);
+        Order order = orderService.createOrder(userId, orderItems, shipping);
         cartProductDao.deleteByCartId(cart.getId());
         return order;
     }

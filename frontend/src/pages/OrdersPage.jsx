@@ -62,6 +62,12 @@ export default function OrdersPage() {
               Total
               <strong>{formatPrice(order.totalAmount)}</strong>
             </div>
+            {order.shippingAddress && (
+              <div title={`${order.shippingAddress.line1}, ${order.shippingAddress.city} ${order.shippingAddress.pincode}`}>
+                Ship to
+                <strong>{order.shippingAddress.fullName}</strong>
+              </div>
+            )}
             <div>
               Order #
               <strong>{order.id}</strong>

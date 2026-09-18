@@ -17,6 +17,10 @@ public class ProductResponse {
     private String description;
     private String image;
     private BigDecimal price;
+    /** List price, or null when the product is not discounted. */
+    private BigDecimal mrp;
+    /** Whole-number percentage off the MRP; 0 when there is no discount. */
+    private int discountPercent;
     private int quantity;
     private int weight;
     private boolean inStock;
@@ -38,6 +42,8 @@ public class ProductResponse {
         dto.description = product.getDescription();
         dto.image = product.getImage();
         dto.price = product.getPrice();
+        dto.mrp = product.getMrp();
+        dto.discountPercent = discountPercent(product.getPrice(), product.getMrp());
         dto.quantity = product.getQuantity();
         dto.weight = product.getWeight();
         dto.inStock = product.getQuantity() > 0;
@@ -142,5 +148,33 @@ public class ProductResponse {
 
     public void setCategory(CategoryResponse category) {
         this.category = category;
+    }
+
+    public BigDecimal getMrp() {
+        return mrp;
+    }
+
+    public void setMrp(BigDecimal mrp) {
+        this.mrp = mrp;
+    }
+
+    public int getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(int discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    /**
+     * The same rounding as the {@code discount_percent} column in V14, so a
+     * product loaded through JPA shows the badge a search result shows.
+     */
+    public static int discountPercent(BigDecimal price, BigDecimal mrp) {
+        if (price == null || mrp == null || mrp.signum() <= 0 || mrp.compareTo(price) <= 0) {
+            return 0;
+        }
+        return mrp.subtract(price).multiply(BigDecimal.valueOf(100))
+                .divide(mrp, 0, java.math.RoundingMode.HALF_UP).intValue();
     }
 }

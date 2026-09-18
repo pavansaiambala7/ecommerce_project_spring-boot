@@ -17,6 +17,21 @@ public class Category {
 
 	private String name;
 
+	/**
+	 * The department this one sits under, or null for a top-level department.
+	 * Held as an id rather than an association: nothing loads a category's
+	 * parent through JPA, and the tree is assembled in SQL.
+	 */
+	@Column(name = "parent_id")
+	private Integer parentId;
+
+	@Column(name = "sort_order", nullable = false)
+	private int sortOrder = 1000;
+
+	/** Shown in the navigation bar under the search box. */
+	@Column(nullable = false)
+	private boolean featured;
+
 	public int getId() {
 		return id;
 	}
@@ -31,5 +46,29 @@ public class Category {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public Integer getParentId() {
+		return parentId;
+	}
+
+	public void setParentId(Integer parentId) {
+		this.parentId = parentId;
+	}
+
+	public int getSortOrder() {
+		return sortOrder;
+	}
+
+	public void setSortOrder(int sortOrder) {
+		this.sortOrder = sortOrder;
+	}
+
+	public boolean isFeatured() {
+		return featured;
+	}
+
+	public void setFeatured(boolean featured) {
+		this.featured = featured;
 	}
 }

@@ -465,3 +465,77 @@ never sees, so neither the amount nor the outcome can be tampered with. The
 webhook is the authoritative confirmation, because a browser can be closed
 between paying and reporting back. Both paths settle the same payment row and
 whichever arrives first wins.
+
+## 12. Loading the 50,000-product catalogue
+
+The catalogue is generated, not stored in the repository: fifty thousand rows
+would bloat every clone and slow every test run. Generating it needs Python;
+loading it needs nothing but curl.
+
+```bash
+cd tools
+pip install faker
+python generate_catalogue.py --out catalogue.csv --count 50000
+gzip -kf catalogue.csv          # 12 MB becomes about 1.4 MB
+```
+
+Upload it straight to the running application - no SSH, no psql, no security
+group changes:
+
+```bash
+HOST=http://13.50.19.252
+TOKEN=$(curl -s -X POST $HOST/api/auth/login -H 'Content-Type: application/json' \
+        -d '{"username":"admin","password":"YOUR_ADMIN_PASSWORD"}' \
+        | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
+
+curl -X POST "$HOST/api/admin/catalogue/import?embed=true" \
+     -H "Authorization: Bearer $TOKEN" \
+     -H 'Content-Type: application/gzip' \
+     --data-binary @catalogue.csv.gz
+```
+
+Administrators can do the same from **Admin -> Catalogue import** in the
+storefront. Either way it reports what happened:
+
+```json
+{"rowsRead":50000,"inserted":50000,"updated":0,
+ "skippedUnknownDepartment":0,"skippedInvalid":0,"awaitingEmbedding":50096}
+```
+
+Fifty thousand rows import in about ten seconds. Products are matched on
+`external_id`, so running it again updates rather than duplicates, and only
+products whose text actually changed lose their embedding.
+
+### Embeddings, and why they take hours
+
+`embed=true` starts a background job; watch it at **Admin -> Catalogue import**
+or:
+
+```bash
+curl -s "$HOST/api/admin/catalogue/embeddings" -H "Authorization: Bearer $TOKEN"
+```
+
+Gemini's free tier allows **100 embedding requests per minute**, and every
+product in a batch counts as one request. Fifty thousand products is therefore
+about **eight hours** of mostly waiting. The job expects this: a quota error
+pauses it for a minute and it carries on, progress is the vectors already in
+the database, and stopping or redeploying loses nothing - starting it again
+continues from where it stopped.
+
+Two ways to make it quick instead:
+
+* **Enable billing** on the Gemini API. The paid tier's limits are far higher,
+  and fifty thousand products is roughly three million tokens - cents, not
+  dollars, at current embedding prices.
+* **Embed nothing, or only part.** Search still works without embeddings: the
+  keyword half of the hybrid search answers on its own, and rows without a
+  vector are simply not offered by the semantic half. Semantic queries
+  ("something to keep tea hot") only work once the rows are embedded.
+
+### What the search does while the catalogue is half-embedded
+
+Nearest-neighbour search always returns *something*, so with only part of the
+catalogue embedded the nearest vector to "saree" was Motichoor Ladoo. Matches
+beyond `app.search.max-vector-distance` (0.40 by default, measured against this
+catalogue) are dropped, so a query with no real semantic match falls back to
+keywords rather than showing whatever happened to be closest.

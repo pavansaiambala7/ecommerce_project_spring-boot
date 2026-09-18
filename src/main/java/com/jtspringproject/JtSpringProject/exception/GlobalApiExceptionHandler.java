@@ -120,6 +120,12 @@ public class GlobalApiExceptionHandler {
 				.body(ApiResponse.error(e.getMessage()));
 	}
 
+	/** An upstream dependency failed; the message tells the shopper what to do instead. */
+	@ExceptionHandler(ServiceUnavailableException.class)
+	public ResponseEntity<ApiResponse<Void>> handleServiceUnavailable(ServiceUnavailableException e) {
+		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ApiResponse.error(e.getMessage()));
+	}
+
 	@ExceptionHandler(NoHandlerFoundException.class)
 	public ResponseEntity<ApiResponse<Void>> handleNoHandler(NoHandlerFoundException e) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)

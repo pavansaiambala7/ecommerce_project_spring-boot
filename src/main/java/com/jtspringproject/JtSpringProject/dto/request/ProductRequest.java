@@ -90,4 +90,17 @@ public class ProductRequest {
     public void setCategoryId(Integer categoryId) {
         this.categoryId = categoryId;
     }
+
+    /** Optional list price. Must not be below {@link #price}; checked in the controller. */
+    @DecimalMin(value = "0.00", message = "MRP cannot be negative")
+    @Digits(integer = 10, fraction = 2, message = "MRP supports at most 2 decimal places")
+    private BigDecimal mrp;
+
+    public BigDecimal getMrp() {
+        return mrp;
+    }
+
+    public void setMrp(BigDecimal mrp) {
+        this.mrp = mrp;
+    }
 }

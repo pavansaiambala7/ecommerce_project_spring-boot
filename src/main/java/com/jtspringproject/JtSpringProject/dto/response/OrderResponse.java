@@ -23,6 +23,7 @@ public class OrderResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<OrderItemResponse> items;
+    private AddressResponse shippingAddress;
 
     public OrderResponse() {
     }
@@ -42,7 +43,16 @@ public class OrderResponse {
         dto.createdAt = order.getCreatedAt();
         dto.updatedAt = order.getUpdatedAt();
         dto.items = order.getItems().stream().map(OrderItemResponse::from).toList();
+        dto.shippingAddress = AddressResponse.from(order.getShippingAddress());
         return dto;
+    }
+
+    public AddressResponse getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(AddressResponse shippingAddress) {
+        this.shippingAddress = shippingAddress;
     }
 
     public int getId() {

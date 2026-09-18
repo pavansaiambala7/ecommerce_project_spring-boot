@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jtspringproject.JtSpringProject.dto.request.CatalogueQuery;
 import com.jtspringproject.JtSpringProject.dto.response.CategoryResponse;
+import com.jtspringproject.JtSpringProject.dto.response.CategoryTreeResponse;
 import com.jtspringproject.JtSpringProject.dto.response.FacetResponse;
 import com.jtspringproject.JtSpringProject.dto.response.ProductResponse;
 
@@ -76,12 +78,51 @@ public class CatalogueSearchService {
 
 	private static final int MAX_PAGE_SIZE = 100;
 
+	/**
+	 * Cosine distance past which a vector match is not a match at all.
+	 *
+	 * <p>An ANN search always returns its nearest neighbours, however far away
+	 * they are. While a catalogue is still being embedded that is glaring: with
+	 * only the grocery seed embedded, a search for "saree" was answered with
+	 * Motichoor Ladoo, the nearest thing that happened to have a vector.
+	 *
+	 * <p>Measured against this catalogue with gemini-embedding-001: a real match
+	 * lands at 0.27-0.31 ("fresh apples" to Fresh Red Apples), while unrelated
+	 * products sit at 0.41-0.43 ("saree" to Motichoor Ladoo). The default splits
+	 * the two, and is a property so it can be retuned without a rebuild.
+	 */
+	private final double maxVectorDistance;
+
+	/**
+	 * Full-text matching requires every word: "budget android phone" finds
+	 * nothing, because no product description contains all three.
+	 */
+	private static final String TSQUERY_ALL = "websearch_to_tsquery('english', :q)";
+
+	/**
+	 * The same query with the words joined by OR instead. Used only as a second
+	 * attempt when requiring every word found nothing, so precise searches keep
+	 * their precision and vague ones still return something. Rewriting the
+	 * parsed query rather than the raw text keeps user input out of the tsquery
+	 * grammar.
+	 */
+	private static final String TSQUERY_ANY =
+			"replace(websearch_to_tsquery('english', :q)::text, '&', '|')::tsquery";
+
+	/** Every column {@link #mapProduct} reads, shared by all listing queries. */
+	private static final String PRODUCT_COLUMNS = """
+			p.product_id, p.name, p.description, p.image, p.price, p.mrp, p.discount_percent,
+			p.quantity, p.weight, p.brand, p.rating, p.rating_count,
+			c.category_id, c.name AS category_name""";
+
 	private final NamedParameterJdbcTemplate jdbc;
 	private final EmbeddingService embeddingService;
 
-	public CatalogueSearchService(NamedParameterJdbcTemplate jdbc, EmbeddingService embeddingService) {
+	public CatalogueSearchService(NamedParameterJdbcTemplate jdbc, EmbeddingService embeddingService,
+			@org.springframework.beans.factory.annotation.Value("${app.search.max-vector-distance:0.40}") double maxVectorDistance) {
 		this.jdbc = jdbc;
 		this.embeddingService = embeddingService;
+		this.maxVectorDistance = maxVectorDistance;
 	}
 
 	/** One page of results plus the total for pagination controls. */
@@ -107,24 +148,35 @@ public class CatalogueSearchService {
 				.addValue("limit", size)
 				.addValue("offset", (long) page * size);
 
-		String sql;
-		if (hasText) {
-			params.addValue("q", query.getQ());
-			float[] queryVector = embedQueryOrNull(query.getQ());
-			if (queryVector != null) {
-				params.addValue("queryVector", toVectorLiteral(queryVector));
-				jdbc.getJdbcTemplate().execute("SET LOCAL hnsw.ef_search = " + EF_SEARCH);
-				sql = hybridSql(query.getSort());
-			} else {
-				sql = lexicalSql(query.getSort());
-			}
-		} else {
-			sql = browseSql(query.getSort());
+		if (!hasText) {
+			List<ProductResponse> items = jdbc.query(browseSql(query.getSort()), params,
+					CatalogueSearchService::mapProduct);
+			return new Page(items, countMatches(query, null, null), page, size);
 		}
 
-		List<ProductResponse> items = jdbc.query(sql, params, CatalogueSearchService::mapProduct);
-		long total = countMatches(query, hasText);
-		return new Page(items, total, page, size);
+		params.addValue("q", query.getQ());
+		float[] queryVector = embedQueryOrNull(query.getQ());
+		boolean hasVector = queryVector != null;
+		if (hasVector) {
+			params.addValue("queryVector", toVectorLiteral(queryVector));
+			jdbc.getJdbcTemplate().execute("SET LOCAL hnsw.ef_search = " + EF_SEARCH);
+		}
+
+		// Full-text matching requires every word, so "cotton shirt for office"
+		// matches nothing. When that happens, match any word instead - which is
+		// what a shopper typing a whole sentence meant. Decided before the search
+		// rather than by retrying an empty one, because with a vector side even
+		// one distant neighbour would look like a hit and suppress the retry.
+		String tsquery = hasKeywordMatch(query.getQ()) ? TSQUERY_ALL : TSQUERY_ANY;
+		List<ProductResponse> items = find(query, params, tsquery, hasVector);
+		String vectorLiteral = hasVector ? (String) params.getValue("queryVector") : null;
+		return new Page(items, countMatches(query, tsquery, vectorLiteral), page, size);
+	}
+
+	private List<ProductResponse> find(CatalogueQuery query, MapSqlParameterSource params, String tsquery,
+			boolean hasVector) {
+		String sql = hasVector ? hybridSql(query.getSort(), tsquery) : lexicalSql(query.getSort(), tsquery);
+		return jdbc.query(sql, params, CatalogueSearchService::mapProduct);
 	}
 
 	/**
@@ -170,6 +222,42 @@ public class CatalogueSearchService {
 				range == null ? null : range.get("max"));
 	}
 
+	/**
+	 * The department tree with product counts, for the navigation bar and the
+	 * department menu. Departments with nothing in them are left out, so no
+	 * link leads to an empty page.
+	 */
+	@Transactional(readOnly = true)
+	public List<CategoryTreeResponse> categoryTree() {
+		record Row(int id, String name, Integer parentId, boolean featured, long ownCount) {
+		}
+		List<Row> rows = jdbc.query("""
+				SELECT c.category_id, c.name, c.parent_id, c.featured,
+				       (SELECT count(*) FROM product p WHERE p.category_id = c.category_id) AS own_count
+				FROM category c
+				ORDER BY c.sort_order, c.name
+				""", new MapSqlParameterSource(), (rs, n) -> new Row(
+				rs.getInt("category_id"), rs.getString("name"),
+				(Integer) rs.getObject("parent_id"), rs.getBoolean("featured"), rs.getLong("own_count")));
+
+		List<CategoryTreeResponse> tree = new ArrayList<>();
+		for (Row top : rows) {
+			if (top.parentId() != null) {
+				continue;
+			}
+			List<CategoryTreeResponse> children = rows.stream()
+					.filter(child -> Objects.equals(child.parentId(), top.id()) && child.ownCount() > 0)
+					.map(child -> new CategoryTreeResponse(child.id(), child.name(), child.featured(),
+							child.ownCount(), List.of()))
+					.toList();
+			long total = top.ownCount() + children.stream().mapToLong(CategoryTreeResponse::productCount).sum();
+			if (total > 0) {
+				tree.add(new CategoryTreeResponse(top.id(), top.name(), top.featured(), total, children));
+			}
+		}
+		return tree;
+	}
+
 	/** Every category that currently has at least one product. */
 	@Transactional(readOnly = true)
 	public List<CategoryResponse> categories() {
@@ -188,28 +276,44 @@ public class CatalogueSearchService {
 
 	// ---------------------------------------------------------------- queries
 
-	private String hybridSql(String sort) {
-		// The vector CTE keeps ORDER BY ... LIMIT directly on the distance
-		// operator, which is the only form pgvector can answer from the HNSW
-		// index. Anything wrapping the distance first would silently fall back
-		// to a sequential scan.
+	/**
+	 * Nearest neighbours by vector distance.
+	 *
+	 * <p>The inner query keeps ORDER BY ... LIMIT directly on the distance
+	 * operator, which is the only form pgvector can answer from the HNSW index;
+	 * anything wrapping the distance first silently falls back to a sequential
+	 * scan. The distance cutoff is therefore applied outside it, on the rows the
+	 * index already returned.
+	 */
+	private String vecCte() {
 		return """
-				WITH vec AS (
-				    SELECT product_id, row_number() OVER () AS rank
-				    FROM (SELECT product_id FROM product
+				vec AS (
+				    SELECT product_id, row_number() OVER (ORDER BY distance) AS rank
+				    FROM (SELECT product_id, embedding <=> CAST(:queryVector AS vector) AS distance
+				          FROM product
 				          WHERE embedding IS NOT NULL
 				          ORDER BY embedding <=> CAST(:queryVector AS vector)
 				          LIMIT %d) ranked
-				),
+				    WHERE distance < %s
+				)""".formatted(CANDIDATE_POOL, maxVectorDistance);
+	}
+
+	/** Best full-text matches. The tsquery is a subquery because only a function call may be aliased in FROM. */
+	private static String lexCte(String tsquery) {
+		return """
 				lex AS (
 				    SELECT product_id, row_number() OVER (ORDER BY ts_rank(search_vector, q.tsq) DESC) AS rank
-				    FROM product, websearch_to_tsquery('english', :q) AS q(tsq)
+				    FROM product, (SELECT %s) AS q(tsq)
 				    WHERE search_vector @@ q.tsq
 				    LIMIT %d
-				)
-				SELECT p.product_id, p.name, p.description, p.image, p.price, p.quantity,
-				       p.weight, p.brand, p.rating, p.rating_count,
-				       c.category_id, c.name AS category_name,
+				)""".formatted(tsquery, CANDIDATE_POOL);
+	}
+
+	private String hybridSql(String sort, String tsquery) {
+		return """
+				WITH %s,
+				%s
+				SELECT %s,
 				       coalesce(1.0 / (%d + vec.rank), 0) + coalesce(1.0 / (%d + lex.rank), 0) AS score
 				FROM product p
 				LEFT JOIN category c ON c.category_id = p.category_id
@@ -218,7 +322,7 @@ public class CatalogueSearchService {
 				WHERE (vec.product_id IS NOT NULL OR lex.product_id IS NOT NULL) AND %s
 				ORDER BY %s
 				LIMIT :limit OFFSET :offset
-				""".formatted(CANDIDATE_POOL, CANDIDATE_POOL, RRF_K, RRF_K,
+				""".formatted(vecCte(), lexCte(tsquery), PRODUCT_COLUMNS, RRF_K, RRF_K,
 				filterPredicate(true), orderBy(sort, true));
 	}
 
@@ -240,51 +344,64 @@ public class CatalogueSearchService {
 	}
 
 	/** Keyword-only ranking, used when the embedding service is unreachable. */
-	private String lexicalSql(String sort) {
+	private String lexicalSql(String sort, String tsquery) {
 		return """
-				SELECT p.product_id, p.name, p.description, p.image, p.price, p.quantity,
-				       p.weight, p.brand, p.rating, p.rating_count,
-				       c.category_id, c.name AS category_name,
-				       ts_rank(p.search_vector, websearch_to_tsquery('english', :q)) AS score
+				SELECT %s,
+				       ts_rank(p.search_vector, %s) AS score
 				FROM product p
 				LEFT JOIN category c ON c.category_id = p.category_id
-				WHERE p.search_vector @@ websearch_to_tsquery('english', :q) AND %s
+				WHERE p.search_vector @@ %s AND %s
 				ORDER BY %s
 				LIMIT :limit OFFSET :offset
-				""".formatted(filterPredicate(true), orderBy(sort, true));
+				""".formatted(PRODUCT_COLUMNS, tsquery, tsquery, filterPredicate(true), orderBy(sort, true));
 	}
 
 	private String browseSql(String sort) {
 		return """
-				SELECT p.product_id, p.name, p.description, p.image, p.price, p.quantity,
-				       p.weight, p.brand, p.rating, p.rating_count,
-				       c.category_id, c.name AS category_name, 0 AS score
+				SELECT %s, 0 AS score
 				FROM product p
 				LEFT JOIN category c ON c.category_id = p.category_id
 				WHERE %s
 				ORDER BY %s
 				LIMIT :limit OFFSET :offset
-				""".formatted(filterPredicate(true), orderBy(sort, false));
+				""".formatted(PRODUCT_COLUMNS, filterPredicate(true), orderBy(sort, false));
 	}
 
-	private long countMatches(CatalogueQuery query, boolean hasText) {
+	/**
+	 * How many products the search found.
+	 *
+	 * <p>Counts the same fused candidate set the results come from, including
+	 * the vector side. Counting only keyword matches reported "0 results" above
+	 * a page full of them. For a text search the number is bounded by
+	 * {@link #CANDIDATE_POOL}, which is what "showing the best 200 matches"
+	 * means; a filtered browse counts the whole catalogue exactly.
+	 */
+	private long countMatches(CatalogueQuery query, String tsquery, String queryVectorLiteral) {
 		MapSqlParameterSource params = filterParams(query);
 		String sql;
-		if (hasText) {
-			params.addValue("q", query.getQ());
-			// Counting only the lexical side would undercount, and counting the
-			// vector side means re-running the ANN scan. The pool is bounded by
-			// CANDIDATE_POOL anyway, so the honest total for a text search is
-			// "how many of the fused candidates survive the filters".
-			sql = """
-					WITH lex AS (
-					    SELECT product_id FROM product, websearch_to_tsquery('english', :q) AS q(tsq)
-					    WHERE search_vector @@ q.tsq LIMIT %d
-					)
-					SELECT count(*) FROM product p JOIN lex ON lex.product_id = p.product_id WHERE %s
-					""".formatted(CANDIDATE_POOL, filterPredicate(true));
-		} else {
+		if (tsquery == null) {
 			sql = "SELECT count(*) FROM product p WHERE " + filterPredicate(true);
+		} else {
+			params.addValue("q", query.getQ());
+			if (queryVectorLiteral != null) {
+				// The same vector the search used; embedding the query again
+				// here would spend a second paid call on one number.
+				params.addValue("queryVector", queryVectorLiteral);
+			}
+			sql = queryVectorLiteral != null
+					? """
+							WITH %s,
+							%s
+							SELECT count(*) FROM product p
+							LEFT JOIN vec ON vec.product_id = p.product_id
+							LEFT JOIN lex ON lex.product_id = p.product_id
+							WHERE (vec.product_id IS NOT NULL OR lex.product_id IS NOT NULL) AND %s
+							""".formatted(vecCte(), lexCte(tsquery), filterPredicate(true))
+					: """
+							WITH %s
+							SELECT count(*) FROM product p
+							JOIN lex ON lex.product_id = p.product_id WHERE %s
+							""".formatted(lexCte(tsquery), filterPredicate(true));
 		}
 		Long total = jdbc.queryForObject(sql, params, Long.class);
 		return total == null ? 0 : total;
@@ -304,13 +421,20 @@ public class CatalogueSearchService {
 		// untyped NULL, and Postgres cannot infer a type for a bare parameter
 		// that only ever appears beside NULL - it rejects the statement with
 		// "could not determine data type of parameter".
+		// A department includes the departments under it: "Fashion" lists
+		// men's, women's and footwear, not only products filed directly on the
+		// parent row (of which there are none).
 		return """
-				(CAST(:categoryId AS integer) IS NULL OR %scategory_id = CAST(:categoryId AS integer))
+				(CAST(:categoryId AS integer) IS NULL
+				 OR %scategory_id IN (SELECT sub.category_id FROM category sub
+				                      WHERE sub.category_id = CAST(:categoryId AS integer)
+				                         OR sub.parent_id = CAST(:categoryId AS integer)))
 				AND (CAST(:minPrice AS numeric) IS NULL OR %sprice >= CAST(:minPrice AS numeric))
 				AND (CAST(:maxPrice AS numeric) IS NULL OR %sprice <= CAST(:maxPrice AS numeric))
 				AND (CAST(:inStockOnly AS boolean) = false OR %squantity > 0)
 				AND (CAST(:brand AS text) IS NULL OR %sbrand = CAST(:brand AS text))
-				""".formatted(p, p, p, p, p);
+				AND (CAST(:minDiscount AS integer) IS NULL OR %sdiscount_percent >= CAST(:minDiscount AS integer))
+				""".formatted(p, p, p, p, p, p);
 	}
 
 	private MapSqlParameterSource filterParams(CatalogueQuery query) {
@@ -319,7 +443,8 @@ public class CatalogueSearchService {
 				.addValue("minPrice", query.getMinPrice())
 				.addValue("maxPrice", query.getMaxPrice())
 				.addValue("inStockOnly", query.isInStockOnly())
-				.addValue("brand", query.getBrand());
+				.addValue("brand", query.getBrand())
+				.addValue("minDiscount", query.getMinDiscount());
 	}
 
 	/**
@@ -335,6 +460,9 @@ public class CatalogueSearchService {
 			case "price_desc" -> "p.price DESC, p.product_id";
 			case "rating" -> "p.rating DESC NULLS LAST, p.rating_count DESC, p.product_id";
 			case "name" -> "p.name ASC, p.product_id";
+			// Biggest saving first; among equal discounts, the better-reviewed
+			// product, which is what a "deals" page is for.
+			case "discount" -> "p.discount_percent DESC, p.rating DESC NULLS LAST, p.product_id";
 			case "relevance" -> relevanceAvailable ? "score DESC, p.product_id" : "p.product_id";
 			default -> {
 				log.debug("Unknown sort '{}', falling back to default ordering", sort);
@@ -352,6 +480,8 @@ public class CatalogueSearchService {
 		dto.setDescription(rs.getString("description"));
 		dto.setImage(rs.getString("image"));
 		dto.setPrice(rs.getBigDecimal("price"));
+		dto.setMrp(rs.getBigDecimal("mrp"));
+		dto.setDiscountPercent(rs.getInt("discount_percent"));
 		dto.setQuantity(rs.getInt("quantity"));
 		dto.setWeight(rs.getInt("weight"));
 		dto.setBrand(rs.getString("brand"));
@@ -381,6 +511,20 @@ public class CatalogueSearchService {
 		return sb.append(']').toString();
 	}
 
+	/**
+	 * Whether any product's text matches the query as keywords. Used where a
+	 * vector search's "nearest" results would otherwise be shown for a query
+	 * that has nothing to do with the catalogue.
+	 */
+	@Transactional(readOnly = true)
+	public boolean hasKeywordMatch(String query) {
+		Boolean match = jdbc.queryForObject("""
+				SELECT EXISTS (SELECT 1 FROM product
+				               WHERE search_vector @@ websearch_to_tsquery('english', :q))
+				""", new MapSqlParameterSource("q", query), Boolean.class);
+		return Boolean.TRUE.equals(match);
+	}
+
 	/** Formats the top matches as plain text for the chat assistant's context. */
 	@Transactional(readOnly = true)
 	public String buildSearchContext(String query) {
@@ -388,16 +532,26 @@ public class CatalogueSearchService {
 		q.setQ(query);
 		q.setSize(5);
 		List<ProductResponse> results = search(q).items();
-		if (results.isEmpty()) {
-			return "No matching products found.";
-		}
+		return results.isEmpty() ? "No matching products found." : formatForContext(results);
+	}
+
+	/**
+	 * Products as the assistant sees them. Prices are rupees with Indian digit
+	 * grouping, and the id is included so a reply can be matched back to the
+	 * products it mentions.
+	 */
+	public static String formatForContext(List<ProductResponse> products) {
 		List<String> lines = new ArrayList<>();
-		for (ProductResponse p : results) {
-			lines.add("- %s%s: $%s (%s)%s".formatted(
-					p.getBrand() == null ? "" : p.getBrand() + " ",
-					p.getName(), p.getPrice(),
+		java.text.NumberFormat rupees = java.text.NumberFormat.getNumberInstance(new java.util.Locale("en", "IN"));
+		for (ProductResponse p : products) {
+			String offer = p.getDiscountPercent() > 0
+					? " (MRP Rs %s, %d%% off)".formatted(rupees.format(p.getMrp()), p.getDiscountPercent())
+					: "";
+			lines.add("- %s: Rs %s%s, %s%s%s".formatted(
+					p.getName(), rupees.format(p.getPrice()), offer,
 					p.isInStock() ? "in stock" : "out of stock",
-					p.getCategory() == null ? "" : " [" + p.getCategory().getName() + "]"));
+					p.getRating() == null ? "" : ", rated " + p.getRating() + "/5",
+					p.getCategory() == null ? "" : ", in " + p.getCategory().getName()));
 		}
 		return String.join("\n", lines);
 	}

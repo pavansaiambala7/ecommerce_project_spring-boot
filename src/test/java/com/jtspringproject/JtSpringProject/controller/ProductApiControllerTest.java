@@ -54,6 +54,37 @@ class ProductApiControllerTest {
     @MockBean
     private com.jtspringproject.JtSpringProject.ai.service.CatalogueSearchService catalogueSearchService;
 
+    @MockBean
+    private com.jtspringproject.JtSpringProject.catalogue.SuggestionService suggestionService;
+
+    @Test
+    void suggest_shouldReturnCompletionsForTheTypedPrefix() throws Exception {
+        org.mockito.Mockito.when(suggestionService.suggest("ap", 8)).thenReturn(java.util.List.of(
+                new com.jtspringproject.JtSpringProject.dto.response.SuggestionResponse("apple", null, null),
+                new com.jtspringproject.JtSpringProject.dto.response.SuggestionResponse("apples", null, null)));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/products/suggest").param("q", "ap"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.data[0].text").value("apple"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.data[1].text").value("apples"));
+    }
+
+    @Test
+    void createProduct_shouldRejectAnMrpBelowThePrice() throws Exception {
+        String body = "{\"name\":\"Phone\",\"price\":\"15999.00\",\"mrp\":\"12999.00\",\"categoryId\":1}";
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/api/products")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isConflict())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.message").value("MRP cannot be lower than the selling price."));
+    }
+
     private Product testProduct;
     private Category testCategory;
 

@@ -7,6 +7,7 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -48,6 +49,10 @@ public class Order {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    /** Null only for orders placed before delivery addresses existed. */
+    @Embedded
+    private ShippingAddress shippingAddress;
 
     public enum OrderStatus {
         CREATED, PAID, FAILED, SHIPPED, DELIVERED, CANCELLED, REFUNDED;
@@ -135,5 +140,13 @@ public class Order {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public ShippingAddress getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(ShippingAddress shippingAddress) {
+        this.shippingAddress = shippingAddress;
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.jtspringproject.JtSpringProject.dto.ApiResponse;
 import com.jtspringproject.JtSpringProject.dto.request.CartItemRequest;
 import com.jtspringproject.JtSpringProject.dto.request.CartQuantityRequest;
+import com.jtspringproject.JtSpringProject.dto.request.CheckoutRequest;
 import java.util.Optional;
 
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -98,19 +99,24 @@ public class CartApiController {
     @PostMapping("/checkout")
     public ResponseEntity<ApiResponse<OrderResponse>> checkout(
             @AuthenticationPrincipal AppUserDetails principal,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody CheckoutRequest request) {
 
+        int addressId = request.getAddressId();
         Optional<String> key = idempotencyService.validate(idempotencyKey);
         if (key.isEmpty()) {
-            return placeOrder(principal.getId());
+            return placeOrder(principal.getId(), addressId);
         }
 
-        return idempotencyService.run(key.get(), principal.getId(), "POST /api/cart/checkout", null,
-                () -> placeOrder(principal.getId()));
+        // The address is part of the request fingerprint: reusing a key to ship
+        // the same cart somewhere else is a different request, and must be
+        // rejected rather than replaying an order bound for the first address.
+        return idempotencyService.run(key.get(), principal.getId(), "POST /api/cart/checkout",
+                "addressId=" + addressId, () -> placeOrder(principal.getId(), addressId));
     }
 
-    private ResponseEntity<ApiResponse<OrderResponse>> placeOrder(int customerId) {
-        Order order = cartService.checkout(customerId);
+    private ResponseEntity<ApiResponse<OrderResponse>> placeOrder(int customerId, int addressId) {
+        Order order = cartService.checkout(customerId, addressId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Order placed", OrderResponse.from(order)));
     }

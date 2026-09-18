@@ -24,6 +24,7 @@ import com.jtspringproject.JtSpringProject.dao.cartDao;
 import com.jtspringproject.JtSpringProject.dao.cartProductDao;
 import com.jtspringproject.JtSpringProject.exception.BusinessRuleException;
 import com.jtspringproject.JtSpringProject.exception.ResourceNotFoundException;
+import com.jtspringproject.JtSpringProject.models.Address;
 import com.jtspringproject.JtSpringProject.models.Cart;
 import com.jtspringproject.JtSpringProject.models.CartProduct;
 import com.jtspringproject.JtSpringProject.models.Order;
@@ -49,6 +50,9 @@ class CartServiceTest {
 
 	@Mock
 	private OrderService orderService;
+
+	@Mock
+	private AddressService addressService;
 
 	@InjectMocks
 	private cartService cartService;
@@ -148,28 +152,56 @@ class CartServiceTest {
 		assertEquals(0, new BigDecimal("0.30").compareTo(cartService.getTotal(USER_ID)));
 	}
 
-	@Test
-	void checkout_shouldRejectAnEmptyCart() {
-		when(cartDao.findByCustomerId(USER_ID)).thenReturn(Optional.of(cart));
-
-		assertThrows(BusinessRuleException.class, () -> cartService.checkout(USER_ID));
-
-		verify(orderService, never()).createOrder(anyInt(), anyList());
+	private Address homeAddress() {
+		Address address = new Address();
+		address.setId(4);
+		address.setFullName("Asha Rao");
+		address.setPhone("9876543210");
+		address.setLine1("12, MG Road");
+		address.setCity("Bengaluru");
+		address.setState("Karnataka");
+		address.setPincode("560001");
+		return address;
 	}
 
 	@Test
-	void checkout_shouldCreateAnOrderAndEmptyTheCart() {
+	void checkout_shouldRejectAnEmptyCart() {
+		when(addressService.requireOwned(USER_ID, 4)).thenReturn(homeAddress());
+		when(cartDao.findByCustomerId(USER_ID)).thenReturn(Optional.of(cart));
+
+		assertThrows(BusinessRuleException.class, () -> cartService.checkout(USER_ID, 4));
+
+		verify(orderService, never()).createOrder(anyInt(), anyList(), any());
+	}
+
+	@Test
+	void checkout_shouldCreateAnOrderShippedToTheChosenAddressAndEmptyTheCart() {
 		cart.getItems().add(new CartProduct(cart, product, 2));
 		Order order = new Order();
 		order.setId(77);
 
+		when(addressService.requireOwned(USER_ID, 4)).thenReturn(homeAddress());
 		when(cartDao.findByCustomerId(USER_ID)).thenReturn(Optional.of(cart));
-		when(orderService.createOrder(anyInt(), anyList())).thenReturn(order);
+		when(orderService.createOrder(anyInt(), anyList(), any())).thenReturn(order);
 
-		Order result = cartService.checkout(USER_ID);
+		Order result = cartService.checkout(USER_ID, 4);
 
 		assertEquals(77, result.getId());
+		verify(orderService).createOrder(anyInt(), anyList(),
+				org.mockito.ArgumentMatchers.argThat(s -> "560001".equals(s.getPincode())
+						&& "12, MG Road".equals(s.getLine1())));
 		verify(cartProductDao).deleteByCartId(11);
+	}
+
+	@Test
+	void checkout_shouldRefuseAnAddressTheCallerDoesNotOwnBeforeTouchingTheCart() {
+		when(addressService.requireOwned(USER_ID, 999))
+				.thenThrow(ResourceNotFoundException.of("Address", 999));
+
+		assertThrows(ResourceNotFoundException.class, () -> cartService.checkout(USER_ID, 999));
+
+		verify(cartDao, never()).findByCustomerId(anyInt());
+		verify(orderService, never()).createOrder(anyInt(), anyList(), any());
 	}
 
 	@Test

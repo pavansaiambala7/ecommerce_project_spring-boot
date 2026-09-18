@@ -120,7 +120,33 @@ public class EmbeddingService {
 		return embedded;
 	}
 
-	private int embedBatch(List<Row> batch) {
+	/**
+	 * The next batch of products after {@code afterId}, in id order.
+	 *
+	 * <p>Keyset pagination rather than "the first N with no vector": a batch that
+	 * keeps failing would otherwise be selected again forever, and a background
+	 * job would never get past it.
+	 */
+	List<Row> nextBatch(int afterId, boolean onlyMissing, int limit) {
+		return jdbc.query("SELECT p.product_id, p.name, p.description, p.brand, p.quantity, p.price, p.weight, "
+				+ "c.name AS category_name FROM product p "
+				+ "LEFT JOIN category c ON c.category_id = p.category_id "
+				+ "WHERE p.product_id > ? " + (onlyMissing ? "AND p.embedding IS NULL " : "")
+				+ "ORDER BY p.product_id LIMIT ?",
+				(rs, n) -> new Row(
+						rs.getInt("product_id"),
+						buildProductText(
+								rs.getString("name"),
+								rs.getString("description"),
+								rs.getString("brand"),
+								rs.getString("category_name"),
+								rs.getBigDecimal("price") == null ? "" : rs.getBigDecimal("price").toPlainString(),
+								rs.getInt("weight"),
+								rs.getInt("quantity") > 0)),
+				afterId, limit);
+	}
+
+	int embedBatch(List<Row> batch) {
 		List<TextSegment> segments = batch.stream().map(r -> TextSegment.from(r.text())).toList();
 		List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
 

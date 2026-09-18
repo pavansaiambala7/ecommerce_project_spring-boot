@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.jtspringproject.JtSpringProject.ai.service.CatalogueSearchService;
-import com.jtspringproject.JtSpringProject.ai.service.EmbeddingService;
+import com.jtspringproject.JtSpringProject.ai.service.EmbeddingJobService;
 import com.jtspringproject.JtSpringProject.controller.api.SearchApiController;
 import com.jtspringproject.JtSpringProject.dto.response.ProductResponse;
 
@@ -38,7 +38,12 @@ class SearchApiControllerTest {
     private CatalogueSearchService catalogueSearchService;
 
     @MockBean
-    private EmbeddingService embeddingService;
+    private EmbeddingJobService embeddingJobService;
+
+    private static EmbeddingJobService.Status running(boolean full) {
+        return new EmbeddingJobService.Status(EmbeddingJobService.State.RUNNING, full, 0, 0, 500,
+                java.time.Instant.now(), null, null, 0);
+    }
 
     private static CatalogueSearchService.Page onePage() {
         ProductResponse product = new ProductResponse();
@@ -70,27 +75,28 @@ class SearchApiControllerTest {
     void reindex_shouldOnlyEmbedMissingByDefault() throws Exception {
         // The default must stay incremental: a full reindex re-embeds the whole
         // catalogue, which at scale is thousands of paid calls.
-        when(embeddingService.embedMissing()).thenReturn(10);
-        when(embeddingService.countMissing()).thenReturn(0);
+        // It also returns at once: fifty thousand products is hundreds of
+        // Gemini calls, far longer than any HTTP client will wait.
+        when(embeddingJobService.start(false)).thenReturn(running(false));
 
         mockMvc.perform(post("/api/search/reindex"))
-                .andExpect(status().isOk())
+                .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.productsIndexed").value(10))
-                .andExpect(jsonPath("$.data.stillMissing").value(0));
+                .andExpect(jsonPath("$.data.state").value("RUNNING"))
+                .andExpect(jsonPath("$.data.full").value(false))
+                .andExpect(jsonPath("$.data.remaining").value(500));
 
-        verify(embeddingService, never()).reindexAll();
+        verify(embeddingJobService, never()).start(true);
     }
 
     @Test
     void reindex_shouldRebuildEverythingWhenAskedExplicitly() throws Exception {
-        when(embeddingService.reindexAll()).thenReturn(97);
-        when(embeddingService.countMissing()).thenReturn(0);
+        when(embeddingJobService.start(true)).thenReturn(running(true));
 
         mockMvc.perform(post("/api/search/reindex?full=true"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.productsIndexed").value(97));
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.data.full").value(true));
 
-        verify(embeddingService, never()).embedMissing();
+        verify(embeddingJobService, never()).start(false);
     }
 }

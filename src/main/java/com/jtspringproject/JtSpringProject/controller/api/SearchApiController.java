@@ -1,8 +1,6 @@
 package com.jtspringproject.JtSpringProject.controller.api;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jtspringproject.JtSpringProject.ai.service.CatalogueSearchService;
-import com.jtspringproject.JtSpringProject.ai.service.EmbeddingService;
+import com.jtspringproject.JtSpringProject.ai.service.EmbeddingJobService;
 import com.jtspringproject.JtSpringProject.dto.ApiResponse;
 import com.jtspringproject.JtSpringProject.dto.request.CatalogueQuery;
 import com.jtspringproject.JtSpringProject.dto.response.ProductResponse;
@@ -29,12 +27,12 @@ public class SearchApiController {
     private static final int MAX_LIMIT = 50;
 
     private final CatalogueSearchService catalogueSearchService;
-    private final EmbeddingService embeddingService;
+    private final EmbeddingJobService embeddingJobService;
 
     public SearchApiController(CatalogueSearchService catalogueSearchService,
-                               EmbeddingService embeddingService) {
+                               EmbeddingJobService embeddingJobService) {
         this.catalogueSearchService = catalogueSearchService;
-        this.embeddingService = embeddingService;
+        this.embeddingJobService = embeddingJobService;
     }
 
     /**
@@ -63,25 +61,23 @@ public class SearchApiController {
     }
 
     /**
-     * Embeds products that have no vector yet.
+     * Starts embedding products that have no vector yet, in the background.
      *
-     * <p>Incremental by default: products are embedded when created or edited,
-     * so this only has work to do after a bulk import. Pass {@code full=true}
-     * to re-embed everything, which is needed after changing the embedding
-     * model or the text template, since vectors produced by different models
-     * cannot be compared against each other.
+     * <p>This used to do the work inside the request. At fifty thousand products
+     * that is several hundred Gemini calls - long enough for any client or proxy
+     * to time out - so it now returns at once with the job's status, which
+     * {@code GET /api/admin/catalogue/embeddings} reports as it progresses.
+     *
+     * <p>Pass {@code full=true} to re-embed everything, which is needed after
+     * changing the embedding model or the text template, since vectors produced
+     * by different models cannot be compared against each other.
      */
     @PostMapping("/reindex")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> reindexProducts(
+    public ResponseEntity<ApiResponse<EmbeddingJobService.Status>> reindexProducts(
             @RequestParam(defaultValue = "false") boolean full) {
-
-        int count = full ? embeddingService.reindexAll() : embeddingService.embedMissing();
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("productsIndexed", count);
-        result.put("stillMissing", embeddingService.countMissing());
-        return ResponseEntity.ok(ApiResponse.success(
-                full ? "Full reindex complete" : "Missing embeddings generated", result));
+        EmbeddingJobService.Status status = embeddingJobService.start(full);
+        return ResponseEntity.status(org.springframework.http.HttpStatus.ACCEPTED)
+                .body(ApiResponse.success("Embedding started in the background", status));
     }
 }

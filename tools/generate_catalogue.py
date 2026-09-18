@@ -16,14 +16,21 @@ local development; this is an operational load against a deployed database.
     pip install faker
     python generate_catalogue.py --out catalogue.csv --count 50000
 
-Then load it with tools/load_catalogue.sql and embed the new rows with
-POST /api/search/reindex.
+Then load it over HTTP - no SSH or database access needed:
+
+    gzip -k catalogue.csv
+    curl -X POST "http://<host>/api/admin/catalogue/import?embed=true" \
+         -H "Authorization: Bearer $TOKEN" --data-binary @catalogue.csv.gz
+
+or with tools/load_catalogue.sql when you do have psql on the database host.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import json
+import math
 import random
 import sys
 from pathlib import Path
@@ -33,18 +40,23 @@ try:
 except ImportError:
     sys.exit("faker is not installed. Run: pip install faker")
 
-from catalogue_taxonomy import CATALOGUE, SERIES
+from catalogue_taxonomy import BOOK_TITLES, BOOK_WORDS, CATALOGUE, DISCOUNTS, SERIES
 
-# Placeholder images, colour-coded per department. Real product photography
-# would have to come from somewhere licensed; these never 404 and make the
-# grid look deliberate rather than broken.
+# Real photographs per product line, built by fetch_catalogue_images.py from
+# sources that permit reuse. Amazon's own images are not an option: they belong
+# to Amazon and the brands.
+IMAGES_FILE = Path(__file__).with_name("catalogue_images.json")
+IMAGES = json.loads(IMAGES_FILE.read_text(encoding="utf-8"))["images"] if IMAGES_FILE.exists() else {}
+
+# Placeholders, colour-coded per department, for any line with no photograph.
 DEPARTMENT_COLOURS = {
-    "Mobile Phones": "1e88e5", "Electronics": "3949ab", "Computers": "5e35b1",
-    "Clothing": "d81b60", "Shoes": "8d6e63", "Home & Kitchen": "00897b",
+    "Mobiles": "1e88e5", "Electronics": "3949ab", "Laptops": "5e35b1",
+    "Men's Fashion": "283593", "Women's Fashion": "d81b60", "Footwear": "8d6e63",
+    "Home & Kitchen": "00897b",
     "Furniture": "6d4c41", "Beauty & Personal Care": "ec407a",
     "Sports & Outdoors": "43a047", "Toys & Games": "fb8c00", "Books": "795548",
     "Automotive": "455a64", "Office Products": "0277bd", "Pet Supplies": "7cb342",
-    "Health & Household": "00acc1", "Baby": "f06292", "Luggage": "5d4037",
+    "Health & Household": "00acc1", "Baby": "f06292", "Bags & Luggage": "5d4037",
     "Musical Instruments": "ad1457", "Tools & Home Improvement": "f57c00",
     "Garden & Outdoor": "2e7d32", "Movies & TV": "424242", "Video Games": "6a1b9a",
 }
@@ -74,6 +86,43 @@ def rupee_price(low: int, high: int, rng: random.Random) -> int:
     return max(low, min(int(rounded), high))
 
 
+def mrp_for(price: int, department: str, rng: random.Random) -> int | None:
+    """The printed MRP a selling price was discounted from, or None if not on offer.
+
+    MRPs are rounded up to the same kind of figure a price tag carries - a
+    Rs 1,299 shirt is "M.R.P. Rs 2,499", never Rs 2,431 - which also means the
+    advertised percentage is whatever that rounding produces, as in real shops.
+    """
+    share, low, high = DISCOUNTS[department]
+    if rng.random() >= share:
+        return None
+    raw = price / (1 - rng.uniform(low, high))
+    if raw < 500:
+        mrp = math.ceil(raw / 10) * 10 - 1
+    elif raw < 5000:
+        mrp = math.ceil(raw / 100) * 100 - 1
+    elif raw < 50000:
+        mrp = math.ceil(raw / 500) * 500 - 1
+    else:
+        mrp = math.ceil(raw / 1000) * 1000 - 100
+    return mrp if mrp > price else None
+
+
+def image_for(department: str, line: str, brand: str, label: str, rng: random.Random) -> str:
+    """The most specific photograph available: this line, then this brand, then the department."""
+    for key in (f"line:{department}|{line}", f"brand:{department}|{brand}", f"dept:{department}"):
+        if IMAGES.get(key):
+            return rng.choice(IMAGES[key])
+    colour_hex = DEPARTMENT_COLOURS.get(department, "555555")
+    return f"https://placehold.co/500x500/{colour_hex}/ffffff?text={label}"
+
+
+def bracket(*parts: str) -> str:
+    """"(8GB RAM, Black)" - leaving out empty parts rather than printing "(Sports, )"."""
+    kept = [part for part in parts if part]
+    return f"({', '.join(kept)})" if kept else ""
+
+
 def build_product(department: str, spec: dict, rng: random.Random, fake: Faker,
                   index: int) -> dict:
     # Departments whose product lines belong to a specific brand declare
@@ -91,14 +140,23 @@ def build_product(department: str, spec: dict, rng: random.Random, fake: Faker,
     # Some attributes only make sense for one brand - Apple has not shipped an
     # Intel chip in years, so the shared pool would describe a machine that
     # does not exist.
-    attribute_pool = spec.get("brand_attributes", {}).get(brand, spec["attributes"])
-    variant = rng.choice(spec["variants"])
-    attribute = rng.choice(attribute_pool)
-    colour = rng.choice(spec["colours"])
+    # Most specific first: what this brand makes, then what this kind of
+    # product comes in, then the department default. "Pet Shampoo (Grain
+    # Free)" and "Office Chair 2 Door" came from skipping the middle step.
+    def pick(field):
+        pool = (spec.get(f"brand_{field}", {}).get(brand)
+                or spec.get(f"line_{field}", {}).get(line)
+                or spec[field])
+        return rng.choice(pool)
+
+    variant = pick("variants")
+    attribute = pick("attributes")
+    colour = pick("colours")
     # A real phone or laptop has no invented series word between brand and
     # line - "Apple Orbit iPhone" reads as generated. Departments with branded
     # lines already have enough combinations without it.
-    series = "" if branded_lines else rng.choice(SERIES)
+    # Departments with too few brand-bound lines to fill their share opt back in.
+    series = rng.choice(SERIES) if (not branded_lines or spec.get("series")) else ""
 
     # Model naming follows each category's conventions: phones get a numeric
     # generation, clothing does not.
@@ -106,19 +164,25 @@ def build_product(department: str, spec: dict, rng: random.Random, fake: Faker,
     # "realme realme P" reads as a bug, not a product.
     prefix = "" if line.lower().startswith(brand.lower()) else brand
 
-    if department == "Mobile Phones":
+    if department == "Mobiles":
         # Phones carry a generation number; laptops do not - a MacBook is a
         # "MacBook Pro 14", never a "MacBook Pro 8 14".
         model = f"{rng.randint(3, 15)}"
-        name_parts = [prefix, line, model, variant, f"({attribute}, {colour})"]
-    elif department in ("Computers", "Video Games"):
-        name_parts = [prefix, series, line, variant, f"({attribute}, {colour})"]
+        name_parts = [prefix, line, model, variant, bracket(attribute, colour)]
+    elif department in ("Laptops", "Video Games"):
+        name_parts = [prefix, series, line, variant, bracket(attribute, colour)]
     elif department == "Books":
-        name_parts = [fake.sentence(nb_words=rng.randint(2, 5)).rstrip("."), "-", series, line]
+        # A real-sounding title and an Indian author: "The Silent River by
+        # Kavya Iyer (Paperback)". Faker's own sentences are Latin filler.
+        genre = attribute
+        title = rng.choice(BOOK_TITLES[genre]).format(
+            **{key: rng.choice(words) for key, words in BOOK_WORDS.items()})
+        book_format = line.replace(" Edition", "")
+        name_parts = [title, "by", fake.name(), f"({book_format})"]
     elif colour:
-        name_parts = [prefix, series, colour, line, variant, f"({attribute})"]
+        name_parts = [prefix, series, colour, line, variant, bracket(attribute)]
     else:
-        name_parts = [prefix, series, line, variant, f"({attribute})"]
+        name_parts = [prefix, series, line, variant, bracket(attribute)]
 
     name = " ".join(part for part in name_parts if part).replace("  ", " ").strip()
     name = name[:255]
@@ -133,8 +197,8 @@ def build_product(department: str, spec: dict, rng: random.Random, fake: Faker,
     # for televisions also permits absurd earbuds.
     low, high = spec.get("line_prices", {}).get(line, spec["price"])
     price = rupee_price(low, high, rng)
+    mrp = mrp_for(price, department, rng)
     label = line.replace(" ", "+")[:22]
-    colour_hex = DEPARTMENT_COLOURS.get(department, "555555")
 
     # Ratings cluster high, as they do on every real marketplace, and a
     # product with few ratings should not look as trusted as one with
@@ -147,8 +211,9 @@ def build_product(department: str, spec: dict, rng: random.Random, fake: Faker,
         "external_id": f"gen-{index:07d}",
         "name": name,
         "description": description,
-        "image": f"https://placehold.co/500x500/{colour_hex}/ffffff?text={label}",
+        "image": image_for(department, line, brand, label, rng),
         "price": price,
+        "mrp": mrp if mrp is not None else "",
         # A tenth out of stock keeps the "in stock only" filter and the
         # disabled Add to Cart path visible in a demo.
         "quantity": 0 if rng.random() < 0.1 else rng.randint(1, 500),
@@ -178,7 +243,7 @@ def main() -> int:
     per_department = args.count // len(departments)
     remainder = args.count - per_department * len(departments)
 
-    fields = ["external_id", "name", "description", "image", "price", "quantity",
+    fields = ["external_id", "name", "description", "image", "price", "mrp", "quantity",
               "weight", "brand", "rating", "rating_count", "category_name"]
 
     written = 0
