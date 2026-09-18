@@ -68,28 +68,18 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                sh './mvnw -B clean compile'
-            }
-        }
-
+        // No separate compile or package stage: 'verify' compiles and tests, and
+        // the Docker build produces the jar that actually ships. Building three
+        // times before Docker built a fourth was most of a fifteen minute run.
         stage('Test') {
             steps {
-                sh './mvnw -B verify'
+                sh './mvnw -B -T 1C verify'
             }
             post {
                 always {
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                     archiveArtifacts artifacts: 'target/site/jacoco/**', allowEmptyArchive: true
                 }
-            }
-        }
-
-        stage('Package') {
-            steps {
-                sh './mvnw -B package -DskipTests'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
 
@@ -102,7 +92,10 @@ pipeline {
                     ).trim() + ".dkr.ecr.${params.AWS_REGION}.amazonaws.com"
                     env.ECR_IMAGE = "${env.ECR_REGISTRY}/${params.ECR_REPOSITORY}:${env.IMAGE_TAG}"
                 }
-                sh "docker build -t ${env.ECR_IMAGE} -t ${env.ECR_REGISTRY}/${params.ECR_REPOSITORY}:latest ."
+                // BuildKit is what makes the cache mounts in the Dockerfile work; it is
+                    // the default on current Docker but stated here so an older
+                    // agent fails loudly rather than silently building slowly.
+                    sh "DOCKER_BUILDKIT=1 docker build -t ${env.ECR_IMAGE} -t ${env.ECR_REGISTRY}/${params.ECR_REPOSITORY}:latest ."
             }
         }
 

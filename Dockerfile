@@ -12,7 +12,9 @@ WORKDIR /frontend
 COPY frontend/package*.json ./
 # ci, not install: it installs exactly what package-lock.json pins, so an image
 # built today and one built next month contain the same dependency tree.
-RUN npm ci
+# The cache mount keeps npm's download cache between builds, so a rebuild
+# that does not change package-lock.json installs from disk, not the network.
+RUN --mount=type=cache,target=/root/.npm npm ci
 COPY frontend/ ./
 # vite.config.js writes to ../src/main/resources/static, which resolves to
 # /src/main/resources/static from this WORKDIR - not /frontend/dist. That path
@@ -20,27 +22,25 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---------------------------------------------------------------------------
-# Stage 1: dependencies (cached independently of source changes)
+# Stage 1: build
 # ---------------------------------------------------------------------------
-FROM maven:3.9-eclipse-temurin-17 AS deps
+# One stage, not a separate dependency stage: the Maven cache mount below keeps
+# the repository between builds, which does the same job without re-downloading
+# every dependency whenever pom.xml is touched.
+FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-# ---------------------------------------------------------------------------
-# Stage 2: build
-# ---------------------------------------------------------------------------
-FROM deps AS builder
-WORKDIR /app
 COPY src ./src
 # The compiled SPA ships inside the jar as ordinary static resources, so the
 # app is served from one origin and needs no CORS in production. A `mvn
 # package` run outside Docker skips this and produces a backend-only jar.
 COPY --from=frontend /src/main/resources/static ./src/main/resources/static
-RUN mvn package -DskipTests -B
+# Tests already ran in the pipeline's Test stage; running them again here
+# would double the build for no extra signal.
+RUN --mount=type=cache,target=/root/.m2 mvn package -DskipTests -B -T 1C
 
 # ---------------------------------------------------------------------------
-# Stage 3: runtime
+# Stage 2: runtime
 # ---------------------------------------------------------------------------
 FROM eclipse-temurin:17-jre
 WORKDIR /app
