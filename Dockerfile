@@ -9,6 +9,11 @@
 # ---------------------------------------------------------------------------
 FROM node:20-alpine AS frontend
 WORKDIR /frontend
+# Bounded heaps, because this image is built on a 2 GB build agent where Node,
+# Maven and Jenkins' own JVM run at the same time. Each would otherwise size its
+# heap from the machine, the host starts swapping, and the build hangs for the
+# best part of an hour instead of failing.
+ENV NODE_OPTIONS=--max-old-space-size=512
 COPY frontend/package*.json ./
 # ci, not install: it installs exactly what package-lock.json pins, so an image
 # built today and one built next month contain the same dependency tree.
@@ -29,6 +34,7 @@ RUN npm run build
 # every dependency whenever pom.xml is touched.
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
+ENV MAVEN_OPTS="-Xmx512m -XX:MaxMetaspaceSize=192m"
 COPY pom.xml .
 COPY src ./src
 # The compiled SPA ships inside the jar as ordinary static resources, so the
