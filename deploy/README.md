@@ -539,3 +539,89 @@ catalogue embedded the nearest vector to "saree" was Motichoor Ladoo. Matches
 beyond `app.search.max-vector-distance` (0.40 by default, measured against this
 catalogue) are dropped, so a query with no real semantic match falls back to
 keywords rather than showing whatever happened to be closest.
+
+## 13. Building on GitHub Actions instead of Jenkins
+
+The Jenkins host is a 2 GB t3.small that also runs Jenkins. Building this image
+needs Node, Maven and the Docker daemon at the same time, and it could not do
+both: builds hung for the best part of an hour and no image reached ECR for
+three days, while the same build takes about two minutes elsewhere. Resizing
+the instance is blocked on a free account plan.
+
+So the build moves to GitHub's runners - free and unlimited for a public
+repository - and the server goes back to only pulling and running an image.
+`.github/workflows/deploy.yml` does the whole job: test, build, push to ECR,
+then run `deploy.sh` on the app host.
+
+Two things make this simpler than the Jenkins pipeline it replaces:
+
+- **No AWS keys.** The workflow assumes an IAM role through GitHub's OIDC
+  provider, and the role's trust policy only accepts tokens from this
+  repository's `main` branch.
+- **No SSH.** Deployment goes through Systems Manager, so the app host needs no
+  port 22 rule, no key pair and no `known_hosts` entry - the three things that
+  broke deploys here before.
+
+### One-time AWS setup (CloudShell)
+
+```bash
+export AWS_PAGER="" AWS_DEFAULT_REGION=eu-north-1
+ACCT=$(aws sts get-caller-identity --query Account --output text)
+REPO=pavansaiambala7/ecommerce_project_spring-boot
+cd ~/ecommerce_project_spring-boot && git pull
+
+# 1. Teach AWS to trust GitHub's token issuer (once per account)
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --client-id-list sts.amazonaws.com \
+  --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 \
+  2>/dev/null || echo "provider already exists"
+
+# 2. The role this repository may assume
+sed "s/ACCOUNT_ID/$ACCT/" deploy/iam/github-actions-trust-policy.json > /tmp/trust.json
+aws iam create-role --role-name github-actions-deploy \
+  --assume-role-policy-document file:///tmp/trust.json \
+  --description "Build and deploy the storefront from GitHub Actions"
+
+aws iam put-role-policy --role-name github-actions-deploy \
+  --policy-name build-and-deploy \
+  --policy-document file://deploy/iam/github-actions-policy.json
+
+# 3. The app host must be reachable by Systems Manager
+aws iam attach-role-policy --role-name app-ec2-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+echo
+echo "Add this as the AWS_ROLE_ARN secret on GitHub:"
+aws iam get-role --role-name github-actions-deploy --query 'Role.Arn' --output text
+```
+
+### One-time GitHub setup
+
+**Settings -> Secrets and variables -> Actions -> New repository secret**
+
+| Name | Value |
+|---|---|
+| `AWS_ROLE_ARN` | the ARN printed above |
+
+That is the only secret. Until it exists the workflow still runs the tests and
+stops before deploying, saying why, rather than failing on a missing secret.
+
+### Using it
+
+Every push to `main` builds and deploys. **Actions -> Deploy -> Run workflow**
+runs it by hand, with a **skip tests** tick for when the tests have already
+passed on that commit and the point is to get it onto the host.
+
+The permissions are deliberately narrow: push to the one ECR repository, and
+run a shell command on an instance tagged `Name=ecommerce-app`. It cannot touch
+other instances, read secrets from SSM, or change any infrastructure.
+
+### What happens to Jenkins
+
+The `Jenkinsfile` still works and is unchanged, so nothing is lost by keeping
+the instance for its own sake. But it will keep failing at the image build for
+the reason above, so turn its SCM polling off to stop it queuing builds that
+cannot finish:
+
+**Job -> Configure -> Build Triggers -> untick "Poll SCM" -> Save**
