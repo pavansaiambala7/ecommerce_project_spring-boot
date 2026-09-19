@@ -1,5 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import Alert from '@mui/material/Alert';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Typography from '@mui/material/Typography';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { api } from '../api/client';
 import AddressForm from '../components/AddressForm';
 import ProductImage from '../components/ProductImage';
@@ -18,6 +33,55 @@ function oneLine(address) {
   return [address.line1, address.line2, address.city, address.state, address.pincode].filter(Boolean).join(', ');
 }
 
+/** One numbered step of the checkout, greyed out until it can be acted on. */
+function Step({ number, title, action, disabled, children }) {
+  return (
+    <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 2, opacity: disabled ? 0.55 : 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: children ? 2 : 0 }}>
+        <Avatar sx={{ bgcolor: 'primary.main', width: 28, height: 28, fontSize: 14 }}>{number}</Avatar>
+        <Typography variant="h3" sx={{ flex: 1 }}>
+          {title}
+        </Typography>
+        {action}
+      </Box>
+      {children}
+    </Paper>
+  );
+}
+
+/** A selectable card, used for both addresses and payment methods. */
+function ChoiceCard({ selected, value, primary, secondary, name }) {
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 1.5,
+        mb: 1.25,
+        borderColor: selected ? 'primary.main' : 'divider',
+        borderWidth: selected ? 2 : 1,
+        bgcolor: selected ? 'action.hover' : 'background.paper',
+      }}
+    >
+      <FormControlLabel
+        value={value}
+        name={name}
+        control={<Radio size="small" />}
+        sx={{ alignItems: 'flex-start', m: 0, width: '100%' }}
+        label={
+          <Box sx={{ pt: 0.25 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {primary}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {secondary}
+            </Typography>
+          </Box>
+        }
+      />
+    </Paper>
+  );
+}
+
 export default function CheckoutPage() {
   const { cart, checkout } = useCart();
   const { user } = useAuth();
@@ -34,13 +98,14 @@ export default function CheckoutPage() {
   const [placed, setPlaced] = useState(null);
 
   useEffect(() => {
-    api.get('/api/payments/razorpay/config', { auth: false })
+    api
+      .get('/api/payments/razorpay/config', { auth: false })
       .then(setOnline)
       .catch(() => setOnline({ enabled: false, keyId: '' }));
   }, []);
 
   // Preselect the default address once the address book has loaded, and go
-  // straight to payment when there is one - as a returning Amazon shopper sees.
+  // straight to payment when there is one, as a returning shopper expects.
   useEffect(() => {
     if (loaded && addressId === null && defaultAddress) {
       setAddressId(defaultAddress.id);
@@ -70,7 +135,7 @@ export default function CheckoutPage() {
         name: 'ShopKart',
         description: `Order #${order.id}`,
         prefill: { name: selected?.fullName ?? user?.username ?? '', contact: selected?.phone ?? '' },
-        theme: { color: '#232f3e' },
+        theme: { color: '#00695c' },
         handler: async (response) => {
           try {
             // Nothing here is trusted by the server: it re-derives the
@@ -112,11 +177,14 @@ export default function CheckoutPage() {
       // the server with the same key and produces the same single order.
       const order = await checkout(newIdempotencyKey(), selected.id);
 
-      const payment = method === 'COD'
-        ? await api.post('/api/payments', { orderId: order.id, method }, {
-            headers: { 'Idempotency-Key': newIdempotencyKey() },
-          })
-        : await payWithRazorpay(order);
+      const payment =
+        method === 'COD'
+          ? await api.post(
+              '/api/payments',
+              { orderId: order.id, method },
+              { headers: { 'Idempotency-Key': newIdempotencyKey() } },
+            )
+          : await payWithRazorpay(order);
 
       setPlaced({ order, payment });
     } catch (err) {
@@ -131,97 +199,121 @@ export default function CheckoutPage() {
   if (placed) {
     const ship = placed.order.shippingAddress;
     return (
-      <div className="panel narrow-panel">
-        <h1 className="section-title order-success">✓ Order placed, thank you!</h1>
-        <p>
-          Order <strong>#{placed.order.id}</strong> for <strong>{formatPrice(placed.order.totalAmount)}</strong> is{' '}
-          <span className="badge">{placed.order.status}</span>
-        </p>
-        {ship && (
-          <p className="meta-row">
-            Delivering to <strong>{ship.fullName}</strong>, {oneLine(ship)}
-          </p>
-        )}
-        <p className="meta-row">
-          Payment {placed.payment.method} — {placed.payment.status}
-          {placed.payment.transactionId && ` (${placed.payment.transactionId})`}
-        </p>
-        <div className="form-actions">
-          <Link to="/orders" className="btn">View your orders</Link>
-          <Link to="/" className="btn-plain">Continue shopping</Link>
-        </div>
-      </div>
+      <Container maxWidth="sm" sx={{ py: 5 }}>
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <CheckCircleOutlineIcon sx={{ fontSize: 64, color: 'success.main' }} />
+          <Typography variant="h2" sx={{ mt: 1, mb: 2 }}>
+            Order placed, thank you!
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            Order <strong>#{placed.order.id}</strong> for <strong>{formatPrice(placed.order.totalAmount)}</strong> is{' '}
+            <Chip label={placed.order.status} size="small" color="primary" />
+          </Typography>
+          {ship && (
+            <Typography variant="body2" color="text.secondary">
+              Delivering to <strong>{ship.fullName}</strong>, {oneLine(ship)}
+            </Typography>
+          )}
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Payment {placed.payment.method} — {placed.payment.status}
+            {placed.payment.transactionId && ` (${placed.payment.transactionId})`}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', mt: 3 }}>
+            <Button component={RouterLink} to="/orders" variant="contained">
+              View your orders
+            </Button>
+            <Button component={RouterLink} to="/" variant="outlined">
+              Continue shopping
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
     );
   }
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="panel">
-        <h1 className="section-title">Nothing to check out</h1>
-        <button type="button" className="btn" onClick={() => navigate('/')}>Browse products</button>
-      </div>
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        <Paper sx={{ p: 5, textAlign: 'center' }}>
+          <Typography variant="h2" gutterBottom>
+            Nothing to check out
+          </Typography>
+          <Button variant="contained" onClick={() => navigate('/')} sx={{ mt: 2 }}>
+            Browse products
+          </Button>
+        </Paper>
+      </Container>
     );
   }
 
   return (
-    <div className="checkout">
-      <h1 className="checkout-title">Checkout</h1>
-      <div className="cart-layout">
-        <div className="checkout-steps">
-          {error && <div className="error">{error.message}</div>}
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Typography variant="h1" sx={{ mb: 2 }}>
+        Checkout
+      </Typography>
 
-          <section className="checkout-step">
-            <div className="step-head">
-              <span className="step-number">1</span>
-              <h2>Delivery address</h2>
-              {!choosingAddress && selected && (
-                <button type="button" className="link-btn step-change" onClick={() => setChoosingAddress(true)}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 300px' }, gap: 3 }}>
+        <Box>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error.message}
+            </Alert>
+          )}
+
+          <Step
+            number={1}
+            title="Delivery address"
+            action={
+              !choosingAddress && selected ? (
+                <Button size="small" onClick={() => setChoosingAddress(true)}>
                   Change
-                </button>
-              )}
-            </div>
-
-            {!loaded && <div className="meta-row">Loading your addresses…</div>}
+                </Button>
+              ) : null
+            }
+          >
+            {!loaded && <CircularProgress size={22} />}
 
             {loaded && !choosingAddress && selected && (
-              <div className="step-summary">
+              <Typography variant="body2">
                 <strong>{selected.fullName}</strong>, {oneLine(selected)}
-              </div>
+              </Typography>
             )}
 
             {loaded && (choosingAddress || !selected) && (
-              <div className="step-body">
+              <>
                 {addresses.length > 0 && !addingAddress && (
                   <>
-                    <div className="address-choices" role="radiogroup" aria-label="Delivery address">
+                    <RadioGroup
+                      aria-label="Delivery address"
+                      value={addressId ?? ''}
+                      onChange={(event) => setAddressId(Number(event.target.value))}
+                    >
                       {addresses.map((address) => (
-                        <label key={address.id} className="address-choice" data-selected={address.id === addressId}>
-                          <input
-                            type="radio"
-                            name="address"
-                            checked={address.id === addressId}
-                            onChange={() => setAddressId(address.id)}
-                          />
-                          <span>
-                            <strong>{address.fullName}</strong> {oneLine(address)}
-                            {address.isDefault && <em className="address-default-tag"> Default</em>}
-                          </span>
-                        </label>
+                        <ChoiceCard
+                          key={address.id}
+                          name="address"
+                          value={address.id}
+                          selected={address.id === addressId}
+                          primary={
+                            <>
+                              {address.fullName}
+                              {address.isDefault && (
+                                <Chip label="Default" size="small" sx={{ ml: 1, height: 18, fontSize: 10 }} />
+                              )}
+                            </>
+                          }
+                          secondary={oneLine(address)}
+                        />
                       ))}
-                    </div>
-                    <button type="button" className="link-btn add-address-link" onClick={() => setAddingAddress(true)}>
+                    </RadioGroup>
+                    <Button size="small" onClick={() => setAddingAddress(true)} sx={{ mb: 1 }}>
                       + Add a new address
-                    </button>
-                    <div className="form-actions">
-                      <button
-                        type="button"
-                        className="btn"
-                        disabled={!addressId}
-                        onClick={() => setChoosingAddress(false)}
-                      >
+                    </Button>
+                    <Box>
+                      <Button variant="contained" disabled={!addressId} onClick={() => setChoosingAddress(false)}>
                         Use this address
-                      </button>
-                    </div>
+                      </Button>
+                    </Box>
                   </>
                 )}
 
@@ -236,88 +328,113 @@ export default function CheckoutPage() {
                     onCancel={addresses.length > 0 ? () => setAddingAddress(false) : undefined}
                   />
                 )}
-              </div>
+              </>
             )}
-          </section>
+          </Step>
 
-          <section className="checkout-step" data-disabled={!selected}>
-            <div className="step-head">
-              <span className="step-number">2</span>
-              <h2>Payment method</h2>
-            </div>
+          <Step number={2} title="Payment method" disabled={!selected || choosingAddress}>
             {selected && !choosingAddress && (
-              <div className="step-body">
-                <label className="pay-option" data-selected={method === 'COD'}>
-                  <input type="radio" name="method" value="COD" checked={method === 'COD'}
-                    onChange={(e) => setMethod(e.target.value)} />
-                  <span>
-                    <strong>Cash on Delivery</strong>
-                    <small>Pay when your order arrives</small>
-                  </span>
-                </label>
-                {online.enabled ? (
-                  <label className="pay-option" data-selected={method === 'ONLINE'}>
-                    <input type="radio" name="method" value="ONLINE" checked={method === 'ONLINE'}
-                      onChange={(e) => setMethod(e.target.value)} />
-                    <span>
-                      <strong>Credit or debit card, UPI, net banking</strong>
-                      <small>Secured by Razorpay</small>
-                    </span>
-                  </label>
-                ) : (
-                  <p className="meta-row">Online payment is currently unavailable.</p>
+              <>
+                <RadioGroup value={method} onChange={(event) => setMethod(event.target.value)}>
+                  <ChoiceCard
+                    name="method"
+                    value="COD"
+                    selected={method === 'COD'}
+                    primary="Cash on Delivery"
+                    secondary="Pay when your order arrives"
+                  />
+                  {online.enabled && (
+                    <ChoiceCard
+                      name="method"
+                      value="ONLINE"
+                      selected={method === 'ONLINE'}
+                      primary="Credit or debit card, UPI, net banking"
+                      secondary="Secured by Razorpay"
+                    />
+                  )}
+                </RadioGroup>
+                {!online.enabled && (
+                  <Typography variant="caption" color="text.secondary">
+                    Online payment is currently unavailable.
+                  </Typography>
                 )}
-              </div>
+              </>
             )}
-          </section>
+          </Step>
 
-          <section className="checkout-step" data-disabled={!selected}>
-            <div className="step-head">
-              <span className="step-number">3</span>
-              <h2>Review items</h2>
-            </div>
-            <div className="step-body">
-              {cart.items.map((item) => (
-                <div key={item.productId} className="review-row">
+          <Step number={3} title="Review items">
+            {cart.items.map((item) => (
+              <Box
+                key={item.productId}
+                sx={{ display: 'grid', gridTemplateColumns: '64px 1fr auto', gap: 2, alignItems: 'center', py: 1 }}
+              >
+                <Box sx={{ height: 60, bgcolor: 'common.white', borderRadius: 1 }}>
                   <ProductImage src={item.image} alt={item.productName} />
-                  <div>
-                    <Link to={`/product/${item.productId}`} className="product-name">{item.productName}</Link>
-                    <div className="meta-row">Qty: {item.quantity}</div>
-                  </div>
-                  <strong>{formatPrice(item.lineTotal)}</strong>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+                </Box>
+                <Box>
+                  <Link
+                    component={RouterLink}
+                    to={`/product/${item.productId}`}
+                    underline="hover"
+                    color="text.primary"
+                    variant="body2"
+                  >
+                    {item.productName}
+                  </Link>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    Qty: {item.quantity}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {formatPrice(item.lineTotal)}
+                </Typography>
+              </Box>
+            ))}
+          </Step>
+        </Box>
 
-        <aside className="summary">
-          <button
-            type="button"
-            className="btn btn-block"
+        <Paper sx={{ p: 2.5, alignSelf: 'start', position: { md: 'sticky' }, top: 80 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            fullWidth
+            size="large"
             disabled={placing || !selected || choosingAddress}
             onClick={placeOrder}
+            startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
           >
             {placing ? 'Placing order…' : method === 'COD' ? 'Place your order' : 'Pay now'}
-          </button>
+          </Button>
           {(!selected || choosingAddress) && (
-            <p className="summary-hint">Choose a delivery address to continue.</p>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+              Choose a delivery address to continue.
+            </Typography>
           )}
-          <h3 className="summary-heading">Order summary</h3>
-          <div className="summary-line">
-            <span>Items ({cart.itemCount}):</span>
-            <span>{formatPrice(cart.total)}</span>
-          </div>
-          <div className="summary-line">
-            <span>Delivery:</span>
-            <span>Free</span>
-          </div>
-          <div className="summary-total">
-            <span>Order total:</span>
-            <span>{formatPrice(cart.total)}</span>
-          </div>
-        </aside>
-      </div>
-    </div>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="h3" gutterBottom>
+            Order summary
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+            <Typography variant="body2">Items ({cart.itemCount}):</Typography>
+            <Typography variant="body2">{formatPrice(cart.total)}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body2">Delivery:</Typography>
+            <Typography variant="body2">Free</Typography>
+          </Box>
+          <Divider sx={{ my: 1.5 }} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Typography variant="body1" sx={{ fontWeight: 700 }}>
+              Order total:
+            </Typography>
+            <Typography variant="h6" color="error.main">
+              {formatPrice(cart.total)}
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 }

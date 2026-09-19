@@ -1,4 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import Alert from '@mui/material/Alert';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
 import { api } from '../api/client';
 import { useAddresses } from '../context/AddressContext';
 import { INDIAN_STATES, matchState } from '../utils/indianStates';
@@ -51,7 +61,7 @@ export default function AddressForm({ initial, onSaved, onCancel, submitLabel = 
   // Fill city and state from the PIN code as soon as all six digits are in.
   useEffect(() => {
     const pin = form.pincode;
-    if (!/^[1-9][0-9]{5}$/.test(pin) || pin === lookedUpPin.current) return;
+    if (!/^[1-9][0-9]{5}$/.test(pin) || pin === lookedUpPin.current) return undefined;
     lookedUpPin.current = pin;
     let active = true;
     api
@@ -82,7 +92,7 @@ export default function AddressForm({ initial, onSaved, onCancel, submitLabel = 
     // http fails silently in some browsers, so explain instead.
     if (!window.isSecureContext) {
       setNote({
-        kind: 'warn',
+        kind: 'warning',
         text:
           'Your browser only shares location with secure (https://) websites, and this site is not ' +
           'on HTTPS yet. Enter your PIN code instead and the city and state will fill in automatically.',
@@ -90,7 +100,7 @@ export default function AddressForm({ initial, onSaved, onCancel, submitLabel = 
       return;
     }
     if (!('geolocation' in navigator)) {
-      setNote({ kind: 'warn', text: 'This browser cannot share its location. Enter the address below.' });
+      setNote({ kind: 'warning', text: 'This browser cannot share its location. Enter the address below.' });
       return;
     }
 
@@ -111,18 +121,18 @@ export default function AddressForm({ initial, onSaved, onCancel, submitLabel = 
             longitude: Number(longitude.toFixed(6)),
           }));
           setNote({
-            kind: 'ok',
+            kind: 'success',
             text: 'Filled in from your location. Add your flat or house number and check the rest.',
           });
         } catch (err) {
-          setNote({ kind: 'warn', text: err.message });
+          setNote({ kind: 'warning', text: err.message });
         } finally {
           setLocating(false);
         }
       },
       (err) => {
         setLocating(false);
-        setNote({ kind: 'warn', text: LOCATION_ERRORS[err.code] ?? 'Could not get your location.' });
+        setNote({ kind: 'warning', text: LOCATION_ERRORS[err.code] ?? 'Could not get your location.' });
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
     );
@@ -145,85 +155,123 @@ export default function AddressForm({ initial, onSaved, onCancel, submitLabel = 
   }
 
   const field = (name, label, props = {}) => (
-    <label className={`field ${errors[name] ? 'field-invalid' : ''}`}>
-      <span>{label}</span>
-      <input value={form[name] ?? ''} onChange={set(name)} {...props} />
-      {errors[name] && <small className="field-error">{errors[name]}</small>}
-    </label>
+    <TextField
+      label={label}
+      value={form[name] ?? ''}
+      onChange={set(name)}
+      error={Boolean(errors[name])}
+      helperText={errors[name]}
+      fullWidth
+      {...props}
+    />
   );
 
   return (
-    <form className="address-form" onSubmit={submit} noValidate>
-      <button type="button" className="locate-btn" onClick={fillFromLocation} disabled={locating}>
-        <span aria-hidden="true">⌖</span> {locating ? 'Finding your location…' : 'Use my current location'}
-      </button>
-      {note && <div className={`form-note form-note-${note.kind}`}>{note.text}</div>}
-      {formError && <div className="error">{formError}</div>}
+    <Box component="form" onSubmit={submit} noValidate sx={{ display: 'grid', gap: 2, maxWidth: 560 }}>
+      <Box>
+        <Button
+          variant="outlined"
+          onClick={fillFromLocation}
+          disabled={locating}
+          startIcon={locating ? <CircularProgress size={16} /> : <MyLocationIcon />}
+        >
+          {locating ? 'Finding your location…' : 'Use my current location'}
+        </Button>
+      </Box>
 
-      {field('fullName', 'Full name (first and last name)', { autoComplete: 'name', maxLength: 100 })}
+      {note && <Alert severity={note.kind}>{note.text}</Alert>}
+      {formError && <Alert severity="error">{formError}</Alert>}
+
+      {field('fullName', 'Full name (first and last name)', {
+        autoComplete: 'name',
+        inputProps: { maxLength: 100 },
+      })}
       {field('phone', 'Mobile number', {
-        inputMode: 'numeric',
         autoComplete: 'tel-national',
-        maxLength: 10,
         placeholder: '10-digit mobile number',
+        inputProps: { inputMode: 'numeric', maxLength: 10 },
       })}
 
-      <div className="field-row">
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
         {field('pincode', 'PIN code', {
-          inputMode: 'numeric',
           autoComplete: 'postal-code',
-          maxLength: 6,
           placeholder: '6 digits [0-9] PIN code',
+          inputProps: { inputMode: 'numeric', maxLength: 6 },
         })}
-        <label className={`field ${errors.state ? 'field-invalid' : ''}`}>
-          <span>State</span>
-          <select value={form.state} onChange={set('state')} autoComplete="address-level1">
-            <option value="">Choose a state</option>
-            {INDIAN_STATES.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-          {errors.state && <small className="field-error">{errors.state}</small>}
-        </label>
-      </div>
-
-      {field('line1', 'Flat, House no., Building, Company, Apartment', { autoComplete: 'address-line1', maxLength: 200 })}
-      {field('line2', 'Area, Street, Sector, Village', {
-        autoComplete: 'address-line2',
-        maxLength: 200,
-        list: areas.length ? 'pincode-areas' : undefined,
-      })}
-      {areas.length > 0 && (
-        <datalist id="pincode-areas">
-          {areas.map((area) => (
-            <option key={area} value={area} />
+        <TextField
+          select
+          label="State"
+          value={form.state ?? ''}
+          onChange={set('state')}
+          error={Boolean(errors.state)}
+          helperText={errors.state}
+          autoComplete="address-level1"
+          fullWidth
+        >
+          <MenuItem value="">Choose a state</MenuItem>
+          {INDIAN_STATES.map((state) => (
+            <MenuItem key={state} value={state}>
+              {state}
+            </MenuItem>
           ))}
-        </datalist>
-      )}
-      <div className="field-row">
-        {field('landmark', 'Landmark', { placeholder: 'E.g. near Apollo Hospital', maxLength: 120 })}
-        {field('city', 'Town/City', { autoComplete: 'address-level2', maxLength: 100 })}
-      </div>
+        </TextField>
+      </Box>
+
+      {field('line1', 'Flat, House no., Building, Company, Apartment', {
+        autoComplete: 'address-line1',
+        inputProps: { maxLength: 200 },
+      })}
+
+      {/* The PIN code lookup returns the localities it covers, so offer them
+          as suggestions rather than making the shopper type one out. */}
+      <Autocomplete
+        freeSolo
+        options={areas}
+        inputValue={form.line2 ?? ''}
+        onInputChange={(_event, value) => {
+          setForm((current) => ({ ...current, line2: value }));
+          setErrors((current) => ({ ...current, line2: undefined }));
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Area, Street, Sector, Village"
+            autoComplete="address-line2"
+            error={Boolean(errors.line2)}
+            helperText={errors.line2}
+            inputProps={{ ...params.inputProps, maxLength: 200 }}
+          />
+        )}
+      />
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+        {field('landmark', 'Landmark', {
+          placeholder: 'E.g. near Apollo Hospital',
+          inputProps: { maxLength: 120 },
+        })}
+        {field('city', 'Town/City', {
+          autoComplete: 'address-level2',
+          inputProps: { maxLength: 100 },
+        })}
+      </Box>
 
       {!initial?.isDefault && (
-        <label className="checkbox-row">
-          <input type="checkbox" checked={form.makeDefault} onChange={set('makeDefault')} />
-          Make this my default address
-        </label>
+        <FormControlLabel
+          control={<Checkbox size="small" checked={form.makeDefault} onChange={set('makeDefault')} />}
+          label="Make this my default address"
+        />
       )}
 
-      <div className="form-actions">
-        <button type="submit" className="btn" disabled={saving}>
+      <Box sx={{ display: 'flex', gap: 1.5 }}>
+        <Button type="submit" variant="contained" disabled={saving}>
           {saving ? 'Saving…' : submitLabel}
-        </button>
+        </Button>
         {onCancel && (
-          <button type="button" className="btn-plain" onClick={onCancel}>
+          <Button variant="text" onClick={onCancel}>
             Cancel
-          </button>
+          </Button>
         )}
-      </div>
-    </form>
+      </Box>
+    </Box>
   );
 }

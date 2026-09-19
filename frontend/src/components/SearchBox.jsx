@@ -1,5 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import InputAdornment from '@mui/material/InputAdornment';
+import ListItem from '@mui/material/ListItem';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
+import SearchIcon from '@mui/icons-material/Search';
 import { api } from '../api/client';
 import { browseLink, useCategoryTree } from '../hooks/useCatalog';
 
@@ -10,18 +20,34 @@ const suggestionCache = new Map();
 /** Waits for a pause in typing, so "apple" is one request rather than five. */
 const DEBOUNCE_MS = 150;
 
-/** Bolds the part of a suggestion the shopper has not typed yet, as Amazon does. */
-function Highlight({ text, typed }) {
+/** Bolds the part of a suggestion the shopper has not typed yet. */
+function Suggestion({ option, typed }) {
   const prefix = typed.toLowerCase();
-  if (prefix && text.startsWith(prefix)) {
-    return (
-      <>
-        {text.slice(0, prefix.length)}
-        <strong>{text.slice(prefix.length)}</strong>
-      </>
-    );
-  }
-  return <strong>{text}</strong>;
+  const matches = prefix && option.text.startsWith(prefix);
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
+      {option.categoryId ? (
+        <CategoryOutlinedIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+      ) : (
+        <SearchIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+      )}
+      <Typography variant="body2" sx={{ flex: 1, minWidth: 0 }} noWrap>
+        {matches ? (
+          <>
+            {option.text.slice(0, prefix.length)}
+            <strong>{option.text.slice(prefix.length)}</strong>
+          </>
+        ) : (
+          <strong>{option.text}</strong>
+        )}
+      </Typography>
+      {option.categoryName && (
+        <Typography variant="caption" color="primary.main" noWrap>
+          in {option.categoryName}
+        </Typography>
+      )}
+    </Box>
+  );
 }
 
 export default function SearchBox() {
@@ -31,13 +57,11 @@ export default function SearchBox() {
 
   const [term, setTerm] = useState(searchParams.get('q') ?? '');
   const [scope, setScope] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [highlighted, setHighlighted] = useState(-1);
-  const inputRef = useRef(null);
+  const [options, setOptions] = useState([]);
 
-  // Keep the box in step with the URL: after a search, or when the back
-  // button returns to an earlier one.
+  // A slow answer for "ap" must not overwrite the answer for "apple".
+  const requestRef = useRef(null);
+
   useEffect(() => {
     setTerm(searchParams.get('q') ?? '');
   }, [searchParams]);
@@ -45,16 +69,18 @@ export default function SearchBox() {
   useEffect(() => {
     const typed = term.toLowerCase().replace(/^\s+/, '');
     if (!typed) {
-      setSuggestions([]);
+      setOptions([]);
       return undefined;
     }
     if (suggestionCache.has(typed)) {
-      setSuggestions(suggestionCache.get(typed));
+      setOptions(suggestionCache.get(typed));
       return undefined;
     }
 
-    // A slow response for "ap" must not overwrite the answer for "apple".
     const controller = new AbortController();
+    requestRef.current?.abort();
+    requestRef.current = controller;
+
     const timer = setTimeout(() => {
       api
         .get(`/api/products/suggest?q=${encodeURIComponent(typed)}&limit=10`, {
@@ -63,11 +89,10 @@ export default function SearchBox() {
         })
         .then((list) => {
           suggestionCache.set(typed, list ?? []);
-          setSuggestions(list ?? []);
-          setHighlighted(-1);
+          setOptions(list ?? []);
         })
         .catch(() => {
-          /* Suggestions are a convenience; a failure leaves plain search working. */
+          /* Suggestions are a convenience; plain search still works without them. */
         });
     }, DEBOUNCE_MS);
 
@@ -77,117 +102,121 @@ export default function SearchBox() {
     };
   }, [term]);
 
-  function go(params) {
-    setOpen(false);
-    inputRef.current?.blur();
-    navigate(browseLink(params));
+  const departments = useMemo(() => tree.filter((d) => d.featured || d.children.length > 0), [tree]);
+
+  function runSearch(query) {
+    navigate(browseLink({ q: query, categoryId: scope }));
   }
 
-  function choose(suggestion) {
-    if (suggestion.categoryId) {
-      // A department suggestion browses the department rather than running a
-      // text search for its name.
+  function choose(option) {
+    if (!option) return;
+    if (typeof option === 'string') {
+      runSearch(option);
+    } else if (option.categoryId) {
+      // A department suggestion browses that department rather than searching
+      // for its name as text.
       setTerm('');
-      go({ categoryId: suggestion.categoryId });
+      navigate(browseLink({ categoryId: option.categoryId }));
     } else {
-      setTerm(suggestion.text);
-      go({ q: suggestion.text, categoryId: scope });
+      setTerm(option.text);
+      runSearch(option.text);
     }
   }
-
-  function submit(event) {
-    event.preventDefault();
-    if (highlighted >= 0 && suggestions[highlighted]) {
-      choose(suggestions[highlighted]);
-      return;
-    }
-    const query = term.trim();
-    if (query || scope) go({ q: query, categoryId: scope });
-  }
-
-  function onKeyDown(event) {
-    if (!open || suggestions.length === 0) return;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      setHighlighted((index) => (index + 1) % suggestions.length);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      setHighlighted((index) => (index <= 0 ? suggestions.length - 1 : index - 1));
-    } else if (event.key === 'Escape') {
-      setOpen(false);
-    }
-  }
-
-  const showList = open && term.trim() !== '' && suggestions.length > 0;
 
   return (
-    <form className="search" onSubmit={submit} role="search">
-      <select
-        className="search-scope"
+    <Paper
+      component="form"
+      elevation={0}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (term.trim() || scope) runSearch(term.trim());
+      }}
+      sx={{
+        display: 'flex',
+        alignItems: 'stretch',
+        flex: 1,
+        minWidth: 0,
+        maxWidth: 820,
+        borderRadius: 2,
+        overflow: 'hidden',
+      }}
+    >
+      <TextField
+        select
         value={scope}
         onChange={(event) => setScope(event.target.value)}
+        variant="standard"
         aria-label="Search in department"
+        // Without displayEmpty the "All" option renders as a blank box, since
+        // its value is the empty string.
+        SelectProps={{ disableUnderline: true, displayEmpty: true }}
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          bgcolor: 'grey.100',
+          minWidth: 120,
+          '& .MuiInputBase-root': { height: '100%', px: 1.5, fontSize: 13 },
+        }}
       >
-        <option value="">All</option>
-        {tree.map((department) => (
-          <option key={department.id} value={department.id}>
+        <MenuItem value="">All</MenuItem>
+        {departments.map((department) => (
+          <MenuItem key={department.id} value={department.id}>
             {department.name}
-          </option>
+          </MenuItem>
         ))}
-      </select>
+      </TextField>
 
-      <div className="search-field">
-        <input
-          ref={inputRef}
-          type="search"
-          value={term}
-          placeholder="Search ShopKart"
-          aria-label="Search products"
-          autoComplete="off"
-          aria-autocomplete="list"
-          aria-expanded={showList}
-          aria-controls="search-suggestions"
-          onChange={(event) => {
-            setTerm(event.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          // Delayed so a click on a suggestion lands before the list closes.
-          onBlur={() => setTimeout(() => setOpen(false), 120)}
-          onKeyDown={onKeyDown}
-        />
-
-        {showList && (
-          <ul className="suggestions" id="search-suggestions" role="listbox">
-            {suggestions.map((suggestion, index) => (
-              <li
-                key={`${suggestion.text}-${suggestion.categoryId ?? ''}`}
-                role="option"
-                aria-selected={index === highlighted}
-                data-active={index === highlighted}
-                onMouseDown={(event) => event.preventDefault()}
-                onMouseEnter={() => setHighlighted(index)}
-                onClick={() => choose(suggestion)}
-              >
-                <span className="suggestion-icon" aria-hidden="true">
-                  {suggestion.categoryId ? '▦' : '⌕'}
-                </span>
-                <span>
-                  <Highlight text={suggestion.text} typed={term.replace(/^\s+/, '')} />
-                  {suggestion.categoryId && <em className="suggestion-scope"> in {suggestion.categoryName}</em>}
-                </span>
-              </li>
-            ))}
-          </ul>
+      <Autocomplete
+        freeSolo
+        fullWidth
+        options={options}
+        filterOptions={(x) => x}
+        inputValue={term}
+        onInputChange={(_event, value, reason) => reason !== 'reset' && setTerm(value)}
+        onChange={(_event, value) => choose(value)}
+        getOptionLabel={(option) => (typeof option === 'string' ? option : option.text)}
+        isOptionEqualToValue={(a, b) => a.text === b.text && a.categoryId === b.categoryId}
+        renderOption={(props, option) => (
+          <ListItem {...props} key={`${option.text}-${option.categoryId ?? ''}`} dense>
+            <Suggestion option={option} typed={term.replace(/^\s+/, '')} />
+          </ListItem>
         )}
-      </div>
-
-      <button type="submit" aria-label="Search">
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
-          <path d="M15.5 15.5 21 21" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-        </svg>
-      </button>
-    </form>
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            placeholder="Search ShopKart"
+            variant="standard"
+            size="medium"
+            InputProps={{
+              ...params.InputProps,
+              disableUnderline: true,
+              sx: { px: 1.5, height: '100%' },
+              endAdornment: (
+                <InputAdornment position="end" sx={{ height: '100%', maxHeight: 'none', m: 0 }}>
+                  <Box
+                    component="button"
+                    type="submit"
+                    aria-label="Search"
+                    sx={{
+                      border: 0,
+                      cursor: 'pointer',
+                      px: 2.5,
+                      height: 42,
+                      display: 'grid',
+                      placeItems: 'center',
+                      bgcolor: 'secondary.main',
+                      color: 'secondary.contrastText',
+                      '&:hover': { bgcolor: 'secondary.dark' },
+                    }}
+                  >
+                    <SearchIcon />
+                  </Box>
+                </InputAdornment>
+              ),
+            }}
+          />
+        )}
+        sx={{ flex: 1, '& .MuiAutocomplete-endAdornment': { display: 'none' } }}
+      />
+    </Paper>
   );
 }

@@ -1,7 +1,35 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import { api } from '../../api/client';
+import { browseLink } from '../../hooks/useCatalog';
 import { formatPrice } from '../../utils/format';
+
+function Stat({ label, value }) {
+  return (
+    <Card>
+      <CardContent>
+        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>
+          {label}
+        </Typography>
+        <Typography variant="h2" sx={{ mt: 0.5 }}>
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function AdminOverview() {
   const [facets, setFacets] = useState(null);
@@ -10,54 +38,78 @@ export default function AdminOverview() {
 
   useEffect(() => {
     api.get('/api/products/facets', { auth: false }).then(setFacets).catch(() => {});
-    api.get('/api/products/search?size=1', { auth: false })
-      .then((page) => setTotal(page.totalItems)).catch(() => {});
+    api
+      .get('/api/products/search?size=1', { auth: false })
+      .then((page) => setTotal(page.totalItems))
+      .catch(() => {});
     // Everything in stock, subtracted from the total, gives what is not.
-    api.get('/api/products/search?size=1&inStockOnly=true', { auth: false })
-      .then((page) => setOutOfStock(page.totalItems)).catch(() => {});
+    api
+      .get('/api/products/search?size=1&inStockOnly=true', { auth: false })
+      .then((page) => setOutOfStock(page.totalItems))
+      .catch(() => {});
   }, []);
 
   const unavailable = total != null && outOfStock != null ? total - outOfStock : null;
+  const number = (n) => (n == null ? '—' : new Intl.NumberFormat('en-IN').format(n));
 
   return (
     <>
-      <h1 className="section-title">Store overview</h1>
+      <Typography variant="h1" sx={{ mb: 2 }}>
+        Store overview
+      </Typography>
 
-      <div className="stat-row">
-        <div className="stat">
-          <span>Products</span>
-          <strong>{total ?? '—'}</strong>
-        </div>
-        <div className="stat">
-          <span>Departments</span>
-          <strong>{facets?.categories.length ?? '—'}</strong>
-        </div>
-        <div className="stat">
-          <span>Out of stock</span>
-          <strong>{unavailable ?? '—'}</strong>
-        </div>
-        <div className="stat">
-          <span>Price range</span>
-          <strong>
-            {facets ? `${formatPrice(facets.minPrice)} – ${formatPrice(facets.maxPrice)}` : '—'}
-          </strong>
-        </div>
-      </div>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Stat label="Products" value={number(total)} />
+        <Stat label="Departments" value={number(facets?.categories.length)} />
+        <Stat label="Out of stock" value={number(unavailable)} />
+        <Stat
+          label="Price range"
+          value={
+            <Typography variant="h3" sx={{ mt: 1 }}>
+              {facets ? `${formatPrice(facets.minPrice)} – ${formatPrice(facets.maxPrice)}` : '—'}
+            </Typography>
+          }
+        />
+      </Box>
 
-      <div className="panel">
-        <h2 style={{ fontSize: 16, marginTop: 0 }}>Products per department</h2>
-        <table className="admin-table">
-          <thead><tr><th>Department</th><th>Products</th></tr></thead>
-          <tbody>
-            {facets?.categories.map((category) => (
-              <tr key={category.id}>
-                <td><Link to={`/?categoryId=${category.id}`} style={{ color: 'var(--link)' }}>{category.name}</Link></td>
-                <td>{category.count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="h3" sx={{ mb: 1.5 }}>
+          Products per department
+        </Typography>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Department</TableCell>
+                <TableCell align="right">Products</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {facets?.categories.map((category) => (
+                <TableRow key={category.id} hover>
+                  <TableCell>
+                    <Link
+                      component={RouterLink}
+                      to={browseLink({ categoryId: category.id })}
+                      underline="hover"
+                    >
+                      {category.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell align="right">{number(category.count)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </>
   );
 }

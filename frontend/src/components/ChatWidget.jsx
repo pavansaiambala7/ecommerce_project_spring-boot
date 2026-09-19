@@ -1,5 +1,19 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Fab from '@mui/material/Fab';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Zoom from '@mui/material/Zoom';
+import CloseIcon from '@mui/icons-material/Close';
+import SendIcon from '@mui/icons-material/Send';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../utils/format';
@@ -42,14 +56,41 @@ function FormattedReply({ text }) {
 
   return blocks.map((block, i) =>
     block.type === 'list' ? (
-      <ul key={i}>
+      <Box key={i} component="ul" sx={{ pl: 2.5, my: 0.5, fontSize: 14 }}>
         {block.items.map((item, j) => (
           <li key={j}>{inline(item)}</li>
         ))}
-      </ul>
+      </Box>
     ) : (
-      <p key={i}>{inline(block.text)}</p>
+      <Typography key={i} variant="body2" sx={{ '& + &': { mt: 1 } }}>
+        {inline(block.text)}
+      </Typography>
     ),
+  );
+}
+
+/** The three-dot "assistant is typing" indicator. */
+function Typing() {
+  return (
+    <Box sx={{ display: 'flex', gap: 0.5, px: 0.5 }} aria-label="Assistant is typing">
+      {[0, 1, 2].map((i) => (
+        <Box
+          key={i}
+          sx={{
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            bgcolor: 'text.disabled',
+            animation: 'chatDot 1.2s infinite ease-in-out',
+            animationDelay: `${i * 0.18}s`,
+            '@keyframes chatDot': {
+              '0%, 60%, 100%': { opacity: 0.25, transform: 'translateY(0)' },
+              '30%': { opacity: 1, transform: 'translateY(-3px)' },
+            },
+          }}
+        />
+      ))}
+    </Box>
   );
 }
 
@@ -88,101 +129,183 @@ export default function ChatWidget() {
     }
   }
 
-  if (!open) {
-    return (
-      <button type="button" className="chat-toggle" onClick={() => setOpen(true)}>
-        <span aria-hidden="true">💬</span> Need help?
-      </button>
-    );
-  }
+  const chips = messages.length === 0 ? STARTERS : actions;
 
   return (
-    <section className="chat-panel" aria-label="Shopping assistant">
-      <header className="chat-head">
-        <span>
-          ShopKart Assistant
-          <small>Answers from our catalogue and your orders</small>
-        </span>
-        <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
-          ×
-        </button>
-      </header>
+    <>
+      <Zoom in={!open}>
+        <Fab
+          color="secondary"
+          variant="extended"
+          onClick={() => setOpen(true)}
+          sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 1200 }}
+        >
+          <SmartToyOutlinedIcon sx={{ mr: 1 }} />
+          Need help?
+        </Fab>
+      </Zoom>
 
-      {!isAuthenticated ? (
-        <div className="chat-signin">
-          <p>Sign in to ask about products, deals and your orders.</p>
-          <Link to="/login" className="btn" onClick={() => setOpen(false)}>
-            Sign in
-          </Link>
-        </div>
-      ) : (
-        <>
-          <div className="chat-log" ref={logRef}>
-            {messages.length === 0 && (
-              <div className="bubble bubble-bot">
-                <p>Hi! I can help you find products, compare prices and check your orders.</p>
-              </div>
-            )}
-            {messages.map((message, index) => (
-              <Fragment key={index}>
-                <div
-                  className={`bubble ${message.from === 'user' ? 'bubble-user' : 'bubble-bot'} ${
-                    message.failed ? 'bubble-failed' : ''
-                  }`}
-                >
-                  {message.from === 'bot' ? <FormattedReply text={message.text} /> : message.text}
-                </div>
-                {message.products?.length > 0 && (
-                  <div className="chat-products">
-                    {message.products.map((product) => (
-                      <Link key={product.id} to={`/product/${product.id}`} className="chat-product">
-                        <ProductImage src={product.image} alt={product.name} />
-                        <span className="chat-product-name">{product.name}</span>
-                        <strong>{formatPrice(product.price)}</strong>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </Fragment>
-            ))}
-            {sending && (
-              <div className="bubble bubble-bot typing" aria-label="Assistant is typing">
-                <span />
-                <span />
-                <span />
-              </div>
-            )}
-          </div>
-
-          {(messages.length === 0 ? STARTERS : actions).length > 0 && (
-            <div className="chat-actions">
-              {(messages.length === 0 ? STARTERS : actions).map((action) => (
-                <button key={action} type="button" onClick={() => ask(action)} disabled={sending}>
-                  {action}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <form
-            className="chat-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              ask(draft);
+      <Zoom in={open} unmountOnExit>
+        <Paper
+          elevation={8}
+          aria-label="Shopping assistant"
+          sx={{
+            position: 'fixed',
+            right: { xs: 12, sm: 24 },
+            bottom: { xs: 12, sm: 24 },
+            width: { xs: 'calc(100vw - 24px)', sm: 380 },
+            height: { xs: '70vh', sm: 540 },
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            zIndex: 1200,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              px: 2,
+              py: 1.25,
+              bgcolor: 'primary.main',
+              color: 'common.white',
             }}
           >
-            <input
-              value={draft}
-              maxLength={2000}
-              placeholder="Ask about a product or an order"
-              onChange={(event) => setDraft(event.target.value)}
-            />
-            <button type="submit" disabled={sending || !draft.trim()}>
-              Send
-            </button>
-          </form>
-        </>
-      )}
-    </section>
+            <Avatar sx={{ bgcolor: 'primary.dark', width: 34, height: 34 }}>
+              <SmartToyOutlinedIcon fontSize="small" />
+            </Avatar>
+            <Box sx={{ flex: 1, lineHeight: 1.2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                ShopKart Assistant
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.85 }}>
+                Answers from our catalogue and your orders
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={() => setOpen(false)} aria-label="Close chat" sx={{ color: 'inherit' }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {!isAuthenticated ? (
+            <Stack spacing={2} sx={{ p: 3, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+              <Typography variant="body2" align="center" color="text.secondary">
+                Sign in to ask about products, deals and your orders.
+              </Typography>
+              <Button component={RouterLink} to="/login" variant="contained" onClick={() => setOpen(false)}>
+                Sign in
+              </Button>
+            </Stack>
+          ) : (
+            <>
+              <Box ref={logRef} sx={{ flex: 1, overflowY: 'auto', p: 1.5, bgcolor: 'background.default' }}>
+                {messages.length === 0 && (
+                  <Paper variant="outlined" sx={{ p: 1.25, mb: 1, maxWidth: '85%' }}>
+                    <Typography variant="body2">
+                      Hi! I can help you find products, compare prices and check your orders.
+                    </Typography>
+                  </Paper>
+                )}
+                {messages.map((message, index) => (
+                  <Fragment key={index}>
+                    <Box sx={{ display: 'flex', justifyContent: message.from === 'user' ? 'flex-end' : 'flex-start' }}>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          p: 1.25,
+                          mb: 1,
+                          maxWidth: '85%',
+                          borderColor: 'transparent',
+                          bgcolor: message.failed
+                            ? 'error.main'
+                            : message.from === 'user'
+                              ? 'primary.main'
+                              : 'background.paper',
+                          color: message.from === 'user' || message.failed ? 'common.white' : 'text.primary',
+                        }}
+                      >
+                        {message.from === 'bot' && !message.failed ? (
+                          <FormattedReply text={message.text} />
+                        ) : (
+                          <Typography variant="body2">{message.text}</Typography>
+                        )}
+                      </Paper>
+                    </Box>
+                    {message.products?.length > 0 && (
+                      <Box className="no-scrollbar" sx={{ display: 'flex', gap: 1, overflowX: 'auto', mb: 1, pb: 0.5 }}>
+                        {message.products.map((product) => (
+                          <Paper
+                            key={product.id}
+                            component={RouterLink}
+                            to={`/product/${product.id}`}
+                            variant="outlined"
+                            sx={{
+                              width: 118,
+                              flexShrink: 0,
+                              p: 1,
+                              textDecoration: 'none',
+                              color: 'inherit',
+                              bgcolor: 'background.paper',
+                            }}
+                          >
+                            <Box sx={{ height: 70 }}>
+                              <ProductImage src={product.image} alt={product.name} />
+                            </Box>
+                            <Typography variant="caption" className="clamp-2" sx={{ display: 'block', mt: 0.5 }}>
+                              {product.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              {formatPrice(product.price)}
+                            </Typography>
+                          </Paper>
+                        ))}
+                      </Box>
+                    )}
+                  </Fragment>
+                ))}
+                {sending && <Typing />}
+              </Box>
+
+              {chips.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', px: 1.5, py: 1 }}>
+                  {chips.map((action) => (
+                    <Chip
+                      key={action}
+                      label={action}
+                      size="small"
+                      variant="outlined"
+                      clickable
+                      disabled={sending}
+                      onClick={() => ask(action)}
+                    />
+                  ))}
+                </Box>
+              )}
+
+              <Box
+                component="form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  ask(draft);
+                }}
+                sx={{ display: 'flex', gap: 1, p: 1.5, borderTop: 1, borderColor: 'divider' }}
+              >
+                <TextField
+                  fullWidth
+                  value={draft}
+                  placeholder="Ask about a product or an order"
+                  inputProps={{ maxLength: 2000 }}
+                  onChange={(event) => setDraft(event.target.value)}
+                />
+                <IconButton type="submit" color="primary" disabled={sending || !draft.trim()} aria-label="Send">
+                  <SendIcon />
+                </IconButton>
+              </Box>
+            </>
+          )}
+        </Paper>
+      </Zoom>
+    </>
   );
 }

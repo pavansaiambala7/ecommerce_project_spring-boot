@@ -1,28 +1,36 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Link from '@mui/material/Link';
+import Rating from '@mui/material/Rating';
+import Typography from '@mui/material/Typography';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import Price from './Price';
 import ProductImage from './ProductImage';
 
-export function Stars({ rating, count }) {
+/** Half-star rating plus the number of ratings, as every marketplace shows it. */
+export function Stars({ rating, count, size = 'small' }) {
   if (rating == null) return null;
   const value = Number(rating);
-  // Rounded to the nearest half star, which is as precise as the icons can show.
-  const halves = Math.round(value * 2);
   return (
-    <div className="rating" title={`${value.toFixed(1)} out of 5 stars`}>
-      <span className="stars" aria-label={`${value.toFixed(1)} out of 5 stars`}>
-        {Array.from({ length: 5 }, (_, i) => {
-          const filled = halves - i * 2;
-          return (
-            <span key={i} className={filled >= 2 ? 'star full' : filled === 1 ? 'star half' : 'star'}>
-              ★
-            </span>
-          );
-        })}
-      </span>
-      {count != null && <span className="rating-count">{new Intl.NumberFormat('en-IN').format(count)}</span>}
-    </div>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+      <Rating
+        value={value}
+        precision={0.5}
+        size={size}
+        readOnly
+        sx={{ color: 'secondary.main' }}
+        title={`${value.toFixed(1)} out of 5 stars`}
+      />
+      {count != null && (
+        <Typography variant="caption" color="text.secondary">
+          {new Intl.NumberFormat('en-IN').format(count)}
+        </Typography>
+      )}
+    </Box>
   );
 }
 
@@ -42,37 +50,52 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <article className="product-card">
-      <Link to={`/product/${product.id}`} className="product-image">
+    <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box
+        component={RouterLink}
+        to={`/product/${product.id}`}
+        sx={{ display: 'block', height: 200, p: 2, bgcolor: 'common.white' }}
+      >
         <ProductImage src={product.image} alt={product.name} />
-      </Link>
+      </Box>
 
-      <div className="product-info">
-        {product.brand && <div className="product-brand">{product.brand}</div>}
-        <Link to={`/product/${product.id}`} className="product-name">
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, flex: 1, pt: 1.5 }}>
+        {product.brand && (
+          <Typography variant="caption" color="text.secondary" noWrap>
+            {product.brand}
+          </Typography>
+        )}
+        <Link
+          component={RouterLink}
+          to={`/product/${product.id}`}
+          underline="hover"
+          color="text.primary"
+          className="clamp-2"
+          sx={{ fontSize: 14, fontWeight: 500, minHeight: 40 }}
+        >
           {product.name}
         </Link>
 
         <Stars rating={product.rating} count={product.ratingCount} />
 
-        <Price product={product} />
+        <Price product={product} size="sm" />
 
-        {product.inStock ? (
-          <span className="stock-ok">In stock</span>
-        ) : (
-          <span className="stock-out">Currently unavailable</span>
-        )}
+        <Typography variant="caption" sx={{ color: product.inStock ? 'success.main' : 'error.main' }}>
+          {product.inStock ? 'In stock' : 'Currently unavailable'}
+        </Typography>
 
-        <button
-          type="button"
-          className="btn btn-block"
+        <Button
+          variant="contained"
+          color="secondary"
+          fullWidth
           disabled={!product.inStock || busy}
           onClick={add}
           title={isAuthenticated ? undefined : 'You will be asked to sign in'}
+          sx={{ mt: 'auto' }}
         >
           Add to cart
-        </button>
-      </div>
-    </article>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

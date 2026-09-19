@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 
 /**
  * Reads the department colour and product type out of a placeholder URL such
@@ -25,7 +28,7 @@ function parsePlaceholder(src) {
  * tile naming the product type instead. It also covers a real photo that fails
  * to load, so a dead image link never leaves a broken-image icon.
  */
-export default function ProductImage({ src, alt, className = '', loading = 'lazy' }) {
+export default function ProductImage({ src, alt, loading = 'lazy', sx }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [src]);
 
@@ -33,20 +36,41 @@ export default function ProductImage({ src, alt, className = '', loading = 'lazy
   if (isPlaceholder || failed) {
     const { colour, label } = isPlaceholder && src ? parsePlaceholder(src) : { colour: '#565959', label: '' };
     return (
-      <div className={`img-fallback ${className}`} style={{ '--tile': colour }} role="img" aria-label={alt}>
-        <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
-          <path
-            d="M10 16h28l-2.5 24h-23L10 16Z M18 16v-3a6 6 0 0 1 12 0v3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.6"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span>{label || alt}</span>
-      </div>
+      <Box
+        role="img"
+        aria-label={alt}
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
+          p: 2,
+          textAlign: 'center',
+          color: colour,
+          bgcolor: `color-mix(in srgb, ${colour} 8%, #ffffff)`,
+          ...sx,
+        }}
+      >
+        <ShoppingBagOutlinedIcon sx={{ fontSize: 44, opacity: 0.7 }} />
+        <Typography variant="caption" className="clamp-2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+          {label || alt}
+        </Typography>
+      </Box>
     );
   }
 
-  return <img src={src} alt={alt} loading={loading} className={className} onError={() => setFailed(true)} />;
+  return (
+    <Box
+      component="img"
+      src={src}
+      alt={alt}
+      loading={loading}
+      className="product-photo"
+      onError={() => setFailed(true)}
+      sx={{ width: '100%', height: '100%', objectFit: 'contain', ...sx }}
+    />
+  );
 }

@@ -1,4 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import { api } from '../../api/client';
 
 export default function AdminCategories() {
@@ -49,53 +65,83 @@ export default function AdminCategories() {
 
   return (
     <>
-      <h1 className="section-title">Departments</h1>
+      <Typography variant="h1" sx={{ mb: 2 }}>
+        Departments
+      </Typography>
 
-      <form className="panel admin-form" onSubmit={submit}>
-        {error && <div className="error">{error.message}</div>}
-        <div className="admin-actions">
-          <input
+      <Paper component="form" onSubmit={submit} sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error.message}
+          </Alert>
+        )}
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <TextField
             required
-            maxLength={255}
-            placeholder="Department name"
+            label="Department name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            style={{ flex: 1, minWidth: 0, padding: 8, border: '1px solid var(--border)', borderRadius: 4 }}
+            inputProps={{ maxLength: 255 }}
+            sx={{ flex: 1, minWidth: 220 }}
           />
-          <button type="submit" className="btn" disabled={busy}>
+          <Button type="submit" variant="contained" disabled={busy}>
             {editingId ? 'Rename' : 'Add'}
-          </button>
+          </Button>
           {editingId && (
-            <button type="button" className="btn-plain" onClick={() => { setEditingId(null); setName(''); }}>
+            <Button
+              variant="text"
+              onClick={() => {
+                setEditingId(null);
+                setName('');
+              }}
+            >
               Cancel
-            </button>
+            </Button>
           )}
-        </div>
-      </form>
+        </Box>
+      </Paper>
 
-      <div className="panel table-scroll">
-        <table className="admin-table">
-          <thead><tr><th>Name</th><th>ID</th><th></th></tr></thead>
-          <tbody>
-            {categories.map((category) => (
-              <tr key={category.id}>
-                <td>{category.name}</td>
-                <td>{category.id}</td>
-                <td className="admin-row-actions">
-                  <button type="button" className="btn-plain"
-                    onClick={() => { setEditingId(category.id); setName(category.name); }}>
-                    Rename
-                  </button>
-                  <button type="button" className="btn-plain danger" disabled={busy}
-                    onClick={() => remove(category)}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Paper>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell align="right">ID</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {categories.map((category) => (
+                <TableRow key={category.id} hover>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell align="right">{category.id}</TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    <Tooltip title="Rename">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setEditingId(category.id);
+                          setName(category.name);
+                        }}
+                      >
+                        <DriveFileRenameOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <span>
+                        <IconButton size="small" color="error" disabled={busy} onClick={() => remove(category)}>
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </>
   );
 }

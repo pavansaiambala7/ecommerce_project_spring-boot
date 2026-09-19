@@ -1,9 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useLocation } from 'react-router-dom';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Skeleton from '@mui/material/Skeleton';
+import Typography from '@mui/material/Typography';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Price from '../components/Price';
 import ProductImage from '../components/ProductImage';
 import { browseLink, useCategoryTree, useStorefrontHome } from '../hooks/useCatalog';
 import { discountOf } from '../utils/format';
+
+/** Banner backgrounds. Material has no opinion about brand artwork, so these live here. */
+const THEMES = {
+  sunrise: 'linear-gradient(120deg, #ff8a4c 0%, #ffb300 100%)',
+  rose: 'linear-gradient(120deg, #d81b60 0%, #ff8a65 100%)',
+  ocean: 'linear-gradient(120deg, #01579b 0%, #00acc1 100%)',
+  dusk: 'linear-gradient(120deg, #4527a0 0%, #7e57c2 100%)',
+  leaf: 'linear-gradient(120deg, #1b5e20 0%, #66bb6a 100%)',
+};
 
 /** A banner looks best with photographs, so products that have one go first. */
 function withPhotosFirst(products) {
@@ -70,119 +93,245 @@ function Hero({ slides }) {
   if (slides.length === 0) return null;
   const slide = slides[index % slides.length];
 
+  const arrowSx = {
+    // Hidden on a phone, where the banner is only as wide as the copy and an
+    // arrow would sit on top of the words.
+    display: { xs: 'none', md: 'inline-flex' },
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    bgcolor: 'rgba(255,255,255,0.85)',
+    '&:hover': { bgcolor: 'common.white' },
+  };
+
   return (
-    <section
-      className={`hero hero-${slide.theme}`}
+    <Box
+      component="section"
+      aria-roledescription="carousel"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      aria-roledescription="carousel"
+      sx={{ position: 'relative', background: THEMES[slide.theme], color: 'common.white', transition: 'background 400ms' }}
     >
-      <Link to={slide.link} className="hero-slide">
-        <div className="hero-copy">
-          <span className="hero-eyebrow">{slide.eyebrow}</span>
-          <h1>{slide.title}</h1>
-          {slide.text && <p>{slide.text}</p>}
-          <span className="hero-cta">Shop now</span>
-        </div>
-        <div className="hero-images" aria-hidden="true">
-          {slide.images.map((src, i) => (
-            <ProductImage key={`${slide.key}-${i}`} src={src} alt="" loading="eager" />
-          ))}
-        </div>
-      </Link>
+      <Container maxWidth="xl">
+        <Box
+          component={RouterLink}
+          to={slide.link}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            alignItems: 'center',
+            gap: 3,
+            py: { xs: 4, md: 6 },
+            px: { xs: 1, md: 4 },
+            color: 'inherit',
+            textDecoration: 'none',
+            minHeight: { xs: 280, md: 330 },
+          }}
+        >
+          <Box>
+            <Typography variant="overline" sx={{ opacity: 0.9, letterSpacing: 1.5 }}>
+              {slide.eyebrow}
+            </Typography>
+            <Typography variant="h1" sx={{ fontWeight: 700, my: 1 }}>
+              {slide.title}
+            </Typography>
+            {slide.text && (
+              <Typography variant="body1" sx={{ opacity: 0.92, mb: 2.5, maxWidth: 460 }}>
+                {slide.text}
+              </Typography>
+            )}
+            <Button variant="contained" color="secondary" size="large">
+              Shop now
+            </Button>
+          </Box>
+
+          <Box
+            aria-hidden="true"
+            sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}
+          >
+            {slide.images.map((src, i) => (
+              <Paper
+                key={`${slide.key}-${i}`}
+                elevation={6}
+                sx={{ height: 170, p: 1.5, bgcolor: 'common.white', borderRadius: 2 }}
+              >
+                <ProductImage src={src} alt="" loading="eager" />
+              </Paper>
+            ))}
+          </Box>
+        </Box>
+      </Container>
+
       {slides.length > 1 && (
         <>
-          <button
-            type="button"
-            className="hero-arrow hero-prev"
+          <IconButton
             aria-label="Previous banner"
             onClick={() => setIndex((i) => (i - 1 + slides.length) % slides.length)}
+            sx={{ ...arrowSx, left: { xs: 4, md: 16 } }}
           >
-            ‹
-          </button>
-          <button
-            type="button"
-            className="hero-arrow hero-next"
+            <ChevronLeftIcon />
+          </IconButton>
+          <IconButton
             aria-label="Next banner"
             onClick={() => setIndex((i) => (i + 1) % slides.length)}
+            sx={{ ...arrowSx, right: { xs: 4, md: 16 } }}
           >
-            ›
-          </button>
-          <div className="hero-dots">
+            <ChevronRightIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, pb: 1.5 }}>
             {slides.map((s, i) => (
-              <button
+              <Box
                 key={s.key}
+                component="button"
                 type="button"
                 aria-label={`Banner ${i + 1}`}
-                data-active={i === index % slides.length}
                 onClick={() => setIndex(i)}
+                sx={{
+                  width: i === index % slides.length ? 26 : 9,
+                  height: 9,
+                  p: 0,
+                  border: 0,
+                  borderRadius: 999,
+                  cursor: 'pointer',
+                  transition: 'width 200ms',
+                  bgcolor: i === index % slides.length ? 'common.white' : 'rgba(255,255,255,0.5)',
+                }}
               />
             ))}
-          </div>
+          </Box>
         </>
       )}
-    </section>
+    </Box>
   );
 }
 
 function DealCard({ card }) {
   return (
-    <article className="deal-card">
-      <h2>{card.headline}</h2>
-      {card.subtitle && <p className="deal-card-sub">{card.subtitle}</p>}
-      <div className="deal-card-grid">
-        {card.products.map((product) => (
-          <Link key={product.id} to={`/product/${product.id}`} className="deal-tile">
-            <span className="deal-tile-image">
-              <ProductImage src={product.image} alt={product.name} />
-            </span>
-            <span className="deal-tile-name">{product.name}</span>
-            {discountOf(product) > 0 && <span className="deal-tag">{discountOf(product)}% off</span>}
-          </Link>
-        ))}
-      </div>
-      <Link to={browseLink(card.query)} className="see-more">
-        See all offers
-      </Link>
-    </article>
+    <Card sx={{ display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1 }}>
+        <Typography variant="h3" gutterBottom>
+          {card.headline}
+        </Typography>
+        {card.subtitle && (
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            {card.subtitle}
+          </Typography>
+        )}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mt: 1.5 }}>
+          {card.products.map((product) => (
+            <Box
+              key={product.id}
+              component={RouterLink}
+              to={`/product/${product.id}`}
+              sx={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}
+            >
+              <Box sx={{ height: 104, bgcolor: 'common.white', borderRadius: 1, p: 0.5 }}>
+                <ProductImage src={product.image} alt={product.name} />
+              </Box>
+              <Typography variant="caption" className="clamp-2" sx={{ display: 'block', mt: 0.5 }}>
+                {product.name}
+              </Typography>
+              {discountOf(product) > 0 && (
+                <Chip
+                  label={`${discountOf(product)}% off`}
+                  size="small"
+                  color="error"
+                  sx={{ position: 'absolute', top: 4, left: 4, height: 20, fontSize: 11 }}
+                />
+              )}
+            </Box>
+          ))}
+        </Box>
+      </CardContent>
+      <Box sx={{ px: 2, pb: 2 }}>
+        <Link component={RouterLink} to={browseLink(card.query)} underline="hover" variant="body2">
+          See all offers
+        </Link>
+      </Box>
+    </Card>
   );
 }
 
-function DealsRow({ deals }) {
+function Shelf({ title, action, children }) {
   const rowRef = useRef(null);
   const scroll = (direction) =>
     rowRef.current?.scrollBy({ left: direction * rowRef.current.clientWidth * 0.8, behavior: 'smooth' });
 
+  const arrowSx = {
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    zIndex: 1,
+    bgcolor: 'background.paper',
+    boxShadow: 2,
+    '&:hover': { bgcolor: 'background.paper' },
+  };
+
+  return (
+    <Paper sx={{ p: 2, mt: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, mb: 1.5 }}>
+        <Typography variant="h2">{title}</Typography>
+        {action}
+      </Box>
+      <Box sx={{ position: 'relative' }}>
+        <IconButton aria-label="Scroll left" onClick={() => scroll(-1)} sx={{ ...arrowSx, left: -8 }}>
+          <ChevronLeftIcon />
+        </IconButton>
+        <Box
+          ref={rowRef}
+          className="no-scrollbar"
+          sx={{ display: 'flex', gap: 2, overflowX: 'auto', scrollSnapType: 'x mandatory', py: 0.5 }}
+        >
+          {children}
+        </Box>
+        <IconButton aria-label="Scroll right" onClick={() => scroll(1)} sx={{ ...arrowSx, right: -8 }}>
+          <ChevronRightIcon />
+        </IconButton>
+      </Box>
+    </Paper>
+  );
+}
+
+function DealsRow({ deals }) {
   if (deals.length === 0) return null;
   return (
-    <section className="shelf">
-      <div className="shelf-head">
-        <h2>Today&apos;s Deals</h2>
-        <Link to={browseLink({ minDiscount: 10, sort: 'discount' })} className="see-more">
+    <Shelf
+      title="Today's Deals"
+      action={
+        <Link
+          component={RouterLink}
+          to={browseLink({ minDiscount: 10, sort: 'discount' })}
+          underline="hover"
+          variant="body2"
+        >
           See all deals
         </Link>
-      </div>
-      <div className="shelf-wrap">
-        <button type="button" className="shelf-arrow" aria-label="Scroll left" onClick={() => scroll(-1)}>
-          ‹
-        </button>
-        <div className="shelf-row" ref={rowRef}>
-          {deals.map((product) => (
-            <Link key={product.id} to={`/product/${product.id}`} className="shelf-item">
-              <span className="shelf-image">
-                <ProductImage src={product.image} alt={product.name} />
-              </span>
-              <span className="deal-badge">{discountOf(product)}% off</span>
-              <Price product={product} size="sm" />
-              <span className="shelf-name">{product.name}</span>
-            </Link>
-          ))}
-        </div>
-        <button type="button" className="shelf-arrow" aria-label="Scroll right" onClick={() => scroll(1)}>
-          ›
-        </button>
-      </div>
-    </section>
+      }
+    >
+      {deals.map((product) => (
+        <Box
+          key={product.id}
+          component={RouterLink}
+          to={`/product/${product.id}`}
+          sx={{
+            width: 168,
+            flexShrink: 0,
+            scrollSnapAlign: 'start',
+            textDecoration: 'none',
+            color: 'inherit',
+          }}
+        >
+          <Box sx={{ height: 150, bgcolor: 'common.white', borderRadius: 1, p: 1 }}>
+            <ProductImage src={product.image} alt={product.name} />
+          </Box>
+          <Chip label={`${discountOf(product)}% off`} size="small" color="error" sx={{ my: 0.75 }} />
+          <Price product={product} size="sm" />
+          <Typography variant="caption" className="clamp-2" color="text.secondary" sx={{ display: 'block' }}>
+            {product.name}
+          </Typography>
+        </Box>
+      ))}
+    </Shelf>
   );
 }
 
@@ -190,19 +339,34 @@ function DepartmentTiles({ tree }) {
   if (tree.length === 0) return null;
   const formatCount = (n) => new Intl.NumberFormat('en-IN').format(n);
   return (
-    <section className="shelf">
-      <div className="shelf-head">
-        <h2>Shop by department</h2>
-      </div>
-      <div className="department-tiles">
+    <Paper sx={{ p: 2, mt: 3 }}>
+      <Typography variant="h2" sx={{ mb: 1.5 }}>
+        Shop by department
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(6, 1fr)' },
+          gap: 1.5,
+        }}
+      >
         {tree.map((department) => (
-          <Link key={department.id} to={browseLink({ categoryId: department.id })} className="department-tile">
-            <strong>{department.name}</strong>
-            <span>{formatCount(department.productCount)} products</span>
-          </Link>
+          <Card
+            key={department.id}
+            component={RouterLink}
+            to={browseLink({ categoryId: department.id })}
+            sx={{ p: 1.75, textDecoration: 'none', color: 'inherit' }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 600 }} className="clamp-2">
+              {department.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {formatCount(department.productCount)} products
+            </Typography>
+          </Card>
         ))}
-      </div>
-    </section>
+      </Box>
+    </Paper>
   );
 }
 
@@ -218,21 +382,49 @@ export default function HomeLanding() {
     return <Navigate to={`/s${search}`} replace />;
   }
 
-  if (error) return <div className="page-status">Could not load the store: {error.message}</div>;
-  if (!home) return <div className="page-status">Loading…</div>;
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="error">Could not load the store: {error.message}</Alert>
+      </Container>
+    );
+  }
+
+  if (!home) {
+    return (
+      <Box>
+        <Skeleton variant="rectangular" height={330} />
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="rounded" height={300} />
+            ))}
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 
   const slides = heroSlides(home);
 
   return (
-    <div className="landing">
+    <Box>
       <Hero slides={slides} />
-      <div className={`deal-cards ${slides.length ? 'over-hero' : ''}`}>
-        {home.cards.map((card) => (
-          <DealCard key={card.key} card={card} />
-        ))}
-      </div>
-      <DealsRow deals={home.deals} />
-      <DepartmentTiles tree={tree} />
-    </div>
+      <Container maxWidth="xl" sx={{ pb: 4, mt: slides.length ? -5 : 3, position: 'relative' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+            gap: 2,
+          }}
+        >
+          {home.cards.map((card) => (
+            <DealCard key={card.key} card={card} />
+          ))}
+        </Box>
+        <DealsRow deals={home.deals} />
+        <DepartmentTiles tree={tree} />
+      </Container>
+    </Box>
   );
 }

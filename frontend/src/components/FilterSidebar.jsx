@@ -1,4 +1,16 @@
 import { useEffect, useState } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Link from '@mui/material/Link';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { findInTree, useCategoryTree } from '../hooks/useCatalog';
 
 const PRICE_RANGES = [
@@ -10,6 +22,19 @@ const PRICE_RANGES = [
 ];
 
 const DISCOUNTS = [10, 25, 50, 70];
+
+/** A filter heading, so every block in the rail lines up. */
+function Block({ title, children }) {
+  return (
+    <Box sx={{ py: 1.5 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+        {title}
+      </Typography>
+      {children}
+      <Divider sx={{ mt: 1.5 }} />
+    </Box>
+  );
+}
 
 /**
  * Department, price, discount and availability filters.
@@ -35,130 +60,150 @@ export default function FilterSidebar({ params, onChange }) {
   }
 
   const { node, parent } = findInTree(tree, params.categoryId);
-  // Inside a department, show where you are and what is below it, as Amazon
-  // does, rather than the full list of thirty departments.
+  // Inside a department, show where you are and what is below it rather than
+  // the full list of thirty departments.
   const top = parent ?? node;
 
   const isRange = (range) =>
     String(params.minPrice ?? '') === String(range.min ?? '') &&
     String(params.maxPrice ?? '') === String(range.max ?? '');
 
+  const itemSx = (selected) => ({
+    borderRadius: 1,
+    py: 0.25,
+    '& .MuiListItemText-primary': {
+      fontSize: 14,
+      fontWeight: selected ? 700 : 400,
+      color: selected ? 'primary.main' : 'text.primary',
+    },
+  });
+
   return (
-    <aside className="filters">
-      <section className="filter-block">
-        <h3>Department</h3>
-        <ul>
+    <Box component="aside">
+      <Block title="Department">
+        <List dense disablePadding>
           {top ? (
             <>
-              <li>
-                <button type="button" onClick={() => onChange({ categoryId: null, page: 0 })}>
-                  ‹ Any Department
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  className={node === top ? 'filter-active' : ''}
-                  onClick={() => onChange({ categoryId: top.id, page: 0 })}
-                >
-                  {top.name}
-                </button>
-              </li>
+              <Link
+                component="button"
+                type="button"
+                underline="hover"
+                onClick={() => onChange({ categoryId: null, page: 0 })}
+                sx={{ display: 'inline-flex', alignItems: 'center', fontSize: 14, mb: 0.5 }}
+              >
+                <ChevronLeftIcon fontSize="small" /> Any Department
+              </Link>
+              <ListItemButton
+                onClick={() => onChange({ categoryId: top.id, page: 0 })}
+                sx={itemSx(node === top)}
+              >
+                <ListItemText primary={top.name} />
+              </ListItemButton>
               {top.children.map((child) => (
-                <li key={child.id} className="filter-child">
-                  <button
-                    type="button"
-                    className={node?.id === child.id ? 'filter-active' : ''}
-                    onClick={() => onChange({ categoryId: child.id, page: 0 })}
-                  >
-                    {child.name}
-                  </button>
-                </li>
+                <ListItemButton
+                  key={child.id}
+                  onClick={() => onChange({ categoryId: child.id, page: 0 })}
+                  sx={{ ...itemSx(node?.id === child.id), pl: 3 }}
+                >
+                  <ListItemText primary={child.name} />
+                </ListItemButton>
               ))}
             </>
           ) : (
             tree.map((department) => (
-              <li key={department.id}>
-                <button type="button" onClick={() => onChange({ categoryId: department.id, page: 0 })}>
-                  {department.name}
-                </button>
-              </li>
+              <ListItemButton
+                key={department.id}
+                onClick={() => onChange({ categoryId: department.id, page: 0 })}
+                sx={itemSx(false)}
+              >
+                <ListItemText primary={department.name} />
+              </ListItemButton>
             ))
           )}
-        </ul>
-      </section>
+        </List>
+      </Block>
 
-      <section className="filter-block">
-        <h3>Price</h3>
-        <ul className="plain-list">
+      <Block title="Price">
+        <List dense disablePadding>
           {PRICE_RANGES.map((range) => (
-            <li key={range.label}>
-              <button
-                type="button"
-                className={isRange(range) ? 'filter-active' : ''}
-                onClick={() => onChange({ minPrice: range.min, maxPrice: range.max, page: 0 })}
-              >
-                {range.label}
-              </button>
-            </li>
+            <ListItemButton
+              key={range.label}
+              onClick={() => onChange({ minPrice: range.min, maxPrice: range.max, page: 0 })}
+              sx={itemSx(isRange(range))}
+            >
+              <ListItemText primary={range.label} />
+            </ListItemButton>
           ))}
-        </ul>
-        <form className="price-range" onSubmit={applyPrice}>
-          <input
+        </List>
+        <Box
+          component="form"
+          onSubmit={applyPrice}
+          sx={{
+            display: 'flex',
+            gap: 0.75,
+            mt: 1,
+            // The spinner arrows cost about 20px a field in a rail this
+            // narrow, which is enough to clip the placeholder.
+            '& input[type=number]': { MozAppearance: 'textfield' },
+            '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+              WebkitAppearance: 'none',
+              margin: 0,
+            },
+          }}
+        >
+          <TextField
             type="number"
-            min="0"
-            placeholder="₹ Min"
+            placeholder="Min"
             value={minPrice}
             onChange={(event) => setMinPrice(event.target.value)}
-            aria-label="Minimum price"
+            inputProps={{ min: 0, 'aria-label': 'Minimum price' }}
+            sx={{ flex: 1, minWidth: 0 }}
           />
-          <input
+          <TextField
             type="number"
-            min="0"
-            placeholder="₹ Max"
+            placeholder="Max"
             value={maxPrice}
             onChange={(event) => setMaxPrice(event.target.value)}
-            aria-label="Maximum price"
+            inputProps={{ min: 0, 'aria-label': 'Maximum price' }}
+            sx={{ flex: 1, minWidth: 0 }}
           />
-          <button type="submit" className="btn-plain">
+          <Button type="submit" variant="outlined" size="small" sx={{ flexShrink: 0, px: 1.5 }}>
             Go
-          </button>
-        </form>
-      </section>
+          </Button>
+        </Box>
+      </Block>
 
-      <section className="filter-block">
-        <h3>Discount</h3>
-        <ul className="plain-list">
+      <Block title="Discount">
+        <List dense disablePadding>
           {DISCOUNTS.map((discount) => (
-            <li key={discount}>
-              <button
-                type="button"
-                className={String(params.minDiscount) === String(discount) ? 'filter-active' : ''}
-                onClick={() =>
-                  onChange({
-                    minDiscount: String(params.minDiscount) === String(discount) ? null : discount,
-                    page: 0,
-                  })
-                }
-              >
-                {discount}% off or more
-              </button>
-            </li>
+            <ListItemButton
+              key={discount}
+              onClick={() =>
+                onChange({
+                  minDiscount: String(params.minDiscount) === String(discount) ? null : discount,
+                  page: 0,
+                })
+              }
+              sx={itemSx(String(params.minDiscount) === String(discount))}
+            >
+              <ListItemText primary={`${discount}% off or more`} />
+            </ListItemButton>
           ))}
-        </ul>
-      </section>
+        </List>
+      </Block>
 
-      <section className="filter-block">
-        <h3>Availability</h3>
-        <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={Boolean(params.inStockOnly)}
-            onChange={(event) => onChange({ inStockOnly: event.target.checked || null, page: 0 })}
-          />
-          In stock only
-        </label>
-      </section>
-    </aside>
+      <Block title="Availability">
+        <FormControlLabel
+          control={
+            <Checkbox
+              size="small"
+              checked={Boolean(params.inStockOnly)}
+              onChange={(event) => onChange({ inStockOnly: event.target.checked || null, page: 0 })}
+            />
+          }
+          label={<Typography variant="body2">In stock only</Typography>}
+        />
+      </Block>
+    </Box>
   );
 }

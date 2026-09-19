@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import MenuIcon from '@mui/icons-material/Menu';
 import { browseLink, useCategoryTree } from '../hooks/useCatalog';
 import DepartmentDrawer from './DepartmentDrawer';
 
@@ -15,27 +19,60 @@ export default function CategoryNav() {
   const active = searchParams.get('categoryId');
   const onDeals = searchParams.get('sort') === 'discount' && !active;
 
+  const linkSx = (selected) => ({
+    color: 'common.white',
+    flexShrink: 0,
+    fontWeight: selected ? 700 : 400,
+    borderRadius: 1,
+    px: 1.5,
+    bgcolor: selected ? 'rgba(255,255,255,0.16)' : 'transparent',
+    '&:hover': { bgcolor: 'rgba(255,255,255,0.12)' },
+  });
+
   return (
     <>
-      <nav className="category-nav" aria-label="Departments">
-        <button type="button" className="nav-all" onClick={() => setMenuOpen(true)}>
-          <span aria-hidden="true">☰</span> All
-        </button>
-        <Link to={browseLink({ minDiscount: 10, sort: 'discount' })} data-active={onDeals}>
+      <Box
+        component="nav"
+        aria-label="Departments"
+        className="no-scrollbar"
+        sx={{
+          bgcolor: 'primary.light',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          px: { xs: 1, md: 2 },
+          py: 0.5,
+          overflowX: 'auto',
+        }}
+      >
+        <Button
+          onClick={() => setMenuOpen(true)}
+          startIcon={<MenuIcon />}
+          sx={{ ...linkSx(false), fontWeight: 600 }}
+        >
+          All
+        </Button>
+        <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(255,255,255,0.3)', my: 0.75 }} />
+        <Button
+          component={RouterLink}
+          to={browseLink({ minDiscount: 10, sort: 'discount' })}
+          sx={linkSx(onDeals)}
+        >
           Today&apos;s Deals
-        </Link>
+        </Button>
         {tree
           .filter((department) => department.featured)
           .map((department) => (
-            <Link
+            <Button
               key={department.id}
+              component={RouterLink}
               to={browseLink({ categoryId: department.id })}
-              data-active={active === String(department.id)}
+              sx={linkSx(active === String(department.id))}
             >
               {department.name}
-            </Link>
+            </Button>
           ))}
-      </nav>
+      </Box>
       <DepartmentDrawer open={menuOpen} onClose={() => setMenuOpen(false)} tree={tree} />
     </>
   );

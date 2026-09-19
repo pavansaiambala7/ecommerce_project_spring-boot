@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import { useAuth } from '../context/AuthContext';
 
 export default function RegisterPage() {
@@ -27,59 +37,82 @@ export default function RegisterPage() {
     }
   }
 
+  // Bean validation failures come back keyed by field name, so each one is
+  // shown under the field it belongs to rather than in the summary.
+  const fieldError = (name) => error?.errors?.[name];
+
   return (
-    <form className="form-card" onSubmit={submit}>
-      <h1>Create account</h1>
-      {error && (
-        <div className="error">
-          {error.message}
-          {/* Bean validation failures come back keyed by field name. */}
-          {error.errors &&
-            Object.entries(error.errors).map(([field, message]) => (
-              <div key={field}>
-                {field}: {message}
-              </div>
-            ))}
-        </div>
-      )}
+    <Container maxWidth="xs" sx={{ py: 6 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <StorefrontIcon sx={{ fontSize: 44, color: 'primary.main' }} />
+      </Box>
 
-      <div className="field">
-        <label htmlFor="username">Username</label>
-        <input id="username" value={form.username} required minLength={3} maxLength={50} onChange={update('username')} />
-      </div>
+      <Paper component="form" onSubmit={submit} sx={{ p: 3, display: 'grid', gap: 2 }}>
+        <Typography variant="h2">Create account</Typography>
+        {error && <Alert severity="error">{error.message}</Alert>}
 
-      <div className="field">
-        <label htmlFor="email">Email</label>
-        <input id="email" type="email" value={form.email} required onChange={update('email')} />
-      </div>
+        <TextField
+          id="username"
+          label="Username"
+          value={form.username}
+          required
+          fullWidth
+          inputProps={{ minLength: 3, maxLength: 50 }}
+          error={Boolean(fieldError('username'))}
+          helperText={fieldError('username')}
+          onChange={update('username')}
+        />
 
-      <div className="field">
-        <label htmlFor="password">Password</label>
-        <input
+        <TextField
+          id="email"
+          label="Email"
+          type="email"
+          value={form.email}
+          required
+          fullWidth
+          error={Boolean(fieldError('email'))}
+          helperText={fieldError('email')}
+          onChange={update('email')}
+        />
+
+        <TextField
           id="password"
+          label="Password"
           type="password"
           value={form.password}
           required
-          minLength={8}
-          maxLength={100}
+          fullWidth
           autoComplete="new-password"
+          inputProps={{ minLength: 8, maxLength: 100 }}
+          error={Boolean(fieldError('password'))}
+          helperText={fieldError('password') ?? 'At least 8 characters.'}
           onChange={update('password')}
         />
-        <small style={{ color: 'var(--muted)' }}>At least 8 characters.</small>
-      </div>
 
-      <div className="field">
-        <label htmlFor="address">Address (optional)</label>
-        <input id="address" value={form.address} maxLength={255} onChange={update('address')} />
-      </div>
+        <TextField
+          id="address"
+          label="Address (optional)"
+          value={form.address}
+          fullWidth
+          inputProps={{ maxLength: 255 }}
+          error={Boolean(fieldError('address'))}
+          helperText={fieldError('address')}
+          onChange={update('address')}
+        />
 
-      <button type="submit" className="btn btn-block" disabled={submitting}>
-        {submitting ? 'Creating…' : 'Create your account'}
-      </button>
+        <Button type="submit" variant="contained" size="large" fullWidth disabled={submitting}>
+          {submitting ? 'Creating…' : 'Create your account'}
+        </Button>
 
-      <div className="form-foot">
-        Already have an account? <Link to="/login">Sign in</Link>
-      </div>
-    </form>
+        <Divider />
+
+        <Typography variant="body2" align="center" color="text.secondary">
+          Already have an account?{' '}
+          <Link component={RouterLink} to="/login" underline="hover">
+            Sign in
+          </Link>
+        </Typography>
+      </Paper>
+    </Container>
   );
 }

@@ -1,4 +1,10 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import Header from './components/Header';
 import CategoryNav from './components/CategoryNav';
 import ChatWidget from './components/ChatWidget';
@@ -27,17 +33,48 @@ function ToResults() {
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
-  if (loading) return <div className="page-status">Loading…</div>;
+  if (loading) {
+    return (
+      <Box sx={{ display: 'grid', placeItems: 'center', py: 10 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;
 }
 
+function Footer() {
+  return (
+    <Box component="footer" sx={{ mt: 6, bgcolor: 'primary.dark', color: 'common.white' }}>
+      <Container maxWidth="xl" sx={{ py: 4, textAlign: 'center' }}>
+        <Typography variant="h6" gutterBottom>
+          ShopKart
+        </Typography>
+        <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 2 }} />
+        <Typography variant="body2" sx={{ opacity: 0.85 }}>
+          A demonstration store. Product photos from{' '}
+          <Link href="https://dummyjson.com" target="_blank" rel="noreferrer" color="inherit" underline="always">
+            DummyJSON
+          </Link>{' '}
+          and{' '}
+          <Link href="https://stocksnap.io" target="_blank" rel="noreferrer" color="inherit" underline="always">
+            StockSnap
+          </Link>{' '}
+          (CC0).
+        </Typography>
+      </Container>
+    </Box>
+  );
+}
+
 export default function App() {
   return (
-    <>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
       <Header />
       <CategoryNav />
-      <main className="app-main">
+
+      <Box component="main" sx={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<HomeLanding />} />
           <Route path="/s" element={<SearchPage />} />
@@ -59,18 +96,10 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </main>
-      <footer className="site-footer">
-        <button type="button" className="back-to-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          Back to top
-        </button>
-        <div className="footer-note">
-          ShopKart is a demonstration store. Product photos:{' '}
-          <a href="https://dummyjson.com" target="_blank" rel="noreferrer">DummyJSON</a> and{' '}
-          <a href="https://stocksnap.io" target="_blank" rel="noreferrer">StockSnap</a> (CC0).
-        </div>
-      </footer>
+      </Box>
+
+      <Footer />
       <ChatWidget />
-    </>
+    </Box>
   );
 }
