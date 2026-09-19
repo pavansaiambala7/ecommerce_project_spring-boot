@@ -2,6 +2,7 @@ package com.jtspringproject.JtSpringProject.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -187,10 +188,10 @@ class CartServiceTest {
 		Order result = cartService.checkout(USER_ID, 4);
 
 		assertEquals(77, result.getId());
+		assertTrue(cart.getItems().isEmpty(), "checkout empties the cart");
 		verify(orderService).createOrder(anyInt(), anyList(),
 				org.mockito.ArgumentMatchers.argThat(s -> "560001".equals(s.getPincode())
 						&& "12, MG Road".equals(s.getLine1())));
-		verify(cartProductDao).deleteByCartId(11);
 	}
 
 	@Test

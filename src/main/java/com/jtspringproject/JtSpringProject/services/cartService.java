@@ -110,17 +110,36 @@ public class cartService {
         return cartProductDao.save(item);
     }
 
+    /**
+     * Removes a product from the cart.
+     *
+     * <p>The line is removed from the cart's own collection rather than deleted
+     * directly. {@code Cart.items} cascades ALL, so while the loaded cart still
+     * holds the line, a delete of that row is undone by the cascade at flush
+     * time: the API answered "Item removed", the row stayed, and the Delete
+     * button in the cart appeared to do nothing. Taking it out of the
+     * collection lets orphanRemoval do the deletion, which cannot be undone by
+     * the parent.
+     */
     @Transactional
     public void removeItem(int userId, int productId) {
         Cart cart = getCart(userId);
-        CartProduct item = cartProductDao.findByCartIdAndProductId(cart.getId(), productId)
+        CartProduct item = cart.getItems().stream()
+                .filter(line -> line.getProduct().getId() == productId)
+                .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Product " + productId + " is not in the cart."));
-        cartProductDao.delete(item);
+
+        cart.getItems().remove(item);
+        cartDao.save(cart);
     }
 
+    /** Empties the cart. Same reasoning as {@link #removeItem}. */
     @Transactional
     public void clear(int userId) {
-        cartDao.findByCustomerId(userId).ifPresent(cart -> cartProductDao.deleteByCartId(cart.getId()));
+        cartDao.findByCustomerId(userId).ifPresent(cart -> {
+            cart.getItems().clear();
+            cartDao.save(cart);
+        });
     }
 
     /**
@@ -151,7 +170,9 @@ public class cartService {
         }
 
         Order order = orderService.createOrder(userId, orderItems, shipping);
-        cartProductDao.deleteByCartId(cart.getId());
+        // Emptied through the cart, not by deleting the rows: see removeItem.
+        cart.getItems().clear();
+        cartDao.save(cart);
         return order;
     }
 
