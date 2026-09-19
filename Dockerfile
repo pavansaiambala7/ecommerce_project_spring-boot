@@ -37,7 +37,7 @@ COPY src ./src
 COPY --from=frontend /src/main/resources/static ./src/main/resources/static
 # Tests already ran in the pipeline's Test stage; running them again here
 # would double the build for no extra signal.
-RUN --mount=type=cache,target=/root/.m2 mvn package -DskipTests -B -T 1C
+RUN --mount=type=cache,target=/root/.m2 mvn package -DskipTests -B
 
 # ---------------------------------------------------------------------------
 # Stage 2: runtime

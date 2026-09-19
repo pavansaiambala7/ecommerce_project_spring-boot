@@ -32,6 +32,12 @@ pipeline {
         // allow - so it times out. The private IP also survives stop/start.
         string(name: 'PROD_HOST', defaultValue: '172.31.11.210', description: 'Private IP of the app EC2 instance (reachable from Jenkins inside the VPC)')
         string(name: 'PROD_SSH_USER', defaultValue: 'ec2-user', description: 'SSH user on the app EC2 instance')
+        // The tests are the slowest part of a run on a 2 GB agent: they start a
+        // PostgreSQL container and several Spring contexts. Skipping them is for
+        // deploying a commit whose tests have already passed somewhere else -
+        // never the default, because then nothing would ever run them.
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false,
+                description: 'Deploy without running the test suite (use when the tests already passed on this commit)')
     }
 
     environment {
@@ -42,6 +48,10 @@ pipeline {
         // localhost URL here (as an earlier version of this file did) makes
         // PostgresTestBase try to connect to a database that doesn't exist,
         // failing the Spring context for every test in the affected classes.
+        // Bound heaps: the agent is a t3.small with 2 GB. Left unbounded, Maven
+        // and the test JVM each size their heap from the machine and the box
+        // starts swapping, which turns a four minute stage into forty.
+        MAVEN_OPTS = '-Xmx640m -XX:MaxMetaspaceSize=256m'
         GEMINI_API_KEY = credentials('gemini-api-key')
         JWT_SECRET = credentials('jwt-secret')
         IMAGE_TAG = "${env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : env.BUILD_NUMBER}"
@@ -72,8 +82,11 @@ pipeline {
         // the Docker build produces the jar that actually ships. Building three
         // times before Docker built a fourth was most of a fifteen minute run.
         stage('Test') {
+            when { expression { !params.SKIP_TESTS } }
             steps {
-                sh './mvnw -B -T 1C verify'
+                // Not -T: parallel modules double peak memory, and this is a
+                // single-module project on a two core agent, so it buys nothing.
+                sh './mvnw -B verify'
             }
             post {
                 always {
