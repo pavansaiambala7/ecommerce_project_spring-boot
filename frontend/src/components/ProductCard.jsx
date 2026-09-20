@@ -54,7 +54,7 @@ export default function ProductCard({ product }) {
       <Box
         component={RouterLink}
         to={`/product/${product.id}`}
-        sx={{ display: 'block', height: 200, p: 2, bgcolor: 'common.white' }}
+        sx={{ display: 'block', height: 200, p: 2, bgcolor: 'common.white', textDecoration: 'none' }}
       >
         <ProductImage src={product.image} alt={product.name} />
       </Box>

@@ -50,6 +50,9 @@ export default function ProductImage({ src, alt, loading = 'lazy', sx }) {
           p: 2,
           textAlign: 'center',
           color: colour,
+          // The tile is usually inside a link to the product, and without this
+          // the label picks up the anchor's underline and reads as broken.
+          textDecoration: 'none',
           bgcolor: `color-mix(in srgb, ${colour} 8%, #ffffff)`,
           ...sx,
         }}

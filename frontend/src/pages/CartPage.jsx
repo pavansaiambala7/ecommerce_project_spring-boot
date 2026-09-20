@@ -58,7 +58,7 @@ export default function CartPage() {
                 <Box
                   component={RouterLink}
                   to={`/product/${item.productId}`}
-                  sx={{ height: 110, bgcolor: 'common.white', borderRadius: 1, p: 0.5 }}
+                  sx={{ height: 110, bgcolor: 'common.white', borderRadius: 1, p: 0.5, textDecoration: 'none' }}
                 >
                   <ProductImage src={item.image} alt={item.productName} />
                 </Box>
