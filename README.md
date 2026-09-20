@@ -6,32 +6,40 @@
 
 <br/><br/>
 
-# 🛒 E-Commerce Platform
+# 🛒 ShopKart
 
-### A production-grade Spring Boot storefront with JWT-secured REST API, AI-powered search & Gemini chatbot
+### An Indian marketplace built on Spring Boot and React — 50,000 products, hybrid semantic search, and a Gemini shopping assistant
 
 <br/>
 
+[![Live demo](https://img.shields.io/badge/Live_demo-13.50.19.252-00695c?style=for-the-badge&logo=amazonec2&logoColor=white)](http://13.50.19.252)
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Gemini AI](https://img.shields.io/badge/Gemini-AI-8B5CF6?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![CI](https://github.com/pavansaiambala7/ecommerce_project_spring-boot/actions/workflows/ci.yml/badge.svg)](https://github.com/pavansaiambala7/ecommerce_project_spring-boot/actions/workflows/ci.yml)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![MUI](https://img.shields.io/badge/MUI-6-007FFF?style=for-the-badge&logo=mui&logoColor=white)](https://mui.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16_+_pgvector-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Deploy](https://github.com/pavansaiambala7/ecommerce_project_spring-boot/actions/workflows/deploy.yml/badge.svg)](https://github.com/pavansaiambala7/ecommerce_project_spring-boot/actions/workflows/deploy.yml)
+
+<br/>
+
+### 🔗 [**Open the live store → 13.50.19.252**](http://13.50.19.252)
+
+<sub>Sign in as `admin` / `123` for the store admin, or `lisa` / `765` as a shopper.<br/>
+Served over plain HTTP, so the browser will call it "Not secure" and "use my location" at checkout will not work — see [Known limitations](#-known-limitations).</sub>
 
 <br/>
 
 <p>
   <a href="#-quick-start">Quick Start</a> •
+  <a href="#-how-search-works">How Search Works</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="#-features">Features</a> •
   <a href="#-api-reference">API Reference</a> •
   <a href="#-database-schema">Database Schema</a> •
-  <a href="#-ai-features">AI Features</a> •
+  <a href="#-the-catalogue">The Catalogue</a> •
+  <a href="#-deployment">Deployment</a> •
   <a href="#-testing">Testing</a>
 </p>
-
-<sub>The architecture diagram above is a live SVG — view it on GitHub to see the animated request/response flow ✨</sub>
 
 </div>
 
@@ -43,14 +51,16 @@
 
 ## 📖 Overview
 
-A **single Spring Boot application** — not a microservice fleet — with two front doors onto the same domain layer:
+One Spring Boot application — not a microservice fleet — serving a React single-page storefront from its own static resources, so the UI and the API share an origin and CORS never enters the picture in production.
 
-| Channel | Type | Auth |
-|---------|------|------|
-| **JSP Storefront** | Server-rendered pages | Session / form login |
-| **REST API** | Stateless JSON endpoints | JWT bearer tokens |
+| Layer | What it is |
+|-------|------------|
+| **Storefront** | React 18 + Vite + Material UI 6, built into `src/main/resources/static/` |
+| **API** | Stateless JSON over JWT bearer tokens |
+| **Data** | PostgreSQL 16 with `pgvector`, `pg_trgm`, full-text search and a materialized view |
+| **AI** | Google Gemini through LangChain4j — embeddings for search, chat for the assistant |
 
-Backed by **PostgreSQL 16 + pgvector**, with optional **AI product search** and a **support chatbot** powered by Google Gemini.
+The catalogue holds **~50,000 generated products across 23 departments**, which is the point: every design decision below (indexing, fusion, paging, suggestion caching) only matters at that size. At a hundred rows, none of it would.
 
 <br/>
 
@@ -63,38 +73,41 @@ Backed by **PostgreSQL 16 + pgvector**, with optional **AI product search** and 
 ### 🐳 Docker Compose *(recommended)*
 
 ```bash
-# Generate a signing secret (required — app refuses to boot without one)
-export JWT_SECRET="$(openssl rand -base64 48)"
+# A signing secret is required — the app refuses to boot without one
+export JWT_SECRET=$(openssl rand -base64 48)
 
-# Optional: enable AI features
-export GEMINI_API_KEY="your-gemini-api-key"
+# Optional: the assistant and semantic search stay inert without this
+export GEMINI_API_KEY=your-key
 
-# Launch
 docker compose up --build
 ```
 
-> App is live at **http://localhost:8080** 🚀
+The store comes up on **http://localhost:8080** with the 96-product seed catalogue.
 
 ### 🔧 Without Docker
 
-Requires **JDK 17** and **PostgreSQL 16** with `vector` + `pg_trgm` extensions.
-
 ```bash
-# Start PostgreSQL with pgvector
-docker run -d --name ecommerce-db -p 5432:5432 \
-  -e POSTGRES_DB=ecommjava \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
+# PostgreSQL with the pgvector extension
+docker run -d --name ecomm-db -p 5432:5432 \
+  -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ecommjava \
   pgvector/pgvector:pg16
 
-# Run the app
-export JWT_SECRET="$(openssl rand -base64 48)"
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+export JWT_SECRET=$(openssl rand -base64 48)
+
+# Build the SPA into the backend's static resources, then run
+cd frontend && npm install && npm run build && cd ..
+./mvnw spring-boot:run
 ```
 
-Flyway automatically creates and migrates the schema on startup. The `dev` profile enables SQL logging.
+### 🎨 Working on the UI
 
-### 🔑 Demo Accounts
+```bash
+cd frontend && npm run dev     # http://localhost:3000, proxies /api to :8080
+```
+
+Point the proxy in `frontend/vite.config.js` at a deployed host to develop against a real catalogue instead of the seed.
+
+### 🔑 Demo accounts
 
 | Username | Password | Role |
 |:--------:|:--------:|:----:|
@@ -102,7 +115,38 @@ Flyway automatically creates and migrates the schema on startup. The `dev` profi
 | `lisa` | `765` | `ROLE_NORMAL` |
 
 > [!WARNING]
-> These are well-known credentials seeded by a migration in every environment. **Rotate or delete them before deploying to production.** See [Security Notes](#-security-notes).
+> Seeded by a migration in **every** environment, including the live demo. Rotate or delete them before this is anything but a demo.
+
+<br/>
+
+---
+
+<br/>
+
+## 🔍 How Search Works
+
+The part worth reading. Searching 50,000 products well needs two different kinds of matching, because each is bad at what the other is good at:
+
+- **Lexical** (`tsvector` + GIN) nails exact tokens — `Sony WH-1000XM5`, `Redmi Note 13` — and is useless for intent.
+- **Vector** (`pgvector` HNSW, cosine) understands *"something to keep coffee hot"* and is unreliable on model numbers, because an embedding does not know that `XM5` differs from `XM4`.
+
+Both run, each returns a ranked pool of 200, and the two rankings are fused with **Reciprocal Rank Fusion**:
+
+```
+score(d) = Σ  1 / (k + rank_i(d))        k = 60
+```
+
+RRF combines *positions*, not scores, so it needs no normalisation between two scales that have nothing to do with each other — which is exactly why it beats a weighted sum here.
+
+Three details that took measuring to get right:
+
+| Problem | Fix |
+|---------|-----|
+| `PgVectorEmbeddingStore` wrapped its query so pgvector never used the HNSW index — a sequential scan over every embedding | Dropped that retrieval path; vectors live on `product.embedding` and are queried with a direct `ORDER BY embedding <=> :q LIMIT k` |
+| Vector search returned confidently unrelated items for short queries | `app.search.max-vector-distance=0.40`, calibrated against real result sets |
+| `totalItems: 0` printed above a full page of results | The count counts the *fused* set, not one of the two halves |
+
+**Suggestions** (the dropdown under the search box) come from a `search_term` materialized view of words, phrases, brands and department names, matched with `pg_trgm` so `aple` still finds Apple. The browser debounces 150 ms, caches by prefix, and aborts the in-flight request when you keep typing — so `apple` is one round trip, not five, and a slow answer for `ap` can never overwrite the answer for `apple`.
 
 <br/>
 
@@ -112,100 +156,32 @@ Flyway automatically creates and migrates the schema on startup. The `dev` profi
 
 ## 🏗 Architecture
 
-The system is organized in five distinct layers, each with a clear responsibility boundary:
-
-```mermaid
-graph TB
-    subgraph CLIENT["🖥️ Client Layer"]
-        direction LR
-        JSP["JSP Storefront<br/><small>Session Auth</small>"]
-        REST["REST Consumers<br/><small>JWT Bearer</small>"]
-    end
-
-    subgraph SECURITY["🛡️ Security Gateway"]
-        direction LR
-        RL["Rate Limiter<br/><small>Bucket4j + Caffeine</small>"]
-        JWT["JWT Filter<br/><small>JJWT HS256</small>"]
-        CORS["CORS Filter<br/><small>Origin Allow-List</small>"]
-    end
-
-    subgraph CORE["⚙️ Application Core"]
-        direction LR
-        CTRL["Controllers<br/><small>REST + MVC</small>"]
-        SVC["Services<br/><small>Business Logic</small>"]
-        DTO["DTOs<br/><small>Request / Response</small>"]
-    end
-
-    subgraph AI["🤖 AI Engine"]
-        direction LR
-        EMB["Embeddings<br/><small>gemini-embedding-001</small>"]
-        RAG["RAG Search<br/><small>pgvector Cosine</small>"]
-        CHAT["Support Chat<br/><small>gemini-2.0-flash</small>"]
-    end
-
-    subgraph DATA["🗄️ Data Layer"]
-        direction LR
-        JPA["Spring Data JPA<br/><small>Hibernate</small>"]
-        FLY["Flyway<br/><small>7 Migrations</small>"]
-        PG["PostgreSQL 16<br/><small>+ pgvector</small>"]
-    end
-
-    CLIENT --> SECURITY
-    SECURITY --> CORE
-    CORE --> AI
-    CORE --> DATA
-    AI --> DATA
-
-    style CLIENT fill:#164e63,stroke:#22d3ee,color:#cffafe
-    style SECURITY fill:#78350f,stroke:#f59e0b,color:#fef3c7
-    style CORE fill:#064e3b,stroke:#10b981,color:#d1fae5
-    style AI fill:#4c1d95,stroke:#8b5cf6,color:#ede9fe
-    style DATA fill:#312e81,stroke:#6366f1,color:#e0e7ff
+```
+React SPA  ──►  Rate limit (Bucket4j)  ──►  JWT filter  ──►  @PreAuthorize  ──►  Controller
+                                                                                     │
+                                                                                     ▼
+                                                                                  Service
+                                                                                 (@Transactional)
+                                                                                     │
+                                                          ┌──────────────────────────┼──────────────┐
+                                                          ▼                          ▼              ▼
+                                                    DAO / JPA              Native SQL (search)   Gemini
+                                                          └──────────────────────────┴──────────────┘
+                                                                          PostgreSQL 16 + pgvector
 ```
 
-### Layer Responsibilities
+### Layer responsibilities
 
-| Layer | Components | Purpose |
-|-------|-----------|---------|
-| **Client** | JSP Views, REST Consumers | User-facing interfaces |
-| **Security** | Rate Limiter → JWT Filter → CORS | Defense in depth, runs before any business logic |
-| **App Core** | Controllers, Services, DTOs, Validation | Domain logic, entities never exposed directly |
-| **AI Engine** | Gemini Embeddings, RAG Search, Chat | Optional intelligence layer, inert without API key |
-| **Data** | JPA Repositories, Flyway, PostgreSQL | Persistence, migrations, vector similarity search |
+| Layer | Owns | Never does |
+|-------|------|------------|
+| **Controller** | HTTP shape, status codes, validation | Business rules, SQL |
+| **Service** | Transactions, invariants, authorization checks | HTTP concepts |
+| **DAO** | Persistence, native queries | Decide who may call it |
+| **DTO** | The public shape of a response | Leak entities — `ProductResponse` deliberately drops the owning customer, which once exposed a password hash |
 
-### Request Lifecycle
+### Why it is one application
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as 🖥️ Client
-    participant RL as 🚦 Rate Limiter
-    participant JF as 🔐 JWT Filter
-    participant CT as ⚙️ Controller
-    participant SV as 📦 Service
-    participant DB as 🗄️ PostgreSQL
-
-    C->>RL: HTTP Request
-    RL->>RL: Check token bucket
-    alt Rate limit exceeded
-        RL-->>C: 429 Too Many Requests
-    end
-    RL->>JF: Pass through
-    JF->>JF: Validate JWT signature + expiry
-    alt Invalid / expired token
-        JF-->>C: 401 Unauthorized
-    end
-    JF->>CT: Authenticated request
-    CT->>CT: Validate DTO
-    alt Validation failed
-        CT-->>C: 400 Bad Request + field errors
-    end
-    CT->>SV: Business operation
-    SV->>DB: Query / Mutate
-    DB-->>SV: Result set
-    SV-->>CT: Domain object
-    CT-->>C: 200 OK { success, message, data }
-```
+Every table in a checkout — cart, order, order items, payment, stock — has to move together or not at all. Split across services, that becomes a distributed transaction with compensating actions; here it is one `@Transactional` method and a row lock. The AI layer is the only genuinely separable piece, and it is already isolated behind an interface that returns degraded results when Gemini is unavailable.
 
 <br/>
 
@@ -219,23 +195,19 @@ sequenceDiagram
 <tr>
 <td width="50%">
 
-### 🔐 Authentication & Security
-- **JWT access + refresh tokens** — 15min / 7day rotation
+### 🔐 Authentication & security
+- **JWT access + refresh** — 15 min / 7 day rotation
 - Refresh tokens stored as **SHA-256 hashes**
-- **Rotate-on-use** — stolen token usable at most once
-- Per-session or account-wide **revocation**
-- Constant-time password comparison (no user enumeration)
-- **CORS** explicit origin allow-list
+- **Rotate on use** — a stolen token works at most once
+- Per-session and account-wide revocation
+- No user enumeration on login
+- Ownership checks on every `/{id}` route
 
 </td>
 <td width="50%">
 
-### 🚦 Rate Limiting
-- **Bucket4j** token-bucket ahead of Spring Security
-- Tiered by endpoint sensitivity
-- IP-keyed with configurable XFF trust
-- `X-RateLimit-Limit` / `Remaining` headers
-- `429` includes `Retry-After`
+### 🚦 Rate limiting
+Bucket4j, **ahead of** Spring Security so an unauthenticated flood is cheap to reject.
 
 | Endpoint | Limit |
 |----------|-------|
@@ -243,50 +215,52 @@ sequenceDiagram
 | `/api/search/reindex` | 2 / hour |
 | `/api/search/**` | 30 / min |
 | Auth endpoints | 5 / min |
-| `/api/**` (default) | 100 / min |
+| `/api/**` | 100 / min |
+
+`429` carries `Retry-After`; the UI surfaces it rather than retrying and burning the remaining budget.
 
 </td>
 </tr>
 <tr>
 <td>
 
-### 🛒 Cart & Checkout
-- Add / update / remove items
-- One unique cart per customer
-- **Checkout under stock row-lock** — no overselling
-- Automatic order creation with line items
-- Full order lifecycle (create → pay → cancel)
+### 🛒 Cart & checkout
+- Amazon-style stepped checkout: address → payment → review
+- **Stock row-lock at checkout** — no overselling
+- **Idempotency keys** — a double-click makes one order
+- Cash on delivery or **Razorpay** (signature re-derived server-side; the page never sees the secret)
+- Shipping address **snapshotted** onto the order, so editing it later cannot rewrite history
 
 </td>
 <td>
 
-### 🤖 AI Intelligence
-- **RAG product search** — Gemini embedding → pgvector cosine similarity → ranked results
-- **Support chatbot** — contextual conversation with product/order retrieval
-- **Bounded session memory** per user
-- Admin-only **reindex** with rate protection
-- Fully optional — inert without `GEMINI_API_KEY`
+### 📍 Addresses
+- Address book with a single enforced default (partial unique index)
+- **PIN code autofill** — six digits fills city and state
+- **Use my current location** — reverse-geocoded into street, city, state, PIN
+- Validation at the database, not just the form: PIN `^[1-9][0-9]{5}$`, phone `^[6-9][0-9]{9}$`
 
 </td>
 </tr>
 <tr>
 <td>
 
-### 🧱 Database Migrations
-- **7 Flyway versioned migrations** (V1–V7)
-- Schema validated against entities on every boot
-- Money stored as `numeric(12,2)`
-- pgvector `vector(768)` for embeddings
+### 🤖 AI
+- **Hybrid search** — see [How Search Works](#-how-search-works)
+- **Shopping assistant** with catalogue and order retrieval
+- **Model fallback chain** — a retired or overloaded model fails over with a cooldown instead of taking the chatbot down, which is exactly how it broke once
+- Degrades to retrieval-only rather than erroring
+- Entirely inert without `GEMINI_API_KEY`
 
 </td>
 <td>
 
-### ✅ Comprehensive Testing
-- **154 tests** across all layers
-- Unit, `@WebMvcTest` slices, integration
-- Real PostgreSQL via **Testcontainers**
-- Authorization matrix tested with **real filter chain**
-- **JaCoCo** coverage reporting
+### 🎨 Storefront
+- React 18 + **Material UI 6**, one theme rather than scattered CSS
+- Department mega-menu, faceted filters, discount and price sorting
+- Search suggestions with typo tolerance
+- Works down to 390 px — no horizontal scroll
+- Admin area: products, departments, customers, bulk import
 
 </td>
 </tr>
@@ -298,197 +272,77 @@ sequenceDiagram
 
 <br/>
 
-## 🔧 Configuration
-
-All configuration is via environment variables. Only `JWT_SECRET` is mandatory.
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `JWT_SECRET` | *(none — startup fails)* | HMAC-SHA signing key, ≥ 32 bytes |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/ecommjava` | Database JDBC URL |
-| `SPRING_DATASOURCE_USERNAME` | `postgres` | Database user |
-| `SPRING_DATASOURCE_PASSWORD` | `postgres` | Database password |
-| `GEMINI_API_KEY` | *(empty)* | Enables AI search and chat |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:8080` | Comma-separated origin allow-list |
-| `RATELIMIT_TRUST_XFF` | `false` | Trust `X-Forwarded-For` for rate-limit identity |
-
-> [!IMPORTANT]
-> There is **deliberately no default signing secret**. A fallback baked into source control is equivalent to no authentication, so the app refuses to boot without one.
-
-> [!CAUTION]
-> Set `RATELIMIT_TRUST_XFF=true` **only** behind a reverse proxy you control that overwrites the `X-Forwarded-For` header. Otherwise, callers can set it themselves and bypass rate limiting entirely.
-
-<br/>
-
----
-
-<br/>
-
-## 🔐 Authentication
-
-The REST API is stateless and authenticates with JWT bearer tokens. The JSP pages use ordinary session form-login.
-
-```bash
-# Login
-curl -s -X POST localhost:8080/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"123"}'
-
-# Use the token
-curl -s localhost:8080/api/cart \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-### Token Lifecycle
-
-```mermaid
-sequenceDiagram
-    participant C as 🖥️ Client
-    participant F as 🛡️ Security Filter
-    participant A as 🔑 AuthService
-    participant DB as 🗄️ PostgreSQL
-
-    C->>F: POST /api/auth/login {username, password}
-    F->>A: authenticate(username, password)
-    A->>DB: SELECT customer WHERE username = ?
-    DB-->>A: user row (bcrypt hash)
-    A->>A: passwordEncoder.matches(raw, hash)
-    A->>DB: INSERT refresh_tokens (SHA-256 hash)
-    A-->>F: accessToken (15m) + refreshToken (7d)
-    F-->>C: 200 OK {accessToken, refreshToken}
-
-    C->>F: GET /api/cart — Authorization: Bearer accessToken
-    F->>F: verify signature + expiry
-    F-->>C: 200 OK {cart}
-
-    Note over C,F: ⏰ 15 minutes later — access token expired
-
-    C->>F: POST /api/auth/refresh {refreshToken}
-    F->>A: refresh(refreshToken)
-    A->>DB: lookup by SHA-256 hash, check revoked/expired
-    A->>DB: revoke old row, insert new hash
-    A-->>F: new accessToken + refreshToken (rotated)
-    F-->>C: 200 OK {accessToken, refreshToken}
-```
-
-| Property | Value |
-|----------|-------|
-| Access token TTL | **15 minutes** |
-| Refresh token TTL | **7 days** |
-| Refresh storage | **SHA-256 hash** only |
-| Rotation | **Every use** — one-time per token |
-| Revocation | Per-session (`/logout`) or all sessions (`/logout-all`) |
-
-<br/>
-
----
-
-<br/>
-
 ## 📡 API Reference
 
-Every response uses a consistent envelope:
+All responses share one envelope:
 
 ```json
-{
-  "success": true,
-  "message": "Success",
-  "data": { },
-  "timestamp": "2025-01-01T00:00:00Z"
-}
+{ "success": true, "message": "Success", "data": { } }
 ```
 
-Validation failures include an `errors` object keyed by field name.
-
 <details>
-<summary><b>🔑 Auth</b></summary>
-<br/>
+<summary><b>Authentication</b></summary>
 
-| Method | Endpoint | Access |
-|:------:|----------|:------:|
-| `POST` | `/api/auth/login` | Public |
-| `POST` | `/api/auth/register` | Public |
-| `POST` | `/api/auth/refresh` | Public |
-| `POST` | `/api/auth/logout` | Authenticated |
-| `POST` | `/api/auth/logout-all` | Authenticated |
+| Method | Path | Auth | Notes |
+|--------|------|:----:|-------|
+| `POST` | `/api/auth/register` | — | Returns a token pair |
+| `POST` | `/api/auth/login` | — | 5 / min per IP |
+| `POST` | `/api/auth/refresh` | — | Rotates; the presented token is revoked |
+| `POST` | `/api/auth/logout` | 🔒 | Revokes one session |
+| `POST` | `/api/auth/logout-all` | 🔒 | Revokes every session |
 
 </details>
 
 <details>
-<summary><b>📦 Products</b></summary>
-<br/>
+<summary><b>Catalogue & search</b></summary>
 
-| Method | Endpoint | Access |
-|:------:|----------|:------:|
-| `GET` | `/api/products` | Public |
-| `GET` | `/api/products/paged` | Public |
-| `GET` | `/api/products/{id}` | Public |
-| `POST` | `/api/products` | Admin |
-| `PUT` | `/api/products/{id}` | Admin |
-| `DELETE` | `/api/products/{id}` | Admin |
-
-**Pagination**: `/api/products/paged` accepts `page`, `size` (1–100), `sortBy` (`id`, `name`, `price`, `quantity`, `weight`), and `direction`.
+| Method | Path | Auth | Notes |
+|--------|------|:----:|-------|
+| `GET` | `/api/products/search` | — | `q`, `categoryId`, `minPrice`, `maxPrice`, `minDiscount`, `inStockOnly`, `sort`, `page`, `size` |
+| `GET` | `/api/products/suggest` | — | Typeahead; `q`, `limit` |
+| `GET` | `/api/products/facets` | — | Counts per department, price range |
+| `GET` | `/api/products/{id}` | — | |
+| `POST` `PUT` `DELETE` | `/api/products`, `/api/products/{id}` | 👑 | |
+| `GET` | `/api/categories/tree` | — | Departments nested, with counts |
+| `GET` | `/api/storefront/home` | — | Landing cards and deals |
 
 </details>
 
 <details>
-<summary><b>🛒 Cart</b></summary>
-<br/>
+<summary><b>Cart, orders, payments</b></summary>
 
-| Method | Endpoint | Access |
-|:------:|----------|:------:|
-| `GET` | `/api/cart` | Owner |
-| `POST` | `/api/cart/items` | Authenticated |
-| `PUT` | `/api/cart/items/{productId}` | Owner |
-| `DELETE` | `/api/cart/items/{productId}` | Owner |
-| `DELETE` | `/api/cart` | Owner |
-| `POST` | `/api/cart/checkout` | Owner |
-
-</details>
-
-<details>
-<summary><b>📋 Orders & Payments</b></summary>
-<br/>
-
-| Method | Endpoint | Access |
-|:------:|----------|:------:|
-| `POST` | `/api/orders` | Authenticated |
-| `GET` | `/api/orders/me` | Authenticated |
-| `GET` | `/api/orders/{id}` | Owner / Admin |
-| `GET` | `/api/orders/user/{userId}` | Self / Admin |
-| `POST` | `/api/orders/{id}/cancel` | Owner / Admin |
-| `PATCH` | `/api/orders/{id}/status` | Admin |
-| `POST` | `/api/payments` | Order Owner |
-| `GET` | `/api/payments/order/{orderId}` | Owner / Admin |
-| `POST` | `/api/payments/refund/{orderId}` | Admin |
+| Method | Path | Auth | Notes |
+|--------|------|:----:|-------|
+| `GET` `DELETE` | `/api/cart` | 🔒 | |
+| `POST` | `/api/cart/items` | 🔒 | |
+| `PUT` `DELETE` | `/api/cart/items/{productId}` | 🔒 | |
+| `POST` | `/api/cart/checkout` | 🔒 | `Idempotency-Key` header |
+| `GET` | `/api/orders/me` | 🔒 | |
+| `POST` | `/api/orders/{id}/cancel` | 🔒 | Owner only |
+| `PATCH` | `/api/orders/{id}/status` | 👑 | |
+| `POST` | `/api/payments` | 🔒 | Cash on delivery |
+| `POST` | `/api/payments/razorpay/orders/{orderId}` | 🔒 | Opens a Razorpay session |
+| `POST` | `/api/payments/razorpay/confirm` | 🔒 | Signature verified server-side |
 
 </details>
 
 <details>
-<summary><b>👤 Users</b></summary>
-<br/>
+<summary><b>Addresses, geo, assistant, admin</b></summary>
 
-| Method | Endpoint | Access |
-|:------:|----------|:------:|
-| `GET` | `/api/users` | Admin |
-| `GET` | `/api/users/me` | Authenticated |
-| `GET` | `/api/users/{id}` | Self / Admin |
-| `PUT` | `/api/users/{id}` | Self / Admin |
-
-</details>
-
-<details>
-<summary><b>🤖 AI</b></summary>
-<br/>
-
-| Method | Endpoint | Access |
-|:------:|----------|:------:|
-| `GET` | `/api/search?q=…&limit=…` | Public |
-| `POST` | `/api/search/reindex` | Admin |
-| `POST` | `/api/chat` | Authenticated |
-| `DELETE` | `/api/chat/history/{sessionId}` | Authenticated |
+| Method | Path | Auth | Notes |
+|--------|------|:----:|-------|
+| `GET` `POST` | `/api/addresses` | 🔒 | |
+| `PUT` `DELETE` | `/api/addresses/{id}` | 🔒 | Owner only |
+| `POST` | `/api/addresses/{id}/default` | 🔒 | |
+| `GET` | `/api/geo/pincode/{pincode}` | 🔒 | City and state from a PIN |
+| `GET` | `/api/geo/reverse` | 🔒 | `lat`, `lng` → address |
+| `POST` | `/api/chat` | 🔒 | 10 / min |
+| `POST` | `/api/admin/catalogue/import` | 👑 | Streams a CSV or `.gz` as the raw body |
+| `GET` `POST` `DELETE` | `/api/admin/catalogue/embeddings` | 👑 | Start, stop and poll the embedding job |
 
 </details>
+
+<sub>— public · 🔒 authenticated · 👑 `ROLE_ADMIN`</sub>
 
 <br/>
 
@@ -498,96 +352,79 @@ Validation failures include an `errors` object keyed by field name.
 
 ## 🗄 Database Schema
 
-Seven Flyway migrations (`V1`–`V7`) build the schema incrementally — money as `numeric(12,2)`, a unique cart per customer, hashed refresh tokens, and the pgvector embedding store.
+Sixteen Flyway migrations build the schema incrementally. `ddl-auto=validate`, so a drift between entity and column fails the boot instead of silently altering a production table.
 
 ```mermaid
 erDiagram
-    CUSTOMER ||--o{ PRODUCT : owns
-    CATEGORY ||--o{ PRODUCT : classifies
+    CUSTOMER ||--o{ ADDRESS : "ships to"
     CUSTOMER ||--o| CART : has
+    CATEGORY ||--o{ CATEGORY : "parent of"
+    CATEGORY ||--o{ PRODUCT : classifies
     CART ||--o{ CART_PRODUCT : contains
     PRODUCT ||--o{ CART_PRODUCT : "referenced by"
     CUSTOMER ||--o{ ORDERS : places
     ORDERS ||--o{ ORDER_ITEMS : contains
-    PRODUCT ||--o{ ORDER_ITEMS : "referenced by"
     ORDERS ||--o| PAYMENTS : "settled by"
     CUSTOMER ||--o{ REFRESH_TOKENS : owns
 
-    CUSTOMER {
-        int id PK
-        string username UK
-        string email
-        string password
-        string role
-        string address
+    PRODUCT {
+        int product_id PK
+        string name
+        text description
+        string brand
+        numeric price
+        numeric mrp
+        int discount_percent "generated"
+        int quantity
+        string external_id UK
+        vector embedding "768-dim, HNSW"
+        tsvector search_vector "generated, GIN"
+        int category_id FK
     }
     CATEGORY {
         int category_id PK
         string name
+        int parent_id FK
+        int sort_order
+        bool featured
     }
-    PRODUCT {
-        int product_id PK
-        string name
-        numeric price
-        int quantity
-        int weight
-        int category_id FK
-        int customer_id FK
-    }
-    CART {
+    ADDRESS {
         int id PK
         int customer_id FK
-    }
-    CART_PRODUCT {
-        int cart_id FK
-        int product_id FK
-        int quantity
+        string full_name
+        string phone "^[6-9][0-9]{9}$"
+        string pincode "^[1-9][0-9]{5}$"
+        bool is_default "one per customer"
     }
     ORDERS {
         int id PK
         int customer_id FK
         numeric total_amount
         string status
+        string ship_full_name "snapshot"
+        string ship_line1 "snapshot"
         datetime created_at
-    }
-    ORDER_ITEMS {
-        int id PK
-        int order_id FK
-        int product_id FK
-        int quantity
-        numeric price
-    }
-    PAYMENTS {
-        int id PK
-        int order_id FK
-        numeric amount
-        string method
-        string status
-        string transaction_id UK
-    }
-    REFRESH_TOKENS {
-        int id PK
-        string token_hash UK
-        int user_id FK
-        datetime expires_at
-        bool revoked
     }
 ```
 
-### Migration History
-
-| Migration | Description |
+| Migration | What it did |
 |:---------:|-------------|
-| `V1` | Initial schema — customers, categories, products |
-| `V2` | pgvector extension + `product_embeddings` table |
-| `V3` | Orders, order items, and payments |
-| `V4` | BCrypt-hash seeded passwords |
-| `V5` | Money columns → `numeric(12,2)` |
+| `V1` | Customers, categories, products |
+| `V2` | `pgvector` extension and vector columns |
+| `V3` | Orders, order items, payments |
+| `V4` | BCrypt the seeded passwords |
+| `V5` | Money → `numeric(12,2)` |
 | `V6` | Refresh token storage |
-| `V7` | Cart quantity tracking |
-
-> [!NOTE]
-> A `product_embeddings` table (`UUID` key, `vector(768)`, JSONB metadata) backs AI search. It's linked to `product` by a `productId` value in metadata rather than a foreign key, since LangChain4j owns that table's shape.
+| `V7` | Cart quantity |
+| `V8` | 96 realistic seed products |
+| `V9` | Catalogue at scale — `brand`, `rating`, `external_id`, generated `search_vector` + GIN, retuned HNSW, dropped the old `product_embeddings` table |
+| `V10` | Idempotent request records |
+| `V11` | Rate-limit buckets |
+| `V12` | Razorpay order and payment columns |
+| `V13` | Prices restated in rupees |
+| `V14` | Department **tree**, `mrp` + generated `discount_percent`, `address` table, order address snapshot, `search_term` materialized view |
+| `V15` | Real photographs for the grocery seed |
+| `V16` | Real photographs for 116 more product lines — catalogue photo coverage 30% → 55% |
 
 <br/>
 
@@ -595,42 +432,56 @@ erDiagram
 
 <br/>
 
-## 🤖 AI Features
+## 📦 The Catalogue
 
-Both features are **optional** and completely inert without `GEMINI_API_KEY`.
+The 50,000 products are **generated, not scraped**. Amazon's product data and images belong to Amazon and its brands, and their terms forbid reuse — so `tools/generate_catalogue.py` builds a catalogue from a hand-written taxonomy of departments, brands, product lines, variants, attributes and colours:
 
-```mermaid
-graph LR
-    Q["🔍 User Query"] --> EMB["Gemini<br/>Embedding"]
-    EMB --> VEC["vector(768)"]
-    VEC --> PGV["pgvector<br/>Cosine Search"]
-    PGV --> RANK["Ranked<br/>Products"]
-
-    CHAT["💬 Chat Message"] --> CTX["Context<br/>Retrieval"]
-    CTX --> PGV
-    CTX --> GEMINI["Gemini 2.0<br/>Flash"]
-    GEMINI --> RESP["AI<br/>Response"]
-
-    style Q fill:#164e63,stroke:#22d3ee,color:#cffafe
-    style EMB fill:#4c1d95,stroke:#8b5cf6,color:#ede9fe
-    style VEC fill:#312e81,stroke:#6366f1,color:#e0e7ff
-    style PGV fill:#312e81,stroke:#6366f1,color:#e0e7ff
-    style RANK fill:#064e3b,stroke:#10b981,color:#d1fae5
-    style CHAT fill:#164e63,stroke:#22d3ee,color:#cffafe
-    style CTX fill:#78350f,stroke:#f59e0b,color:#fef3c7
-    style GEMINI fill:#4c1d95,stroke:#8b5cf6,color:#ede9fe
-    style RESP fill:#064e3b,stroke:#10b981,color:#d1fae5
+```bash
+cd tools
+python generate_catalogue.py --count 50000 --out catalogue.csv
+gzip -k catalogue.csv
 ```
 
-| Feature | Model | How it works |
-|---------|-------|-------------|
-| **RAG Product Search** | `gemini-embedding-001` | Embeds query → pgvector cosine similarity → ranked results with scores |
-| **Support Chat** | `gemini-2.0-flash` | Augments conversation with retrieved product/order context. Bounded per-user session memory |
+Upload it from **Admin → Catalogue import**. The file streams up as the raw request body and lands through PostgreSQL `COPY`, so a 12 MB CSV never sits in memory in the browser or the server. Rows are matched on `external_id`, which makes re-importing the same file an update rather than 50,000 duplicates.
 
-`POST /api/search/reindex` rebuilds the embedding store (admin-only, heavily rate-limited — 2/hour). It clears existing vectors first and issues one paid embedding request per product.
+### Product photographs
 
-> [!IMPORTANT]
-> `pgvector.dimension` (768) must match the embedding model's output. `gemini-embedding-001` returns 3072 dimensions by default, so `GeminiConfig` explicitly requests 768 via `outputDimensionality`. Change the model, the property, and the `vector(...)` column in `V2` together.
+Photos come from two sources that are genuinely free to use — **[DummyJSON](https://dummyjson.com)**, published for demo shops, and **StockSnap via [Openverse](https://openverse.org)** under CC0. `tools/fetch_catalogue_images.py` searches both and writes `tools/catalogue_images.json`.
+
+Search results cannot be trusted unreviewed: a stock search for *"baby wipes"* returned a bull, and *"car battery"* a clock. So the committed file is a **reviewed** set — every photo was checked by eye against the line it illustrates, and anything that did not show the product was deleted rather than shipped.
+
+A photo illustrates the *kind* of product, not the exact model: a Redmi Note 13 gets a real smartphone photograph, not that phone. Where no honest photograph exists — Indian ethnic wear, household cleaning supplies — the product shows a **tinted tile naming the product type**, in its department's colour. That is deliberate. Putting a stock photo of an evening gown on a *Printed Kurti* would be worse than saying nothing.
+
+<br/>
+
+---
+
+<br/>
+
+## 🚀 Deployment
+
+GitHub Actions → ECR → EC2, with **no static AWS credentials anywhere**:
+
+```
+push to main
+     │
+     ▼
+ ./mvnw verify          201 tests, real PostgreSQL via Testcontainers
+     │
+     ▼
+ OIDC federation        GitHub mints a short-lived token; AWS trusts this repo's
+     │                  main branch only — no access key is ever stored
+     ▼
+ docker build + push    BuildKit cache mounts for ~/.m2 and ~/.npm
+     │
+     ▼
+ SSM Run Command        runs deploy/deploy.sh on the instance tagged
+     │                  Name=ecommerce-app — no inbound SSH, no key pair
+     ▼
+ health gate            polls /actuator/health/readiness before reporting success
+```
+
+The IAM policy is scoped to one ECR repository and one instance tag; `deploy/iam/` holds both documents. Full walkthrough in **[deploy/README.md](deploy/README.md)**.
 
 <br/>
 
@@ -641,20 +492,20 @@ graph LR
 ## 🧪 Testing
 
 ```bash
-./mvnw verify
+./mvnw verify                      # 201 tests + JaCoCo report
+./mvnw test -Dtest=CartIntegrationTest
 ```
 
-**154 tests** — JUnit 5, Mockito, `@WebMvcTest` slices, and full-context integration — with JaCoCo coverage at `target/site/jacoco/`.
+| Kind | What it covers |
+|------|----------------|
+| **Unit** | Services with mocked collaborators |
+| **`@WebMvcTest`** | Controller shape, status codes, validation |
+| **Integration** | Real PostgreSQL 16 + pgvector via **Testcontainers** — migrations run, so a broken migration fails the build |
+| **Authorization matrix** | Every route driven through the **real filter chain**: anonymous, wrong user, admin |
 
-| Test Type | What it covers |
-|-----------|---------------|
-| **Unit** | Service logic, JWT utilities, DTOs |
-| **`@WebMvcTest`** | Controller slices with mocked services |
-| **Integration** | Full app boot against real PostgreSQL (Testcontainers) |
-| **Authorization** | Real filter chain — anonymous callers blocked from admin/owner routes |
+Integration tests need a working Docker daemon. Without one they do not silently skip — they fail, loudly, which is the point.
 
-> [!NOTE]
-> Integration tests need PostgreSQL with pgvector. By default, they start one via **Testcontainers**. If `SPRING_DATASOURCE_URL` is already set, that database is used instead — useful when the build runs inside a container.
+> A worked example of why these exist: deleting a cart item appeared to succeed but the row came back, because `cascade = ALL` re-persisted the child that had just been removed from the parent's collection. The fix was two lines. The test that now guards it was written first, watched to fail with `expected: <[2]> but was: <[1, 2]>`, and only then made to pass.
 
 <br/>
 
@@ -665,39 +516,50 @@ graph LR
 ## 📁 Project Structure
 
 ```
-src/main/java/com/jtspringproject/JtSpringProject/
+├── frontend/                     React 18 + Vite + Material UI 6
+│   ├── src/theme.js              the single source of the storefront's look
+│   ├── src/components/           Header, SearchBox, ProductCard, ChatWidget, …
+│   ├── src/pages/                storefront pages and the admin area
+│   ├── src/context/              Auth, Cart, Address
+│   └── src/hooks/useCatalog.js   shared catalogue loaders
 │
-├── controller/            # JSP controllers (admin, storefront, cart)
-│   └── api/               # REST controllers
+├── src/main/java/…/
+│   ├── controller/               REST controllers, one per resource
+│   ├── services/                 transactions and business rules
+│   ├── dao/                      persistence, native search SQL
+│   ├── dto/                      request and response shapes
+│   ├── catalogue/                import, suggestions, storefront assembly
+│   ├── ai/                       Gemini config, embedding job, assistant
+│   ├── security/                 JWT filter, entry points, authorization
+│   ├── ratelimit/                Bucket4j filter and tiers
+│   ├── idempotency/              replay-safe request records
+│   ├── payment/                  Razorpay integration
+│   └── geo/                      PIN lookup and reverse geocoding
 │
-├── dto/                   # Request and response DTOs
-│                          # (entities are never serialized)
-│
-├── security/              # JWT issuing / verification, principal, auth service
-│
-├── ratelimit/             # Bucket4j filter and tier configuration
-│
-├── exception/             # Domain exceptions + global error handlers
-│
-├── services/              # Business logic
-├── dao/                   # Spring Data JPA repositories
-├── models/                # JPA entities
-│
-├── ai/                    # Gemini embeddings, pgvector RAG, support chat
-│   └── config/            # AI configuration (models, dimensions)
-│
-└── configuration/         # App-wide config (CORS, security, web MVC)
-
-src/main/resources/
-├── db/migration/          # Flyway migrations V1–V7
-└── application.properties # All externalized config
+├── src/main/resources/db/migration/    V1 … V16
+├── src/main/resources/static/          the built SPA (generated)
+├── tools/                              catalogue generator and image fetcher
+├── deploy/                             deploy scripts, IAM policies, runbook
+└── .github/workflows/deploy.yml        the pipeline above
 ```
 
-### Design Decisions
+<br/>
 
-- **Entities never leave the service layer** — every endpoint maps to a DTO, keeping password hashes out of responses and preventing `Order → OrderItem → Order` circular serialization.
-- **`spring.jpa.open-in-view` is disabled** — read paths that need associations fetch them explicitly with `@EntityGraph`.
-- **Rate limiting runs before auth** — throttled traffic costs zero authentication work, and login endpoints themselves are protected against credential stuffing.
+---
+
+<br/>
+
+## ⚠ Known limitations
+
+Worth stating plainly rather than leaving to be discovered:
+
+| | |
+|---|---|
+| **No TLS** | The demo is plain HTTP. Browsers therefore refuse `navigator.geolocation`, so **"use my current location" cannot work on the live site** — PIN code autofill is the path that does. Fixing this needs a certificate and a domain. |
+| **Seeded credentials** | `admin` / `123` exists in every environment, by migration. |
+| **Photo coverage** | About 55% of the catalogue carries a real photograph; the rest show a labelled tile, because no CC0 photograph honestly depicts a *Kurta Pyjama Set* or a bottle of *Dishwash Gel*. See [Product photographs](#product-photographs). |
+| **Embeddings are slow to build** | The free Gemini tier allows 100 embeddings a minute, so embedding all 50,000 products takes about eight hours. The job is resumable and runs in the background; lexical search works throughout. |
+| **Single instance** | One `t3.small`, no load balancer, no replica. Deploys are a brief restart. |
 
 <br/>
 
@@ -705,36 +567,20 @@ src/main/resources/
 
 <br/>
 
-## 🔒 Security Notes
+## 🛠 Tech Stack
 
-| Concern | Mitigation |
-|---------|-----------|
-| Default secrets | `JWT_SECRET` has **no default** — app won't start without one |
-| Seed accounts | `admin` / `lisa` exist for local dev only — delete before production |
-| CORS | Explicit origin allow-list, **never** wildcard + credentials |
-| Refresh tokens | Stored as **SHA-256 hashes**, rotate on every use |
-| User enumeration | Password comparison runs even for unknown usernames |
-| Rate limiting | Applied **before** authentication to protect login endpoints |
-
-<br/>
-
----
-
-<br/>
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
+| | |
+|---|---|
 | **Language** | Java 17 |
-| **Framework** | Spring Boot 3.2.5, Spring Security 6, Spring Data JPA |
-| **Database** | PostgreSQL 16 + pgvector, Flyway |
-| **AI / LLM** | Google Gemini (`gemini-embedding-001`, `gemini-2.0-flash`), LangChain4j |
-| **Auth** | JJWT (HS256), BCrypt |
-| **Rate Limiting** | Bucket4j + Caffeine |
-| **Views** | JSP, JSTL |
+| **Framework** | Spring Boot 3.2.5 — Web, Data JPA, Security, Validation, Actuator |
+| **Frontend** | React 18, Vite 5, Material UI 6, Emotion, React Router 6 |
+| **Database** | PostgreSQL 16, pgvector, pg_trgm, Flyway |
+| **AI** | LangChain4j 0.35 + Google Gemini (`gemini-embedding-001`, `gemini-3.6-flash`) |
+| **Auth** | JJWT, BCrypt |
+| **Payments** | Razorpay |
+| **Rate limiting** | Bucket4j (Caffeine + PostgreSQL) |
 | **Testing** | JUnit 5, Mockito, Testcontainers, JaCoCo |
-| **Build / CI** | Maven, Docker, GitHub Actions, Jenkins |
+| **Build & deploy** | Maven, Docker, GitHub Actions, AWS ECR + EC2 + SSM |
 
 <br/>
 
@@ -744,20 +590,4 @@ src/main/resources/
 
 ## 📄 License
 
-No license file is included yet. Until one is added, all rights are reserved by default — don't reuse beyond personal/educational reference without asking.
-
-<br/>
-
-<div align="center">
-
----
-
-<br/>
-
-**Built with** &nbsp; ☕ Spring Boot &nbsp;·&nbsp; 🐘 PostgreSQL &nbsp;·&nbsp; 🧠 Gemini AI &nbsp;·&nbsp; 🐳 Docker
-
-<br/>
-
-<sub>Made with ❤️ by <a href="https://github.com/pavansaiambala7">Pavan Sai Ambala</a></sub>
-
-</div>
+Educational project. Product photographs are DummyJSON and CC0 StockSnap images, credited in `tools/catalogue_images.json`; no Amazon content is used or redistributed.
