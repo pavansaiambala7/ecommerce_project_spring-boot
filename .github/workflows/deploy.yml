@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AWS_REGION: eu-north-1
+  AWS_REGION: ap-southeast-2
   ECR_REPOSITORY: ecommerce-app
   APP_INSTANCE_TAG: ecommerce-app
 

@@ -32,7 +32,7 @@ cd ecommerce_project_spring-boot
 Then set these once per CloudShell session — everything below reuses them:
 
 ```bash
-export AWS_REGION=eu-north-1      # match whatever region you see top-right in the console
+export AWS_REGION=ap-southeast-2      # match whatever region you see top-right in the console
 export AWS_DEFAULT_REGION=$AWS_REGION
 ```
 
@@ -301,7 +301,7 @@ overwrite or a delete is itself recoverable; public access is blocked because
 the objects contain every customer record you hold.
 
 ```bash
-export AWS_DEFAULT_REGION=eu-north-1
+export AWS_DEFAULT_REGION=ap-southeast-2
 BUCKET=ecommerce-db-backups-$(aws sts get-caller-identity --query Account --output text)
 
 aws s3api create-bucket --bucket "$BUCKET" \
@@ -380,7 +380,7 @@ is rolled back instead of promoted.
 Create an SNS topic and subscribe to it (confirm the emailed link):
 
 ```bash
-export AWS_DEFAULT_REGION=eu-north-1
+export AWS_DEFAULT_REGION=ap-southeast-2
 TOPIC_ARN=$(aws sns create-topic --name ecommerce-alerts --query TopicArn --output text)
 aws sns subscribe --topic-arn "$TOPIC_ARN" --protocol email --notification-endpoint you@example.com
 echo "$TOPIC_ARN"
@@ -412,7 +412,7 @@ Store the credentials. The key id is public and reaches the browser; the two
 secrets never leave the server:
 
 ```bash
-export AWS_DEFAULT_REGION=eu-north-1
+export AWS_DEFAULT_REGION=ap-southeast-2
 
 aws ssm put-parameter --name /ecommerce/razorpay-key-id \
   --value "rzp_test_xxxxxxxxxxxx" --type SecureString --overwrite
@@ -565,7 +565,7 @@ Two things make this simpler than the Jenkins pipeline it replaces:
 ### One-time AWS setup (CloudShell)
 
 ```bash
-export AWS_PAGER="" AWS_DEFAULT_REGION=eu-north-1
+export AWS_PAGER="" AWS_DEFAULT_REGION=ap-southeast-2
 ACCT=$(aws sts get-caller-identity --query Account --output text)
 REPO=pavansaiambala7/ecommerce_project_spring-boot
 cd ~/ecommerce_project_spring-boot && git pull

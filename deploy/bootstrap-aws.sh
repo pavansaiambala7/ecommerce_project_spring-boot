@@ -18,7 +18,7 @@
 set -euo pipefail
 
 export AWS_PAGER=""
-AWS_REGION="${AWS_REGION:-eu-north-1}"        # must match deploy.yml's AWS_REGION
+AWS_REGION="${AWS_REGION:-ap-southeast-2}"        # must match deploy.yml's AWS_REGION
 export AWS_DEFAULT_REGION="$AWS_REGION"
 GITHUB_REPO="${GITHUB_REPO:-pavansaiambala7/ecommerce_project_spring-boot}"
 ECR_REPOSITORY=ecommerce-app
