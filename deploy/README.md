@@ -436,7 +436,7 @@ In the Razorpay dashboard, under Settings → Webhooks, add:
 
 | Field | Value |
 |---|---|
-| URL | `http://13.50.19.252/api/payments/razorpay/webhook` |
+| URL | `http://15.134.105.201/api/payments/razorpay/webhook` |
 | Secret | the value printed above |
 | Events | `payment.captured`, `payment.failed`, `order.paid`, `refund.processed` |
 
@@ -444,7 +444,7 @@ Redeploy so the host picks the secrets up, then confirm the storefront can
 see the gateway:
 
 ```bash
-curl -s http://13.50.19.252/api/payments/razorpay/config
+curl -s http://15.134.105.201/api/payments/razorpay/config
 # {"data":{"enabled":true,"keyId":"rzp_test_..."}}
 ```
 
@@ -483,7 +483,7 @@ Upload it straight to the running application - no SSH, no psql, no security
 group changes:
 
 ```bash
-HOST=http://13.50.19.252
+HOST=http://15.134.105.201
 TOKEN=$(curl -s -X POST $HOST/api/auth/login -H 'Content-Type: application/json' \
         -d '{"username":"admin","password":"YOUR_ADMIN_PASSWORD"}' \
         | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)

@@ -12,7 +12,7 @@
 
 <br/>
 
-[![Live demo](https://img.shields.io/badge/Live_demo-13.50.19.252-00695c?style=for-the-badge&logo=amazonec2&logoColor=white)](http://13.50.19.252)
+[![Live demo](https://img.shields.io/badge/Live_demo-15.134.105.201-00695c?style=for-the-badge&logo=amazonec2&logoColor=white)](http://15.134.105.201)
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
@@ -22,7 +22,7 @@
 
 <br/>
 
-### 🔗 [**Open the live store → 13.50.19.252**](http://13.50.19.252)
+### 🔗 [**Open the live store → 15.134.105.201**](http://15.134.105.201)
 
 <sub>Sign in as `admin` / `123` for the store admin, or `lisa` / `765` as a shopper.<br/>
 Served over plain HTTP, so the browser will call it "Not secure" and "use my location" at checkout will not work — see [Known limitations](#-known-limitations).</sub>
