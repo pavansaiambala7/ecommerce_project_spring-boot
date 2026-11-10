@@ -14,8 +14,6 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>JtSpringProject</name>
 	<description>E-Commerce Spring Boot Project with AI-powered search and support</description>
-	<!-- jar, the Spring Boot default. This was war only because JSPs cannot
-	     resolve from an executable jar; with the views gone, so is the reason. -->
 	<properties>
 		<java.version>17</java.version>
 		<langchain4j.version>0.35.0</langchain4j.version>

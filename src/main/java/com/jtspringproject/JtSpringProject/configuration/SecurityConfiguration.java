@@ -115,9 +115,9 @@ public class SecurityConfiguration {
 	 * the HTML and JavaScript would buy nothing, since an unauthenticated visitor
 	 * is meant to browse the catalogue anyway.
 	 *
-	 * <p>There is no form login here any more. The JSP storefront that needed one
-	 * is gone, and a server-side login page fighting a client-side router is what
-	 * produced the redirect loop this replaced.
+	 * <p>There is no form login here. A server-side login page fighting a
+	 * client-side router is what produced the redirect loop this replaced, so
+	 * authentication stays entirely in the API.
 	 */
 	@Bean
 	@Order(2)
